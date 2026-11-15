@@ -55,7 +55,7 @@ export const site = {
    * Platzhalter-Hinweise (gestrichelte Kästen) ein-/ausblenden.
    * Vor dem Livegang: alle Platzhalter füllen, dann auf `false` stellen.
    */
-  platzhalterAnzeigen: true,
+  platzhalterAnzeigen: false,
 };
 
 /**

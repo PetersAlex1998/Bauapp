@@ -31,14 +31,16 @@ const kartenSuche = encodeURIComponent(`${a.strasse}, ${a.plz} ${a.ort}`);
             <dt>Telefon</dt>
             <dd><a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></dd>
           </div>
-          <div>
-            <dt>E-Mail</dt>
-            <dd>
-              {site.email
-                ? <a href={`mailto:${site.email}`}>{site.email}</a>
-                : <Platzhalter art="inline">E-Mail-Adresse</Platzhalter>}
-            </dd>
-          </div>
+          {(site.email || site.platzhalterAnzeigen) && (
+            <div>
+              <dt>E-Mail</dt>
+              <dd>
+                {site.email
+                  ? <a href={`mailto:${site.email}`}>{site.email}</a>
+                  : <Platzhalter art="inline">E-Mail-Adresse</Platzhalter>}
+              </dd>
+            </div>
+          )}
           <div>
             <dt>Erreichbarkeit</dt>
             <dd>

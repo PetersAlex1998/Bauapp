@@ -16,7 +16,13 @@ const bereit = site.formularEndpoint !== '';
     <p class="formular__hinweis">Pflichtfelder sind mit * gekennzeichnet.</p>
   </div>
 
-  {!bereit && (
+  {!bereit && !site.platzhalterAnzeigen && (
+    <p class="formular__bald">
+      <strong>Online-Anfragen sind in Kürze möglich.</strong> Bis dahin erreichen Sie uns am besten telefonisch unter{' '}
+      <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>{site.erreichbarkeit ? ` (${site.erreichbarkeit})` : ''}.
+    </p>
+  )}
+  {!bereit && site.platzhalterAnzeigen && (
     <Platzhalter>
       <p><strong>Formularversand noch nicht eingerichtet.</strong> Es fehlt die Empfänger-Anbindung (siehe README, Abschnitt „Kontaktformular“). Bis dahin erreichen Sie uns telefonisch unter <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p>
     </Platzhalter>

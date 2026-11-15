@@ -204,8 +204,8 @@ import { site } from '../data/site';
 
   <!-- VOR ORT -->
   <section class="abschnitt hell" aria-labelledby="vor-ort">
-    <div class="rahmen zweier">
-      <div>
+    <div class:list={['rahmen', { zweier: site.platzhalterAnzeigen }]}>
+      <div class="spalte-text">
         <p class="marke">Wer wir sind</p>
         <h2 id="vor-ort">Zuhause im Kreis Paderborn. Seit {site.gruendungsjahr}.</h2>
         <p class="lead">

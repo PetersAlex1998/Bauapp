@@ -17,37 +17,46 @@ const a = site.adresse;
       <h2>Angaben gemäß § 5 DDG</h2>
       <p>
         {site.name}<br />
-        <Platzhalter art="inline">Vollständiger Firmenname mit Rechtsform (z. B. e. K., GmbH) bzw. Vor- und Nachname des Inhabers</Platzhalter><br />
+        {site.platzhalterAnzeigen && <><Platzhalter art="inline">Vollständiger Firmenname mit Rechtsform (z. B. e. K., GmbH) bzw. Vor- und Nachname des Inhabers</Platzhalter><br /></>}
         {a.strasse}<br />
         {a.plz} {a.ort}
       </p>
 
-      <h2>Vertreten durch</h2>
-      <p><Platzhalter art="inline">Inhaber/in bzw. Geschäftsführer/in</Platzhalter></p>
+      {site.platzhalterAnzeigen && (<>
+        <h2>Vertreten durch</h2>
+        <p><Platzhalter art="inline">Inhaber/in bzw. Geschäftsführer/in</Platzhalter></p>
+      </>)}
 
       <h2>Kontakt</h2>
       <p>
-        Telefon: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a><br />
-        E-Mail: {site.email ? <a href={`mailto:${site.email}`}>{site.email}</a> : <Platzhalter art="inline">E-Mail-Adresse (Pflichtangabe)</Platzhalter>}
+        Telefon: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
+        {site.email
+          ? <><br />E-Mail: <a href={`mailto:${site.email}`}>{site.email}</a></>
+          : site.platzhalterAnzeigen && <><br />E-Mail: <Platzhalter art="inline">E-Mail-Adresse (Pflichtangabe)</Platzhalter></>}
       </p>
 
-      <h2>Registereintrag</h2>
-      <p><Platzhalter art="inline">Registergericht und Registernummer – falls eingetragen, sonst Abschnitt entfernen</Platzhalter></p>
+      <h2>Gewerberechtliche Erlaubnis</h2>
+      <p>
+        HaDie-Immobilien verfügt über die Erlaubnis nach § 34c der Gewerbeordnung (Wohnimmobilienverwalter).
+        {site.platzhalterAnzeigen && <> <Platzhalter art="inline">Zuständige Aufsichtsbehörde mit Anschrift</Platzhalter></>}
+      </p>
 
-      <h2>Umsatzsteuer-ID</h2>
-      <p><Platzhalter art="inline">Umsatzsteuer-Identifikationsnummer nach § 27a UStG – falls vorhanden</Platzhalter></p>
+      {site.platzhalterAnzeigen && (<>
+        <h2>Registereintrag</h2>
+        <p><Platzhalter art="inline">Registergericht und Registernummer – falls eingetragen, sonst Abschnitt entfernen</Platzhalter></p>
 
-      <h2>Gewerberechtliche Erlaubnis und Aufsichtsbehörde</h2>
-      <p><Platzhalter art="inline">Angaben zur Erlaubnis nach § 34c GewO (z. B. als Wohnimmobilienverwalter) und zuständige Aufsichtsbehörde mit Anschrift – falls zutreffend</Platzhalter></p>
+        <h2>Umsatzsteuer-ID</h2>
+        <p><Platzhalter art="inline">Umsatzsteuer-Identifikationsnummer nach § 27a UStG – falls vorhanden</Platzhalter></p>
 
-      <h2>Berufshaftpflichtversicherung</h2>
-      <p><Platzhalter art="inline">Name und Anschrift des Versicherers, räumlicher Geltungsbereich – falls zutreffend</Platzhalter></p>
+        <h2>Berufshaftpflichtversicherung</h2>
+        <p><Platzhalter art="inline">Name und Anschrift des Versicherers, räumlicher Geltungsbereich – falls zutreffend</Platzhalter></p>
 
-      <h2>Verbraucherstreitbeilegung</h2>
-      <p><Platzhalter art="inline">Erklärung, ob HaDie an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilnimmt (§ 36 VSBG)</Platzhalter></p>
+        <h2>Verbraucherstreitbeilegung</h2>
+        <p><Platzhalter art="inline">Erklärung, ob HaDie an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilnimmt (§ 36 VSBG)</Platzhalter></p>
 
-      <h2>Verantwortlich für den Inhalt</h2>
-      <p><Platzhalter art="inline">Name und Anschrift der verantwortlichen Person (§ 18 Abs. 2 MStV)</Platzhalter></p>
+        <h2>Verantwortlich für den Inhalt</h2>
+        <p><Platzhalter art="inline">Name und Anschrift der verantwortlichen Person (§ 18 Abs. 2 MStV)</Platzhalter></p>
+      </>)}
     </div>
   </section>
 </Seite>

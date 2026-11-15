@@ -17,10 +17,10 @@ const a = site.adresse;
       <h2>1. Verantwortlicher</h2>
       <p>
         {site.name}<br />
-        <Platzhalter art="inline">Vollständiger Name / Rechtsform des Verantwortlichen</Platzhalter><br />
+        {site.platzhalterAnzeigen && <><Platzhalter art="inline">Vollständiger Name / Rechtsform des Verantwortlichen</Platzhalter><br /></>}
         {a.strasse}, {a.plz} {a.ort}<br />
         Telefon: {site.telefon.anzeige}<br />
-        E-Mail: {site.email ?? <Platzhalter art="inline">E-Mail-Adresse</Platzhalter>}
+        {site.email ? <>E-Mail: {site.email}</> : site.platzhalterAnzeigen && <>E-Mail: <Platzhalter art="inline">E-Mail-Adresse</Platzhalter></>}
       </p>
 
       <h2>2. Hosting und Server-Protokolle</h2>
@@ -67,7 +67,7 @@ const a = site.adresse;
         <p>Zuständige Aufsichtsbehörde eintragen (für Nordrhein-Westfalen: Landesbeauftragte für Datenschutz und Informationsfreiheit NRW) – bitte prüfen. Gegebenenfalls Datenschutzbeauftragten benennen.</p>
       </Platzhalter>
 
-      <p class="leise">Stand: <Platzhalter art="inline">Datum</Platzhalter></p>
+      {site.platzhalterAnzeigen && <p class="leise">Stand: <Platzhalter art="inline">Datum</Platzhalter></p>}
     </div>
   </section>
 </Seite>

@@ -2260,3 +2260,14 @@ a[href^='tel:'] {
     min-width: 0;
   }
 }
+
+/* Hinweis im Kontaktformular, solange der Versand nicht angebunden ist */
+.formular__bald {
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.75rem;
+  background: var(--buehne);
+}
+.formular__bald a {
+  font-weight: 600;
+}

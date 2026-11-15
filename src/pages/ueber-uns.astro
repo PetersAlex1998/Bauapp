@@ -20,8 +20,8 @@ import { site } from '../data/site';
   </section>
 
   <section class="abschnitt" aria-labelledby="haltung">
-    <div class="rahmen zweier">
-      <div>
+    <div class:list={['rahmen', { zweier: site.platzhalterAnzeigen }]}>
+      <div class="spalte-text">
         <p class="marke">Unsere Haltung</p>
         <h2 id="haltung">Warum 360°?</h2>
         <p class="lead">
@@ -65,6 +65,7 @@ import { site } from '../data/site';
     </div>
   </section>
 
+  {site.platzhalterAnzeigen ? (
   <section class="abschnitt" aria-labelledby="menschen">
     <div class="rahmen">
       <p class="marke">Die Menschen hinter HaDie</p>
@@ -84,6 +85,15 @@ import { site } from '../data/site';
       </div>
     </div>
   </section>
+  ) : (
+  <section class="abschnitt" aria-labelledby="zugelassen">
+    <div class="rahmen spalte-text">
+      <p class="marke">Zugelassen und geprüft</p>
+      <h2 id="zugelassen">Die Erlaubnis dafür haben wir.</h2>
+      <p class="leise">HaDie-Immobilien verfügt über die gewerberechtliche Erlaubnis für Wohnimmobilienverwalter nach § 34c der Gewerbeordnung.</p>
+    </div>
+  </section>
+  )}
 
   <Kontaktband titel="Lernen wir uns kennen." text="Am besten im Gespräch. Rufen Sie an oder schreiben Sie uns – wir nehmen uns Zeit für Ihre Immobilie." />
 </Seite>
