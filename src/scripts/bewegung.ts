@@ -145,6 +145,10 @@ function start() {
     '.viertel > li',
     '.dreier > li',
     '.umfang > li',
+    '.katalog__leiste',
+    '.katalog__gruppe',
+    '.katalog__fehlt',
+    '.finder',
     '.vergleich__karte',
     '.kontaktkarte',
     '.kontaktband .knopfreihe',
@@ -223,6 +227,9 @@ function start() {
       });
     });
   }
+
+  // Aufklappen verändert die Seitenhöhe – Scroll-Effekte danach neu vermessen
+  document.addEventListener('toggle', () => ScrollTrigger.refresh(), true);
 
   // Schriften können die Höhen verändern – danach neu vermessen
   document.fonts?.ready.then(() => ScrollTrigger.refresh());

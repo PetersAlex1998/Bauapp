@@ -3,6 +3,7 @@ import Seite from '../../layouts/Seite.astro';
 import Kreis from '../../components/Kreis.astro';
 import Kontaktband from '../../components/Kontaktband.astro';
 import Platzhalter from '../../components/Platzhalter.astro';
+import Katalog from '../../components/Katalog.astro';
 import { leistungen, gradbereich } from '../../data/leistungen';
 import { site } from '../../data/site';
 
@@ -57,7 +58,7 @@ const schema = [
 
   <section class="abschnitt" aria-labelledby="umfang">
     <div class="rahmen">
-      <p class="marke">Was dazugehört</p>
+      <p class="marke">Auf einen Blick</p>
       <h2 id="umfang">Das übernehmen wir für Sie.</h2>
       <ul class="umfang" style="margin-top:2.5rem">
         {l.umfang.map((u) => (
@@ -67,13 +68,27 @@ const schema = [
           </li>
         ))}
       </ul>
-      {l.platzhalter && (
-        <div style="margin-top:2rem"><Platzhalter><p>{l.platzhalter}</p></Platzhalter></div>
-      )}
     </div>
   </section>
 
-  <section class="abschnitt hell" aria-labelledby="zusammenspiel">
+  <section class="abschnitt hell" aria-labelledby="katalog">
+    <div class="rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">Im Einzelnen</p>
+        <h2 id="katalog">Alle Leistungen in diesem Bereich.</h2>
+      </div>
+      <Katalog gruppen={l.katalog} />
+      {l.platzhalter && (
+        <div style="margin-top:2rem"><Platzhalter><p>{l.platzhalter}</p></Platzhalter></div>
+      )}
+      <p class="katalog__fehlt">
+        Nicht dabei, was Sie suchen? <a href="/kontakt/#anfrage">Fragen Sie uns</a> – oder nutzen Sie die
+        <a href="/leistungen/#finder">Suche über alle Leistungen</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="zusammenspiel">
     <div class="rahmen">
       <p class="marke">Im Zusammenspiel</p>
       <h2 id="zusammenspiel" class="sr-only">Wie dieser Bereich mit den anderen zusammenhängt</h2>

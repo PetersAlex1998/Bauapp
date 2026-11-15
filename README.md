@@ -38,6 +38,7 @@ project → Import an existing project“, dieses Repository und den gewünschte
 | --- | --- |
 | Name, Adresse, Telefon, E-Mail, Bürozeiten, Region | `src/data/site.ts` |
 | Die vier Leistungsbereiche (Texte, Reihenfolge, Unterseiten, Kreis) | `src/data/leistungen.ts` |
+| Aufgabenkatalog: einzelne Leistungen je Bereich (aufklappbare Gruppen, Leistungssuche) | `src/data/leistungen.ts`, jeweils unter `katalog` – eine Zeile pro Leistung |
 | Startseite | `src/pages/index.astro` |
 | Über uns, Kontakt | `src/pages/ueber-uns.astro`, `src/pages/kontakt.astro` |
 | Impressum, Datenschutz (Vorlagen) | `src/pages/impressum.astro`, `src/pages/datenschutz.astro` |

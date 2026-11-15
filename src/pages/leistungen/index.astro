@@ -3,6 +3,9 @@ import Seite from '../../layouts/Seite.astro';
 import Kreis from '../../components/Kreis.astro';
 import Leistungskarten from '../../components/Leistungskarten.astro';
 import Kontaktband from '../../components/Kontaktband.astro';
+import Leistungsfinder from '../../components/Leistungsfinder.astro';
+import { leistungen } from '../../data/leistungen';
+const gesamt = leistungen.reduce((s, l) => s + l.katalog.reduce((t, g) => t + g.punkte.length, 0), 0);
 ---
 <Seite
   titel="Leistungen: 360° Hausverwaltung"
@@ -29,7 +32,18 @@ import Kontaktband from '../../components/Kontaktband.astro';
     </div>
   </section>
 
-  <section class="abschnitt hell" aria-labelledby="warum">
+  <section class="abschnitt hell" aria-labelledby="finder-titel" id="finder">
+    <div class="rahmen finder-rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">Leistungssuche</p>
+        <h2 id="finder-titel">Suchen Sie etwas Bestimmtes?</h2>
+        <p class="lead leise">{gesamt} einzelne Leistungen in vier Bereichen. Geben Sie ein Stichwort ein – wir zeigen Ihnen, wo es hingehört.</p>
+      </div>
+      <Leistungsfinder />
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="warum">
     <div class="rahmen">
       <p class="marke">Warum aus einer Hand</p>
       <h2 id="warum">Weil an einer Immobilie alles zusammenhängt.</h2>

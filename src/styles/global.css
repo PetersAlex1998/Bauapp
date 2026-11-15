@@ -1596,3 +1596,328 @@ html.motion .expand__vorspann {
   background: rgba(31, 95, 166, 0.16);
   border-color: transparent;
 }
+
+/* ==========================================================================
+   AUFGABENKATALOG (aufklappbare Gruppen) und LEISTUNGSSUCHE
+   ========================================================================== */
+
+.katalog__leiste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+  margin-bottom: 1.25rem;
+}
+.katalog__summe {
+  margin: 0;
+  color: var(--tinte-leise);
+}
+.katalog__summe strong {
+  color: var(--tinte);
+}
+.katalog__alle {
+  min-height: 2.75rem;
+  padding: 0.4rem 1.1rem;
+  border: 1.5px solid var(--linie);
+  border-radius: 999px;
+  background: none;
+  color: var(--akzent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.4s,
+    background-color 0.4s;
+}
+.katalog__alle:hover {
+  border-color: var(--akzent);
+  background: rgba(31, 95, 166, 0.06);
+}
+
+.katalog__gruppe {
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  background: var(--papier);
+  transition:
+    border-color 0.5s,
+    box-shadow 0.5s;
+}
+.katalog__gruppe {
+  scroll-margin-top: 6rem;
+}
+.katalog__gruppe + .katalog__gruppe {
+  margin-top: 0.75rem;
+}
+.katalog__gruppe:hover,
+.katalog__gruppe[open] {
+  border-color: rgba(31, 95, 166, 0.45);
+}
+.katalog__gruppe[open] {
+  background: var(--weiss);
+  box-shadow: 0 18px 40px -28px rgba(18, 38, 63, 0.45);
+}
+.katalog__gruppe summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 1.15rem 1.4rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  list-style: none;
+}
+.katalog__gruppe summary::-webkit-details-marker {
+  display: none;
+}
+.katalog__nr {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  color: var(--akzent);
+  min-width: 2ch;
+}
+.katalog__titel {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+}
+.katalog__kurz {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--tinte-leise);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+.katalog__anzahl {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--tinte-leise);
+  white-space: nowrap;
+}
+/* Plus, das beim Öffnen zum Minus wird */
+.katalog__zeichen {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1.5px solid var(--linie);
+  border-radius: 50%;
+  flex: none;
+  transition:
+    background-color 0.4s,
+    border-color 0.4s;
+}
+.katalog__zeichen::before,
+.katalog__zeichen::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.9rem;
+  height: 2px;
+  margin: -1px 0 0 -0.45rem;
+  border-radius: 2px;
+  background: var(--tinte);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.4s;
+}
+.katalog__zeichen::after {
+  transform: rotate(90deg);
+}
+.katalog__gruppe[open] .katalog__zeichen {
+  background: var(--dunkel);
+  border-color: var(--dunkel);
+}
+.katalog__gruppe[open] .katalog__zeichen::before,
+.katalog__gruppe[open] .katalog__zeichen::after {
+  background: #fff;
+}
+.katalog__gruppe[open] .katalog__zeichen::after {
+  transform: rotate(0deg);
+}
+.katalog__inhalt {
+  padding: 0.25rem 1.4rem 1.5rem calc(1.4rem + 2ch + 1.25rem);
+}
+.katalog__liste {
+  list-style: none;
+  margin: 0;
+  padding: 1.1rem 0 0;
+  border-top: 1px solid var(--linie);
+  columns: 2;
+  column-gap: 2.5rem;
+}
+.katalog__liste li {
+  position: relative;
+  break-inside: avoid;
+  padding: 0.38rem 0 0.38rem 1.7rem;
+  line-height: 1.45;
+}
+/* Häkchen */
+.katalog__liste li::before {
+  content: '';
+  position: absolute;
+  left: 0.2rem;
+  top: 0.72rem;
+  width: 0.75rem;
+  height: 0.4rem;
+  border-left: 2px solid var(--akzent);
+  border-bottom: 2px solid var(--akzent);
+  transform: rotate(-45deg);
+}
+.katalog__hinweis {
+  margin: 1.1rem 0 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--buehne);
+  font-size: 0.95rem;
+  color: var(--tinte-leise);
+}
+.katalog__fehlt {
+  margin: 2rem 0 0;
+  color: var(--tinte-leise);
+}
+.katalog__fehlt a {
+  color: var(--akzent-text);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .katalog__gruppe[open] .katalog__inhalt {
+    animation: katalog-auf 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@keyframes katalog-auf {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+@media (max-width: 44rem) {
+  .katalog__gruppe summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.4rem 0.9rem;
+    padding: 1rem 1rem;
+  }
+  .katalog__anzahl {
+    display: none;
+  }
+  .katalog__inhalt {
+    padding: 0 1rem 1.25rem;
+  }
+  .katalog__liste {
+    columns: 1;
+  }
+}
+
+/* ---------- Leistungssuche ---------- */
+.finder-rahmen {
+  max-width: 54rem;
+}
+.finder__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.finder__feld {
+  position: relative;
+}
+.finder__feld svg {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  width: 1.3rem;
+  height: 1.3rem;
+  translate: 0 -50%;
+  color: var(--tinte-leise);
+  pointer-events: none;
+}
+.finder__feld input {
+  width: 100%;
+  min-height: 3.75rem;
+  padding: 0.9rem 1.2rem 0.9rem 3.3rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.45);
+  border-radius: 999px;
+  background: var(--papier);
+  color: inherit;
+  font: inherit;
+  font-size: 1.1rem;
+}
+.finder__feld input:focus-visible {
+  outline-offset: 2px;
+  border-color: var(--akzent);
+}
+.finder__beispiele {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  color: var(--tinte-leise);
+}
+.finder__beispiele button {
+  min-height: 2.5rem;
+  padding: 0.3rem 0.9rem;
+  border: 1.5px solid var(--linie);
+  border-radius: 999px;
+  background: none;
+  color: var(--tinte);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.4s,
+    background-color 0.4s;
+}
+.finder__beispiele button:hover {
+  border-color: var(--akzent);
+  background: rgba(31, 95, 166, 0.06);
+}
+.finder__ergebnis:not(:empty) {
+  margin-top: 1.75rem;
+}
+.finder__zahl {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--akzent-text);
+}
+.finder__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--linie);
+}
+.finder__liste a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.15rem 1.5rem;
+  padding: 0.9rem 0.5rem;
+  border-bottom: 1px solid var(--linie);
+  text-decoration: none;
+  transition: background-color 0.4s;
+}
+.finder__liste a:hover {
+  background: var(--buehne);
+}
+.finder__punkt {
+  font-weight: 600;
+}
+.finder__ort {
+  font-size: 0.92rem;
+  color: var(--akzent-text);
+}
+.finder__ort::after {
+  content: ' →';
+}
+.finder__mehr,
+.finder__leer {
+  margin: 1rem 0 0;
+  color: var(--tinte-leise);
+}
+.finder__leer a {
+  color: var(--akzent-text);
+  font-weight: 600;
+}

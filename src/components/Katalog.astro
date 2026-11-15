@@ -1,0 +1,74 @@
+---
+/**
+ * Aufgabenkatalog eines Leistungsbereichs als aufklappbare Gruppen.
+ * Inhalt: `katalog` in src/data/leistungen.ts.
+ * Funktioniert ohne JavaScript (natives <details>); das Skript ergänzt
+ * nur «Alle aufklappen» und das Öffnen per Link (#gruppe).
+ */
+import { gruppenAnker, type Gruppe } from '../data/leistungen';
+interface Props { gruppen: Gruppe[] }
+const { gruppen } = Astro.props;
+const anzahl = gruppen.reduce((summe, g) => summe + g.punkte.length, 0);
+---
+<div class="katalog" data-katalog>
+  <div class="katalog__leiste">
+    <p class="katalog__summe"><strong>{gruppen.length} Bereiche</strong> · {anzahl} Leistungen. Wählen Sie einen Bereich, um die Einzelheiten zu sehen.</p>
+    <button class="katalog__alle" type="button" data-alle hidden>Alle aufklappen</button>
+  </div>
+
+  {gruppen.map((g, i) => (
+    <details class="katalog__gruppe" id={gruppenAnker(g.titel)} open={i === 0}>
+      <summary>
+        <span class="katalog__nr" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+        <span class="katalog__kopf">
+          <h3 class="katalog__titel">{g.titel}</h3>
+          <span class="katalog__kurz">{g.kurz}</span>
+        </span>
+        <span class="katalog__anzahl">{g.punkte.length} Leistungen</span>
+        <span class="katalog__zeichen" aria-hidden="true"></span>
+      </summary>
+      <div class="katalog__inhalt">
+        <ul class="katalog__liste">
+          {g.punkte.map((p) => <li>{p}</li>)}
+        </ul>
+        {g.hinweis && <p class="katalog__hinweis">{g.hinweis}</p>}
+      </div>
+    </details>
+  ))}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-katalog]').forEach((katalog) => {
+    const gruppen = [...katalog.querySelectorAll<HTMLDetailsElement>('details')];
+    const knopf = katalog.querySelector<HTMLButtonElement>('[data-alle]');
+    if (knopf) {
+      knopf.hidden = false;
+      const beschriften = () => {
+        knopf.textContent = gruppen.every((g) => g.open) ? 'Alle zuklappen' : 'Alle aufklappen';
+      };
+      knopf.addEventListener('click', () => {
+        const oeffnen = !gruppen.every((g) => g.open);
+        gruppen.forEach((g) => (g.open = oeffnen));
+        beschriften();
+      });
+      gruppen.forEach((g) => g.addEventListener('toggle', beschriften));
+    }
+  });
+
+  // Link von der Leistungssuche: /leistungen/…/#gruppe öffnet die passende Gruppe.
+  const zurGruppe = () => {
+    const ziel = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    if (ziel instanceof HTMLDetailsElement) {
+      ziel.open = true;
+      // knapp unter der feststehenden Kopfzeile ausrichten
+      // (offsetTop statt getBoundingClientRect: unabhängig von der Einblend-Animation)
+      requestAnimationFrame(() => {
+        let oben = 0;
+        for (let el: HTMLElement | null = ziel; el; el = el.offsetParent as HTMLElement | null) oben += el.offsetTop;
+        window.scrollTo({ top: oben - 96 });
+      });
+    }
+  };
+  zurGruppe();
+  window.addEventListener('hashchange', zurGruppe);
+</script>

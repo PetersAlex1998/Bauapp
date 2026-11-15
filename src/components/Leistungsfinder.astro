@@ -1,0 +1,95 @@
+---
+/**
+ * Leistungssuche über alle vier Bereiche.
+ * Die Einträge stammen automatisch aus src/data/leistungen.ts.
+ */
+import { leistungen, gruppenAnker } from '../data/leistungen';
+import { site } from '../data/site';
+
+const eintraege = leistungen.flatMap((l) =>
+  l.katalog.flatMap((g) =>
+    g.punkte.map((p) => ({ p, g: g.titel, k: l.titel, u: `/leistungen/${l.slug}/#${gruppenAnker(g.titel)}` })),
+  ),
+);
+const beispiele = ['Winterdienst', 'Nebenkosten', 'Mieterwechsel', 'Bad', 'Heizung', 'Fassade'];
+---
+<div class="finder" data-finder data-telefon={site.telefon.anzeige} data-tel-link={site.telefon.link}>
+  <label class="finder__label" for="finder-eingabe">Was braucht Ihre Immobilie?</label>
+  <div class="finder__feld">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    <input id="finder-eingabe" type="search" autocomplete="off" placeholder="z. B. Winterdienst, Nebenkosten, Bad …" aria-describedby="finder-hilfe" />
+  </div>
+  <p class="finder__beispiele" id="finder-hilfe">
+    <span>Häufig gesucht:</span>
+    {beispiele.map((b) => <button type="button" data-beispiel={b}>{b}</button>)}
+  </p>
+  <div class="finder__ergebnis" aria-live="polite"></div>
+  <script type="application/json" is:inline set:html={JSON.stringify(eintraege)} />
+</div>
+
+<script>
+  type Eintrag = { p: string; g: string; k: string; u: string };
+  const finder = document.querySelector<HTMLElement>('[data-finder]');
+  if (finder) {
+    const eingabe = finder.querySelector<HTMLInputElement>('input')!;
+    const ausgabe = finder.querySelector<HTMLElement>('.finder__ergebnis')!;
+    const daten: Eintrag[] = JSON.parse(finder.querySelector('script[type="application/json"]')!.textContent || '[]');
+    const MAX = 8;
+
+    // Groß-/Kleinschreibung und Umlaute spielen bei der Suche keine Rolle.
+    const glatt = (t: string) =>
+      t.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    const index = daten.map((e) => ({ e, punkt: glatt(e.p), rest: glatt(`${e.g} ${e.k}`) }));
+
+    const element = (tag: string, klasse: string, text?: string) => {
+      const el = document.createElement(tag);
+      el.className = klasse;
+      if (text) el.textContent = text;
+      return el;
+    };
+
+    const suchen = () => {
+      const worte = glatt(eingabe.value).split(/\s+/).filter((w) => w.length > 1);
+      ausgabe.replaceChildren();
+      if (!worte.length) return;
+
+      const treffer = index
+        .filter((i) => worte.every((w) => i.punkt.includes(w) || i.rest.includes(w)))
+        .sort((a, b) => Number(worte.every((w) => b.punkt.includes(w))) - Number(worte.every((w) => a.punkt.includes(w))));
+
+      if (!treffer.length) {
+        const leer = element('p', 'finder__leer', 'Dazu steht nichts in unserer Liste – das heißt nicht, dass wir es nicht übernehmen. Rufen Sie uns an: ');
+        const tel = document.createElement('a');
+        tel.href = `tel:${finder.dataset.telLink}`;
+        tel.textContent = finder.dataset.telefon ?? '';
+        leer.append(tel);
+        ausgabe.append(leer);
+        return;
+      }
+
+      ausgabe.append(element('p', 'finder__zahl', `${treffer.length} ${treffer.length === 1 ? 'Treffer' : 'Treffer'}`));
+      const liste = element('ul', 'finder__liste');
+      treffer.slice(0, MAX).forEach(({ e }) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = e.u;
+        a.append(element('span', 'finder__punkt', e.p), element('span', 'finder__ort', `${e.k} · ${e.g}`));
+        li.append(a);
+        liste.append(li);
+      });
+      ausgabe.append(liste);
+      if (treffer.length > MAX) {
+        ausgabe.append(element('p', 'finder__mehr', `und ${treffer.length - MAX} weitere – geben Sie mehr ein, um die Auswahl einzugrenzen.`));
+      }
+    };
+
+    eingabe.addEventListener('input', suchen);
+    finder.querySelectorAll<HTMLButtonElement>('[data-beispiel]').forEach((b) =>
+      b.addEventListener('click', () => {
+        eingabe.value = b.dataset.beispiel ?? '';
+        suchen();
+        eingabe.focus();
+      }),
+    );
+  }
+</script>
