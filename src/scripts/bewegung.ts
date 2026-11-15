@@ -167,7 +167,14 @@ function start() {
   ScrollTrigger.batch(ziele, {
     start: 'top 90%',
     once: true,
-    onEnter: (gruppe) => gsap.to(gruppe, { opacity: 1, y: 0, duration: DAUER, ease: EASE, stagger: 0.13, overwrite: true }),
+    onEnter: (gruppe) => {
+      // Was beim Springen (Anker-Link, Ende-Taste) übersprungen wurde, ist sofort da;
+      // nur was jetzt im Bild liegt, blendet nacheinander ein.
+      const imBild = (gruppe as HTMLElement[]).filter((el) => el.getBoundingClientRect().bottom > 0);
+      const darueber = (gruppe as HTMLElement[]).filter((el) => !imBild.includes(el));
+      gsap.set(darueber, { opacity: 1, y: 0 });
+      gsap.to(imBild, { opacity: 1, y: 0, duration: DAUER, ease: EASE, stagger: 0.13, overwrite: true });
+    },
   });
 
   /* ---------- Sanfte Parallaxe für markierte Elemente ---------- */

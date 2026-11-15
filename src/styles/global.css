@@ -537,7 +537,9 @@ a {
     grid-template-columns: 1fr;
   }
   .seitenkopf__kreis {
-    max-width: 13rem;
+    width: 100%;
+    max-width: 17rem;
+    margin-inline: auto; /* mittig unter dem Text */
   }
 }
 .brotkrumen {
@@ -1920,4 +1922,58 @@ html.motion .expand__vorspann {
 .finder__leer a {
   color: var(--akzent-text);
   font-weight: 600;
+}
+
+/* ==========================================================================
+   FEINSCHLIFF für alle Bildschirmgrößen
+   ========================================================================== */
+
+/* Lange Wörter (z. B. «Eigentümergemeinschaften») dürfen nie über den Rand laufen. */
+h1,
+h2,
+h3,
+p,
+li,
+dd,
+summary {
+  overflow-wrap: break-word;
+}
+@media (max-width: 44rem) {
+  h1,
+  h2,
+  h3,
+  .katalog__liste li,
+  .prosa p {
+    hyphens: auto;
+  }
+  .katalog__titel {
+    font-size: 1.12rem;
+  }
+  .katalog__nr {
+    font-size: 1.1rem;
+  }
+  .katalog__zeichen {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+
+/* Die große Telefonnummer bleibt immer in einer Zeile. */
+.telefon-gross {
+  white-space: nowrap;
+}
+.kontaktkarte .telefon-gross {
+  font-size: clamp(1.9rem, 4vw, 3.4rem);
+}
+@media (max-width: 22rem) {
+  .telefon-gross {
+    font-size: 1.9rem;
+  }
+}
+
+/* Brotkrumen auf dem Smartphone: die aktuelle Seite steht ohnehin als Überschrift darunter. */
+@media (max-width: 44rem) {
+  .brotkrumen li[aria-current='page'] {
+    display: none;
+  }
 }
