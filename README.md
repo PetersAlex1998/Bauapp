@@ -19,8 +19,18 @@ Am schnellsten über Netlify (kostenlos für diesen Zweck): dort mit GitHub anme
 project → Import an existing project“, dieses Repository und den gewünschten Branch wählen,
 „Deploy“. Die Einstellungen stehen bereits in `netlify.toml`. Jeder Push aktualisiert die Vorschau.
 
-Die Vorschau ist per `X-Robots-Tag` für Suchmaschinen gesperrt. Diesen Block in `netlify.toml`
-vor dem echten Livegang entfernen.
+## Sicherheit und Vorschau-Schutz
+
+- **Sicherheits-Header** stehen in `netlify.toml`: strenge Content-Security-Policy (nur eigene
+  Skripte, Schriften und Bilder), HSTS, Schutz vor Einbettung in fremde Seiten u. a.
+  Wird ein Formulardienst oder ein anderer externer Dienst angebunden, muss dessen Adresse in
+  der Content-Security-Policy ergänzt werden, sonst blockiert der Browser ihn.
+- **Passwortschutz:** In Netlify die Umgebungsvariable `VORSCHAU_PASSWORT` setzen und neu
+  veröffentlichen. Der Browser fragt dann nach Benutzername (beliebig) und Passwort. Zum
+  Livegang die Variable wieder löschen. Details: `netlify/edge-functions/vorschau-schutz.ts`.
+- **Suchmaschinen** sind per `X-Robots-Tag` ausgesperrt. Diese Zeile in `netlify.toml` vor dem
+  echten Livegang entfernen.
+- Die Seite speichert keine Daten, hat keine Datenbank, kein Login und keine Fremdskripte.
 
 ## Inhalte ändern
 

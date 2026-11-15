@@ -60,12 +60,7 @@ const unternehmen = {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="format-detection" content="telephone=no" />
     <!-- Bewegung nur, wenn der Besucher sie nicht abgeschaltet hat. Fällt das Skript aus, wird nach 3 s alles sichtbar. -->
-    <script is:inline>
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        document.documentElement.classList.add('motion');
-        setTimeout(function () { document.documentElement.classList.add('motion-bereit'); }, 3000);
-      }
-    </script>
+    <script is:inline src="/bewegung-start.js"></script>
     {[unternehmen, ...schema].map((s) => <script type="application/ld+json" is:inline set:html={JSON.stringify(s)} />)}
   </head>
   <body>
