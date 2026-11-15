@@ -4,21 +4,24 @@
    ========================================================================== */
 
 :root {
-  /* Farben – Markenfarben: #02070A (Schwarz), #0297DE (Blau), #FC734D (Orange).
-     Alle weiteren Töne sind daraus abgeleitet. */
-  --dunkel: #02070a; /* Markenschwarz – dunkle Flächen und Text */
-  --dunkel-hell: #0d1a22; /* aufgehelltes Schwarz für Flächen auf Dunkel */
-  --papier: #f3f6f8; /* kühler, heller Hintergrund */
-  --papier-dunkel: #e4eaee;
-  --weiss: #ffffff;
-  --tinte: #02070a; /* Text */
-  --tinte-leise: #46535b; /* Sekundärtext */
-  --blau: #0297de; /* Markenblau – Kreis, Marken, Akzente */
-  --blau-text: #026b9e; /* abgedunkeltes Blau für Text auf hellem Grund (AA-Kontrast) */
-  --orange: #fc734d; /* Markenorange – Handlungsaufrufe */
-  --orange-hell: #fd8d6e; /* Hover */
-  --linie: rgba(2, 7, 10, 0.16);
-  --linie-hell: rgba(243, 246, 248, 0.2);
+  /* Farbkonzept «Nachtblau, Sandstein, Messing»
+     Nachtblau steht für Verlässlichkeit, Sandstein für Substanz und Wärme,
+     Messing für Wertigkeit. Es gibt genau eine Akzentfarbe. */
+  --dunkel: #0f1b2d; /* Nachtblau – dunkle Flächen */
+  --dunkel-hell: #1b2a41; /* aufgehelltes Nachtblau für Flächen auf Dunkel */
+  --papier: #f6f2ea; /* Sandstein hell – Hintergrund */
+  --papier-dunkel: #eae3d6;
+  --weiss: #fffdf8; /* warmes Weiß für Karten und helle Abschnitte */
+  --tinte: #131c2b; /* Text */
+  --tinte-leise: #505a6b; /* Sekundärtext */
+  --akzent: #c9a35f; /* Messing – Kreis, Marken, Akzente auf dunklem Grund */
+  --akzent-grafik: #a67c2e; /* dunkleres Messing für Linien und Ziffern auf hellem Grund */
+  --akzent-text: #7d5f22; /* tiefes Messing für Text auf hellem Grund (AA-Kontrast) */
+  --aktion: #c9a35f; /* Buttons und Telefonnummer */
+  --aktion-hell: #d9ba80; /* Hover */
+  --hinweis: #b4472f; /* nur für Platzhalter-Markierungen */
+  --linie: rgba(15, 27, 45, 0.16);
+  --linie-hell: rgba(246, 242, 234, 0.2);
 
   /* Schrift */
   --serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
@@ -93,12 +96,12 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--blau-text);
+  outline: 3px solid var(--akzent-text);
   outline-offset: 3px;
   border-radius: 4px;
 }
 .dunkel :focus-visible {
-  outline-color: var(--blau);
+  outline-color: var(--akzent);
 }
 
 .sr-only {
@@ -155,7 +158,7 @@ a {
   color: var(--tinte-leise);
 }
 .dunkel .leise {
-  color: rgba(243, 246, 248, 0.78);
+  color: rgba(246, 242, 234, 0.78);
 }
 
 .spalte-text {
@@ -171,7 +174,7 @@ a {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blau-text);
+  color: var(--akzent-text);
   margin: 0 0 1.25rem;
 }
 .marke::before {
@@ -183,7 +186,7 @@ a {
   flex: none;
 }
 .dunkel .marke {
-  color: var(--blau);
+  color: var(--akzent);
 }
 
 /* ---------- Buttons ---------- */
@@ -211,11 +214,11 @@ a {
   transform: translateY(-1px);
 }
 .knopf--voll {
-  background: var(--orange);
+  background: var(--aktion);
   color: var(--dunkel);
 }
 .knopf--voll:hover {
-  background: var(--orange-hell);
+  background: var(--aktion-hell);
 }
 .knopf--linie {
   border-color: currentColor;
@@ -250,7 +253,7 @@ a {
   gap: 0.5rem;
   font-weight: 600;
   text-decoration: none;
-  color: var(--blau-text);
+  color: var(--akzent-text);
 }
 .pfeil-link::after {
   content: '→';
@@ -260,7 +263,7 @@ a {
   transform: translateX(4px);
 }
 .dunkel .pfeil-link {
-  color: var(--blau);
+  color: var(--akzent);
 }
 
 /* ---------- Kopfzeile ---------- */
@@ -269,7 +272,7 @@ a {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(2, 7, 10, 0.94);
+  background: rgba(15, 27, 45, 0.94);
   color: var(--papier);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--linie-hell);
@@ -298,7 +301,7 @@ a {
   stroke: var(--linie-hell);
 }
 .logo__ring .lauf {
-  stroke: var(--blau);
+  stroke: var(--akzent);
   stroke-dasharray: 100;
   stroke-dashoffset: 0;
 }
@@ -352,10 +355,10 @@ a {
 }
 .nav a:not(.knopf):hover,
 .nav a[aria-current='page'] {
-  background: rgba(243, 246, 248, 0.1);
+  background: rgba(246, 242, 234, 0.1);
 }
 .nav a[aria-current='page'] {
-  color: var(--blau);
+  color: var(--akzent);
 }
 .nav .knopf {
   margin-left: 0.75rem;
@@ -430,13 +433,13 @@ a {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blau);
+  color: var(--akzent);
   margin-bottom: 1.4rem;
   line-height: 1.5;
 }
 .hero h1 em {
   font-style: italic;
-  color: var(--blau);
+  color: var(--akzent);
 }
 .fakten {
   display: flex;
@@ -458,7 +461,7 @@ a {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--blau);
+  background: var(--akzent);
 }
 
 @media (max-width: 56rem) {
@@ -551,15 +554,15 @@ a {
   }
 }
 .kreis__grad {
-  fill: rgba(243, 246, 248, 0.6);
+  fill: rgba(246, 242, 234, 0.6);
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.06em;
 }
 .kreis__segment path.flaeche {
-  fill: rgba(243, 246, 248, 0.07);
-  stroke: rgba(243, 246, 248, 0.35);
+  fill: rgba(246, 242, 234, 0.07);
+  stroke: rgba(246, 242, 234, 0.35);
   stroke-width: 1.25;
   transition:
     fill 0.25s,
@@ -579,8 +582,8 @@ a.kreis__segment {
 a.kreis__segment:hover path.flaeche,
 a.kreis__segment:focus-visible path.flaeche,
 .kreis__segment[data-aktiv='true'] path.flaeche {
-  fill: var(--blau);
-  stroke: var(--blau);
+  fill: var(--akzent);
+  stroke: var(--akzent);
 }
 a.kreis__segment:hover text,
 a.kreis__segment:focus-visible text,
@@ -596,11 +599,11 @@ a.kreis__segment:focus-visible path.flaeche {
 }
 .kreis__mitte {
   fill: var(--dunkel-hell);
-  stroke: rgba(243, 246, 248, 0.3);
+  stroke: rgba(246, 242, 234, 0.3);
 }
 .kreis__haus {
   fill: none;
-  stroke: var(--blau);
+  stroke: var(--akzent);
   stroke-width: 2.5;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -616,7 +619,7 @@ a.kreis__segment:focus-visible path.flaeche {
 .kreis__mittetext--klein {
   font-size: 12px;
   font-weight: 500;
-  fill: rgba(243, 246, 248, 0.7);
+  fill: rgba(246, 242, 234, 0.7);
 }
 .kreis-hinweis {
   min-height: 1.6em;
@@ -696,11 +699,11 @@ a.kreis__segment:focus-visible path.flaeche {
   border-color: var(--dunkel);
 }
 .vergleich__karte--hadie h3 {
-  color: var(--blau);
+  color: var(--akzent);
 }
 .vergleich__karte--hadie li::before {
-  border-color: var(--blau);
-  background: var(--blau);
+  border-color: var(--akzent);
+  background: var(--akzent);
 }
 .vergleich__karte--hadie .vergleich__fazit {
   border-color: var(--linie-hell);
@@ -752,9 +755,9 @@ a.kreis__segment:focus-visible path.flaeche {
   background: var(--papier);
 }
 .viertel__karte:hover {
-  border-color: var(--blau);
+  border-color: var(--akzent-grafik);
   transform: translateY(-3px);
-  box-shadow: 0 14px 30px -18px rgba(2, 7, 10, 0.4);
+  box-shadow: 0 14px 30px -18px rgba(15, 27, 45, 0.4);
 }
 .viertel__kopf {
   display: flex;
@@ -766,7 +769,7 @@ a.kreis__segment:focus-visible path.flaeche {
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--blau-text);
+  color: var(--akzent-text);
 }
 .viertel__zeichen {
   width: 2.75rem;
@@ -776,7 +779,7 @@ a.kreis__segment:focus-visible path.flaeche {
   stroke: var(--linie);
 }
 .viertel__zeichen .bogen {
-  stroke: var(--blau);
+  stroke: var(--akzent-grafik);
 }
 .viertel__verb {
   font-size: 0.8125rem;
@@ -807,7 +810,7 @@ a.kreis__segment:focus-visible path.flaeche {
   margin-top: auto;
   padding-top: 0.5rem;
   font-weight: 600;
-  color: var(--blau-text);
+  color: var(--akzent-text);
 }
 
 /* ---------- Zielgruppen ---------- */
@@ -840,11 +843,11 @@ a.kreis__segment:focus-visible path.flaeche {
   font-family: var(--serif);
   font-size: 2.6rem;
   line-height: 1;
-  color: var(--blau);
+  color: var(--akzent-grafik);
   margin-bottom: 1rem;
 }
 .dunkel .schritt-nr {
-  color: var(--blau);
+  color: var(--akzent);
 }
 
 /* ---------- Umfang (Leistungsseite) ---------- */
@@ -899,17 +902,17 @@ a.kreis__segment:focus-visible path.flaeche {
 /* ---------- Platzhalter ---------- */
 
 .platzhalter {
-  border: 2px dashed var(--orange);
+  border: 2px dashed var(--hinweis);
   border-radius: var(--radius);
   padding: 1.25rem 1.4rem;
-  background: rgba(252, 115, 77, 0.08);
+  background: rgba(180, 71, 47, 0.08);
   color: var(--tinte);
   font-size: 0.98rem;
 }
 .platzhalter__marke {
   display: inline-block;
-  background: var(--orange);
-  color: var(--dunkel);
+  background: var(--hinweis);
+  color: #fff;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -939,12 +942,13 @@ a.kreis__segment:focus-visible path.flaeche {
   font-size: 0.9em;
 }
 .dunkel .platzhalter {
-  background: rgba(252, 115, 77, 0.12);
-  border-color: var(--orange);
+  background: rgba(180, 71, 47, 0.2);
+  border-color: #e08a72;
   color: var(--papier);
 }
 .dunkel .platzhalter__marke {
-  background: var(--orange);
+  background: var(--hinweis);
+  color: #fff;
   color: var(--dunkel);
 }
 
@@ -967,7 +971,7 @@ a.kreis__segment:focus-visible path.flaeche {
   font-size: clamp(2.3rem, 6vw, 3.6rem);
   line-height: 1.05;
   text-decoration: none;
-  color: var(--orange);
+  color: var(--aktion);
   margin-bottom: 0.4rem;
 }
 .telefon-gross:hover {
@@ -996,7 +1000,7 @@ a.kreis__segment:focus-visible path.flaeche {
   margin-bottom: 0.3rem;
 }
 .dunkel .kontaktliste dt {
-  color: var(--blau);
+  color: var(--akzent);
 }
 .kontaktliste dd {
   margin: 0;
@@ -1045,7 +1049,7 @@ a.kreis__segment:focus-visible path.flaeche {
   font: inherit;
   color: inherit;
   background: var(--papier);
-  border: 1.5px solid rgba(2, 7, 10, 0.45);
+  border: 1.5px solid rgba(15, 27, 45, 0.45);
   border-radius: 0.6rem;
   padding: 0.8rem 0.9rem;
   min-height: 3.1rem;
@@ -1058,7 +1062,7 @@ a.kreis__segment:focus-visible path.flaeche {
 .feld select:focus-visible,
 .feld textarea:focus-visible {
   outline-offset: 1px;
-  border-color: var(--blau-text);
+  border-color: var(--akzent-text);
 }
 .formular fieldset {
   border: 0;
@@ -1077,13 +1081,13 @@ a.kreis__segment:focus-visible path.flaeche {
   gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.4rem 0.95rem;
-  border: 1.5px solid rgba(2, 7, 10, 0.45);
+  border: 1.5px solid rgba(15, 27, 45, 0.45);
   border-radius: 999px;
   font-weight: 500;
   cursor: pointer;
 }
 .auswahl input {
-  accent-color: var(--blau-text);
+  accent-color: var(--akzent-text);
   width: 1.05rem;
   height: 1.05rem;
 }
@@ -1093,7 +1097,7 @@ a.kreis__segment:focus-visible path.flaeche {
   color: var(--papier);
 }
 .auswahl label:has(input:focus-visible) {
-  outline: 3px solid var(--blau-text);
+  outline: 3px solid var(--akzent-text);
   outline-offset: 2px;
 }
 .formular__hinweis {
@@ -1171,7 +1175,7 @@ a.kreis__segment:focus-visible path.flaeche {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blau);
+  color: var(--akzent);
   margin-bottom: 1rem;
 }
 .fuss ul {
@@ -1201,7 +1205,7 @@ a.kreis__segment:focus-visible path.flaeche {
   padding-top: 1.5rem;
   border-top: 1px solid var(--linie-hell);
   font-size: 0.9rem;
-  color: rgba(243, 246, 248, 0.75);
+  color: rgba(246, 242, 234, 0.75);
 }
 
 /* ---------- Anruf-Leiste (nur Smartphone) ---------- */
@@ -1233,7 +1237,7 @@ a.kreis__segment:focus-visible path.flaeche {
     text-decoration: none;
   }
   .schnellkontakt a:first-child {
-    background: var(--orange);
+    background: var(--aktion);
     color: var(--dunkel);
   }
   .schnellkontakt svg {
@@ -1344,7 +1348,7 @@ h3 {
   aspect-ratio: 1;
   translate: 0 -50%;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(2, 151, 222, 0.22), rgba(2, 151, 222, 0.06) 55%, transparent 72%);
+  background: radial-gradient(closest-side, rgba(201, 163, 95, 0.22), rgba(201, 163, 95, 0.06) 55%, transparent 72%);
   pointer-events: none;
 }
 .hero__scroll {
@@ -1360,13 +1364,13 @@ h3 {
   letter-spacing: 0.24em;
   text-transform: uppercase;
   text-decoration: none;
-  color: rgba(243, 246, 248, 0.65);
+  color: rgba(246, 242, 234, 0.65);
 }
 .hero__scroll::after {
   content: '';
   width: 1px;
   height: 2.6rem;
-  background: linear-gradient(var(--blau), transparent);
+  background: linear-gradient(var(--akzent), transparent);
   transform-origin: top;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -1437,8 +1441,8 @@ h3 {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to top, rgba(2, 7, 10, 0.9) 0%, rgba(2, 7, 10, 0.3) 40%, transparent 65%),
-    linear-gradient(to right, rgba(2, 7, 10, 0.75) 0%, rgba(2, 7, 10, 0.25) 45%, transparent 65%);
+    linear-gradient(to top, rgba(15, 27, 45, 0.9) 0%, rgba(15, 27, 45, 0.3) 40%, transparent 65%),
+    linear-gradient(to right, rgba(15, 27, 45, 0.75) 0%, rgba(15, 27, 45, 0.25) 45%, transparent 65%);
 }
 .expand__text {
   position: absolute;
@@ -1456,10 +1460,10 @@ h3 {
   display: inline-block;
   margin: 1.5rem 0 0;
   padding: 0.3rem 0.7rem;
-  border: 1.5px dashed var(--orange);
+  border: 1.5px dashed #e08a72;
   border-radius: 0.5rem;
   font-size: 0.85rem;
-  background: rgba(2, 7, 10, 0.6);
+  background: rgba(15, 27, 45, 0.6);
 }
 .expand__vorspann {
   position: absolute;
@@ -1472,7 +1476,7 @@ h3 {
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(243, 246, 248, 0.6);
+  color: rgba(246, 242, 234, 0.6);
   display: none;
 }
 html.motion .expand__vorspann {
@@ -1550,7 +1554,7 @@ html.motion .expand__vorspann {
   width: 2.25rem;
   height: 2.25rem;
   margin: -1.125rem 0 0 -1.125rem;
-  border: 1.5px solid var(--blau);
+  border: 1.5px solid var(--akzent);
   border-radius: 50%;
   pointer-events: none;
   opacity: 0;
@@ -1559,9 +1563,9 @@ html.motion .expand__vorspann {
     border-color 0.6s;
 }
 .zeiger[data-zustand='link'] {
-  background: rgba(2, 151, 222, 0.16);
+  background: rgba(201, 163, 95, 0.16);
 }
 .zeiger[data-zustand='gross'] {
-  background: rgba(2, 151, 222, 0.2);
+  background: rgba(201, 163, 95, 0.2);
   border-color: transparent;
 }
