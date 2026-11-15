@@ -45,7 +45,7 @@ export const site = {
   /**
    * Fotos. Datei in den Ordner `public/bilder/` legen und hier eintragen,
    * z. B. { src: '/bilder/objekt.jpg', alt: 'Mehrfamilienhaus in Bad Lippspringe' }.
-   * Solange `null`, zeigt die Startseite eine gezeichnete Abendszene.
+   * Solange `null`, zeigt die Startseite eine gezeichnete Morgenszene.
    */
   bilder: {
     objekt: null as { src: string; alt: string } | null,
