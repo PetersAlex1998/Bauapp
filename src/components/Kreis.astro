@@ -54,10 +54,15 @@ const gradmarken = [
 ---
 
 <svg class:list={['kreis', { 'kreis--gross': gross }]} viewBox="-30 -15 560 535" role="group" aria-label={titel}>
-  <path class="kreis__ticks" d={ticks} fill="none" stroke-width="1.5" aria-hidden="true"></path>
-  <g aria-hidden="true">
+  <!-- Die Ebenen (data-tiefe) bewegen sich auf der Startseite unterschiedlich stark: Parallax. -->
+  <g class="kreis__ebene kreis__ebene--ticks" data-tiefe="0.4" aria-hidden="true">
+    <path class="kreis__ticks" d={ticks} fill="none" stroke-width="1.5"></path>
+  </g>
+  <g class="kreis__ebene" data-tiefe="0.7" aria-hidden="true">
     {gradmarken.map((m) => <text class="kreis__grad" x={m.x} y={m.y} text-anchor={m.anker}>{m.g}</text>)}
   </g>
+
+  <g class="kreis__ebene" data-tiefe="1.2">
 
   {
     segmente.map((s) => (
@@ -70,8 +75,9 @@ const gradmarken = [
       </a>
     ))
   }
+  </g>
 
-  <g aria-hidden="true">
+  <g class="kreis__ebene kreis__ebene--mitte" data-tiefe="2" aria-hidden="true">
     <circle class="kreis__mitte" cx={C} cy={C} r="112"></circle>
     <path class="kreis__haus" d="M222 240 L250 214 L278 240 M229 235 V268 H271 V235 M244 268 V250 H256 V268"></path>
     <text class="kreis__mittetext" x={C} y={C + 48} text-anchor="middle">Ihre Immobilie</text>

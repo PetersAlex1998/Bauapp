@@ -28,6 +28,23 @@ Den Inhalt von `dist/` auf den Webspace laden (oder das Repository mit Netlify, 
 Unternehmensdaten und Leistungen stehen nur an einer Stelle und erscheinen automatisch überall
 (Kopf, Fuß, Kontakt, Impressum, Suchmaschinen-Daten, 360°-Kreis).
 
+## Bewegung (Scroll-Effekte)
+
+Die Seite nutzt GSAP mit ScrollTrigger und Lenis (weiches Scrollen), lokal gebündelt, ohne CDN.
+Alles dazu steht in `src/scripts/bewegung.ts`; Tempo über `DAUER` und `EASE` am Dateianfang.
+
+- Vollbild-Hero mit Parallax-Ebenen im 360°-Kreis (Scroll und Maus)
+- Bild, das sich beim Scrollen zur vollen Fläche öffnet (Startseite)
+- Text, der Wort für Wort aufhellt; Einblendungen aller Abschnitte
+- Cursor-Ring und „magnetische“ Buttons (nur mit Maus)
+
+Besucher mit der Systemeinstellung „Bewegung reduzieren“ und Browser ohne JavaScript sehen die
+Seite vollständig, nur ohne Animation.
+
+**Objektfoto:** Die gezeichnete Abendszene auf der Startseite ist ein Platzhalter. Foto nach
+`public/bilder/` legen und in `src/data/site.ts` unter `bilder.objekt` eintragen – es ersetzt
+die Zeichnung automatisch (Querformat, mindestens 2400 px breit, als JPG oder WebP).
+
 ## Platzhalter
 
 Fehlende Inhalte sind auf der Website als gestrichelte Kästen mit der Marke „Platzhalter“ sichtbar.

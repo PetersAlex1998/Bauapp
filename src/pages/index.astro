@@ -5,6 +5,7 @@ import Leistungskarten from '../components/Leistungskarten.astro';
 import Kontaktband from '../components/Kontaktband.astro';
 import Platzhalter from '../components/Platzhalter.astro';
 import Icon from '../components/Icon.astro';
+import Szene from '../components/Szene.astro';
 import { site } from '../data/site';
 ---
 <Seite
@@ -13,11 +14,15 @@ import { site } from '../data/site';
 >
   <!-- HERO -->
   <section class="hero dunkel">
+    <div class="hero__glanz" aria-hidden="true"></div>
     <div class="rahmen hero__raster">
       <div class="hero__text">
         <h1>
           <span class="hero__dach">360° Hausverwaltung in Bad Lippspringe und Umgebung</span>
-          Ein Partner für alles, was Ihre Immobilie <em>braucht.</em>
+          <span class="zeile"><span>Ein Partner</span></span>
+          <span class="zeile"><span>für alles, was</span></span>
+          <span class="zeile"><span>Ihre Immobilie</span></span>
+          <span class="zeile"><span><em>braucht.</em></span></span>
         </h1>
         <p class="lead leise">
           HADIE Immobilien verwaltet Ihr Haus – und kümmert sich um alles Weitere:
@@ -39,6 +44,9 @@ import { site } from '../data/site';
         <p class="kreis-hinweis leise" data-standard="Vier Bereiche, ein Partner – wählen Sie ein Viertel aus.">Vier Bereiche, ein Partner – wählen Sie ein Viertel aus.</p>
       </div>
     </div>
+    <a class="hero__scroll" href="#unterschied-buehne" aria-label="Weiter nach unten">
+      <span aria-hidden="true">Scrollen</span>
+    </a>
   </section>
 
   <script>
@@ -56,21 +64,42 @@ import { site } from '../data/site';
     }
   </script>
 
-  <!-- MEHR ALS HAUSVERWALTUNG -->
-  <section class="abschnitt" aria-labelledby="unterschied">
-    <div class="rahmen zweier">
-      <div>
+  <!-- MEHR ALS HAUSVERWALTUNG: Bild öffnet sich beim Scrollen -->
+  <section class="expand dunkel" aria-labelledby="unterschied">
+    <div class="expand__buehne" id="unterschied-buehne">
+      <p class="expand__vorspann" aria-hidden="true">Ihre Immobilie. Rundum betrachtet.</p>
+      <div class="expand__bild">
+        <div class="expand__inhalt"><Szene /></div>
+        <div class="expand__schleier"></div>
+      </div>
+      <div class="expand__text rahmen">
         <p class="marke">Der Unterschied</p>
         <h2 id="unterschied">Mehr als eine Hausverwaltung.</h2>
-        <p class="lead">
-          Eine Immobilie braucht mehr als eine korrekte Abrechnung. Die Tonnen müssen an die Straße.
-          Eine Wohnung wird frei und muss renoviert werden. Und eines Tages steht ein Vorhaben an,
-          das das ganze Haus betrifft.
-        </p>
+        {site.platzhalterAnzeigen && !site.bilder.objekt && (
+          <p class="expand__notiz"><strong>Platzhalter:</strong> Illustration – hier folgt ein echtes Foto eines betreuten Objekts.</p>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="abschnitt aussage" aria-label="Was 360° Hausverwaltung bedeutet">
+    <div class="rahmen">
+      <p class="aussage__text" data-worte>
+        Eine Immobilie braucht mehr als eine korrekte Abrechnung. Die Tonnen müssen an die Straße.
+        Eine Wohnung wird frei und muss renoviert werden. Und eines Tages steht ein Vorhaben an,
+        das das ganze Haus betrifft.
+      </p>
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="ein-anruf">
+    <div class="rahmen zweier">
+      <div>
+        <p class="marke">360° statt Stückwerk</p>
+        <h2 id="ein-anruf">Meist heißt das: viele Firmen. Bei HADIE: ein Anruf.</h2>
         <p class="leise">
-          Meist bedeutet das: viele Firmen, viele Telefonnummern – und Sie mittendrin.
-          Bei HADIE bedeutet es: ein Anruf. Wir nennen das 360° Hausverwaltung, weil wir Ihre
-          Immobilie rundum betrachten und nicht nur den Teil, der in der Akte steht.
+          Wir nennen das 360° Hausverwaltung, weil wir Ihre Immobilie rundum betrachten –
+          und nicht nur den Teil, der in der Akte steht.
         </p>
       </div>
       <div class="vergleich">
@@ -98,7 +127,7 @@ import { site } from '../data/site';
   </section>
 
   <!-- DIE VIER VIERTEL -->
-  <section class="abschnitt hell" aria-labelledby="leistungen">
+  <section class="abschnitt" aria-labelledby="leistungen">
     <div class="rahmen">
       <div class="abschnittskopf">
         <p class="marke">4 × 90° = 360°</p>
@@ -113,7 +142,7 @@ import { site } from '../data/site';
   </section>
 
   <!-- FÜR WEN -->
-  <section class="abschnitt" aria-labelledby="fuer-wen">
+  <section class="abschnitt hell" aria-labelledby="fuer-wen">
     <div class="rahmen">
       <div class="abschnittskopf">
         <p class="marke">Für wen wir arbeiten</p>
@@ -146,7 +175,7 @@ import { site } from '../data/site';
   </section>
 
   <!-- SO BEGINNT ES -->
-  <section class="abschnitt hell" aria-labelledby="ablauf">
+  <section class="abschnitt" aria-labelledby="ablauf">
     <div class="rahmen">
       <div class="abschnittskopf">
         <p class="marke">Der erste Schritt</p>
@@ -173,7 +202,7 @@ import { site } from '../data/site';
   </section>
 
   <!-- VOR ORT -->
-  <section class="abschnitt" aria-labelledby="vor-ort">
+  <section class="abschnitt hell" aria-labelledby="vor-ort">
     <div class="rahmen zweier">
       <div>
         <p class="marke">Wer wir sind</p>

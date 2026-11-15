@@ -1,0 +1,98 @@
+---
+/**
+ * Atmosphärische Abendszene in mehreren Ebenen (für Parallax).
+ * Sie steht stellvertretend für ein echtes Objektfoto: Sobald in
+ * src/data/site.ts unter `bilder.objekt` ein Foto hinterlegt ist,
+ * wird stattdessen das Foto gezeigt.
+ */
+import { site } from '../data/site';
+const foto = site.bilder.objekt;
+
+// Fensterraster des Hauptgebäudes (fest vorgegeben, damit es bei jedem Build gleich aussieht)
+const HELL = new Set(['0-1', '0-5', '1-2', '1-3', '1-6', '2-0', '2-4', '2-7', '3-2', '3-5', '3-6']);
+const fenster = [];
+for (let etage = 0; etage < 4; etage++) {
+  for (let spalte = 0; spalte < 8; spalte++) {
+    fenster.push({ x: 508 + spalte * 76, y: 410 + etage * 96, hell: HELL.has(`${etage}-${spalte}`) });
+  }
+}
+const sterne = [
+  [120, 90], [310, 160], [470, 60], [690, 120], [905, 70], [1090, 150], [1280, 80], [1470, 130], [1390, 240], [210, 260], [1530, 300], [60, 330],
+];
+---
+{foto ? (
+  <img class="szene" src={foto.src} alt={foto.alt} loading="lazy" decoding="async" />
+) : (
+  <svg class="szene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration: ein Wohnhaus am Abend, dahinter ein großer Kreis">
+    <defs>
+      <linearGradient id="sz-himmel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#02070a" />
+        <stop offset="0.6" stop-color="#04202f" />
+        <stop offset="1" stop-color="#07405c" />
+      </linearGradient>
+      <radialGradient id="sz-glut" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#fc734d" stop-opacity="0.5" />
+        <stop offset="1" stop-color="#fc734d" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+
+    <rect width="1600" height="1000" fill="url(#sz-himmel)" />
+    <g data-tiefe="0.15">
+      {sterne.map(([x, y]) => <circle cx={x} cy={y} r="1.6" fill="#f3f6f8" opacity="0.55" />)}
+    </g>
+
+    <!-- Abendglut und 360°-Kreis hinter dem Haus -->
+    <g data-tiefe="0.3">
+      <ellipse cx="1000" cy="800" rx="820" ry="250" fill="url(#sz-glut)" />
+      <g transform="translate(280 0)">
+      <circle cx="800" cy="560" r="372" fill="none" stroke="#0297de" stroke-width="1" stroke-dasharray="2 14" opacity="0.7" />
+      <circle cx="800" cy="560" r="340" fill="none" stroke="#0297de" stroke-width="2.5" />
+      </g>
+    </g>
+
+    <!-- Höhenzug im Hintergrund -->
+    <g data-tiefe="0.5">
+      <path d="M0 760 C 180 690 300 720 470 680 S 760 640 930 690 1250 650 1420 700 1600 690 1600 690 V1000 H0 Z" fill="#05202d" />
+    </g>
+    <g data-tiefe="0.75">
+      <path d="M0 800 C 220 760 380 790 560 770 S 900 760 1100 780 1420 750 1600 790 V1000 H0 Z" fill="#041722" />
+      <!-- Nachbarhäuser -->
+      <path d="M170 800 V590 L300 520 L430 590 V800 Z" fill="#061520" />
+      <rect x="540" y="600" width="250" height="200" fill="#061520" />
+      <rect x="580" y="640" width="34" height="46" fill="#ffd4b0" opacity="0.7" />
+      <rect x="285" y="640" width="30" height="42" fill="#ffd4b0" opacity="0.6" />
+    </g>
+
+    <!-- Das Haus -->
+    <g data-tiefe="1">
+      <g transform="translate(280 0)">
+      <rect x="560" y="318" width="480" height="62" fill="#0a161d" />
+      <rect x="470" y="378" width="660" height="424" fill="#0c1921" />
+      <rect x="470" y="378" width="660" height="5" fill="#0297de" opacity="0.55" />
+      {[0, 1, 2, 3].map((e) => <rect x="470" y={482 + e * 96} width="660" height="2" fill="#f3f6f8" opacity="0.08" />)}
+      {fenster.map((f) => (
+        <g>
+          <rect x={f.x} y={f.y} width="50" height="64" fill={f.hell ? '#ffd4b0' : '#132631'} opacity={f.hell ? 0.92 : 1} />
+          <rect x={f.x + 24} y={f.y} width="2" height="64" fill="#0c1921" />
+          <rect x={f.x} y={f.y + 64} width="50" height="3" fill="#f3f6f8" opacity="0.1" />
+        </g>
+      ))}
+      <rect x="640" y="334" width="320" height="30" fill="#ffd4b0" opacity="0.5" />
+      <rect x="772" y="716" width="56" height="86" fill="#fc734d" opacity="0.85" />
+      </g>
+    </g>
+
+    <!-- Vordergrund -->
+    <g data-tiefe="1.5">
+      <rect x="0" y="800" width="1600" height="200" fill="#02070a" />
+      <path d="M0 812 C 90 770 150 800 240 782 S 380 800 470 806 V1000 H0 Z" fill="#02070a" />
+      <path d="M1130 806 C 1230 778 1330 800 1420 780 S 1540 790 1600 772 V1000 H1130 Z" fill="#02070a" />
+    </g>
+    <g data-tiefe="2">
+      <ellipse cx="120" cy="640" rx="150" ry="190" fill="#010405" />
+      <rect x="110" y="780" width="18" height="220" fill="#010405" />
+      <ellipse cx="1500" cy="610" rx="170" ry="220" fill="#010405" />
+      <rect x="1490" y="780" width="20" height="220" fill="#010405" />
+    </g>
+  </svg>
+)}

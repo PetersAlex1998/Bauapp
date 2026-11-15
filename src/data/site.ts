@@ -43,6 +43,15 @@ export const site = {
   formularEndpoint: '' as string,
 
   /**
+   * Fotos. Datei in den Ordner `public/bilder/` legen und hier eintragen,
+   * z. B. { src: '/bilder/objekt.jpg', alt: 'Mehrfamilienhaus in Bad Lippspringe' }.
+   * Solange `null`, zeigt die Startseite eine gezeichnete Abendszene.
+   */
+  bilder: {
+    objekt: null as { src: string; alt: string } | null,
+  },
+
+  /**
    * Platzhalter-Hinweise (gestrichelte Kästen) ein-/ausblenden.
    * Vor dem Livegang: alle Platzhalter füllen, dann auf `false` stellen.
    */
