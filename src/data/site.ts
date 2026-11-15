@@ -27,7 +27,7 @@ export const site = {
 
   // OFFEN – bitte ergänzen:
   email: null as string | null, // z. B. 'info@…'
-  erreichbarkeit: null as string | null, // z. B. 'Mo–Fr 8–17 Uhr'
+  erreichbarkeit: 'Mo–Fr 8–17 Uhr' as string | null,
 
   // Orte für Texte und Suchmaschinen-Daten.
   // Das Tätigkeitsgebiet (Kreis Paderborn) steht so in allen Texten und Suchmaschinen-Daten.
