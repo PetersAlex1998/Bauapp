@@ -9,8 +9,8 @@
  * die Website an der Stelle einen gut sichtbaren Platzhalter.
  */
 export const site = {
-  name: 'HADIE Immobilien',
-  kurzname: 'HADIE',
+  name: 'HaDie-Immobilien',
+  kurzname: 'HaDie',
   claim: '360° Hausverwaltung',
   gruendungsjahr: 2015,
 

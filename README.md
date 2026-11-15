@@ -1,6 +1,6 @@
-# Website HADIE Immobilien
+# Website HaDie-Immobilien
 
-Statische Website für **HADIE Immobilien – 360° Hausverwaltung**, Kreis Paderborn (Büro in Bad Lippspringe).
+Statische Website für **HaDie-Immobilien – 360° Hausverwaltung**, Kreis Paderborn (Büro in Bad Lippspringe).
 Gebaut mit [Astro](https://astro.build): Das Ergebnis sind reine HTML-/CSS-Dateien, die auf jedem Webspace laufen.
 
 ## Starten

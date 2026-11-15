@@ -1,5 +1,5 @@
 /* ==========================================================================
-   HADIE Immobilien – Gestaltung
+   HaDie-Immobilien – Gestaltung
    Farben, Schriften und Abstände sind oben als Variablen definiert.
    ========================================================================== */
 
@@ -655,7 +655,7 @@ a.kreis__segment:focus-visible path.flaeche {
   margin: 1.25rem 0 0;
 }
 
-/* ---------- Vergleich «üblich / HADIE» ---------- */
+/* ---------- Vergleich «üblich / HaDie» ---------- */
 
 .zweier {
   display: grid;

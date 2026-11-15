@@ -10,7 +10,7 @@
  * Einträge bestimmt die Position im Kreis (im Uhrzeigersinn).
  *
  * HINWEIS: Die Detailpunkte unter `umfang` beschreiben den üblichen
- * Inhalt des jeweiligen Bereichs und müssen von HADIE geprüft und
+ * Inhalt des jeweiligen Bereichs und müssen von HaDie geprüft und
  * an das tatsächliche Angebot angepasst werden.
  */
 export interface Leistung {
@@ -34,9 +34,9 @@ export const leistungen: Leistung[] = [
     kurz: 'Das Fundament: Ihre Immobilie kaufmännisch, technisch und organisatorisch in Ordnung – für Eigentümergemeinschaften und Mietobjekte.',
     seoTitel: 'Hausverwaltung im Kreis Paderborn',
     seoBeschreibung:
-      'Klassische Hausverwaltung für Eigentümer und Eigentümergemeinschaften im Kreis Paderborn – als Teil der 360° Hausverwaltung von HADIE Immobilien.',
+      'Klassische Hausverwaltung für Eigentümer und Eigentümergemeinschaften im Kreis Paderborn – als Teil der 360° Hausverwaltung von HaDie-Immobilien.',
     einleitung:
-      'Abrechnungen, die stimmen. Unterlagen, die vollständig sind. Ein Gebäude, bei dem jemand hinschaut. Die klassische Hausverwaltung ist das Fundament unserer Arbeit – und der Punkt, an dem bei HADIE alles Weitere zusammenläuft.',
+      'Abrechnungen, die stimmen. Unterlagen, die vollständig sind. Ein Gebäude, bei dem jemand hinschaut. Die klassische Hausverwaltung ist das Fundament unserer Arbeit – und der Punkt, an dem bei HaDie alles Weitere zusammenläuft.',
     umfang: [
       {
         titel: 'Kaufmännisch',
@@ -54,7 +54,7 @@ export const leistungen: Leistung[] = [
     zusammenspiel:
       'Weil wir Ihr Gebäude aus der Verwaltung kennen, wissen wir früh, was ansteht – ob im Alltag am Objekt, bei einer Renovierung oder bei einem größeren Vorhaben. Sie müssen niemandem erst erklären, worum es geht.',
     platzhalter:
-      'Genauer Leistungsumfang der Verwaltung (z. B. WEG-Verwaltung, Mietverwaltung, Sondereigentumsverwaltung) – bitte von HADIE bestätigen und ergänzen.',
+      'Genauer Leistungsumfang der Verwaltung (z. B. WEG-Verwaltung, Mietverwaltung, Sondereigentumsverwaltung) – bitte von HaDie bestätigen und ergänzen.',
   },
   {
     slug: 'objektservice',
@@ -63,7 +63,7 @@ export const leistungen: Leistung[] = [
     kurz: 'Der Alltag: Dienstleistungen wie der Mülltonnendienst, die niemandem auffallen – solange sie zuverlässig erledigt werden.',
     seoTitel: 'Objektservice & Mülltonnendienst im Kreis Paderborn',
     seoBeschreibung:
-      'Alltägliche Dienstleistungen rund um Ihre Immobilie, etwa der Mülltonnendienst – direkt von Ihrer Hausverwaltung HADIE Immobilien im Kreis Paderborn.',
+      'Alltägliche Dienstleistungen rund um Ihre Immobilie, etwa der Mülltonnendienst – direkt von Ihrer Hausverwaltung HaDie-Immobilien im Kreis Paderborn.',
     einleitung:
       'Eine Immobilie zeigt im Alltag, wie gut sie betreut wird. Stehen die Tonnen rechtzeitig an der Straße? Kümmert sich jemand, bevor aus einer Kleinigkeit ein Ärgernis wird? Genau diese Aufgaben übernehmen wir gleich mit.',
     umfang: [
@@ -83,7 +83,7 @@ export const leistungen: Leistung[] = [
     zusammenspiel:
       'Wer regelmäßig am Objekt ist, sieht mehr als jede Akte. Was uns im Alltag auffällt, fließt in die Verwaltung ein – und wird erledigt, solange es noch klein ist.',
     platzhalter:
-      'Weitere alltägliche Dienstleistungen neben dem Mülltonnendienst (z. B. Winterdienst, Treppenhausreinigung, Gartenpflege, Hausmeisterdienste) – bitte von HADIE benennen.',
+      'Weitere alltägliche Dienstleistungen neben dem Mülltonnendienst (z. B. Winterdienst, Treppenhausreinigung, Gartenpflege, Hausmeisterdienste) – bitte von HaDie benennen.',
   },
   {
     slug: 'renovierung-sanierung',
@@ -92,7 +92,7 @@ export const leistungen: Leistung[] = [
     kurz: 'Der Bestand: Wohnungen und Gebäudeteile wieder in einen Zustand bringen, der sich gut vermietet und seinen Wert behält.',
     seoTitel: 'Renovierung & Sanierung von Beständen – Raum Paderborn',
     seoBeschreibung:
-      'Renovierung und Sanierung von Wohnungen und Beständen im Kreis Paderborn – organisiert von Ihrer Hausverwaltung HADIE Immobilien.',
+      'Renovierung und Sanierung von Wohnungen und Beständen im Kreis Paderborn – organisiert von Ihrer Hausverwaltung HaDie-Immobilien.',
     einleitung:
       'Irgendwann reicht Instandhalten nicht mehr. Eine Wohnung wird frei und braucht mehr als frische Farbe, ein Bestand ist in die Jahre gekommen. Wir kümmern uns um Renovierung und Sanierung – damit Sie nicht zum Bauleiter werden müssen.',
     umfang: [
@@ -112,7 +112,7 @@ export const leistungen: Leistung[] = [
     zusammenspiel:
       'Eine Renovierung endet bei uns nicht mit der Schlussrechnung. Was erneuert wurde, kennen wir anschließend auch in der Verwaltung – das macht spätere Entscheidungen einfacher.',
     platzhalter:
-      'Konkrete Angaben zu Renovierung und Sanierung (typische Maßnahmen, eigene Ausführung oder Zusammenarbeit mit Partnerbetrieben) sowie Vorher-/Nachher-Fotos – bitte von HADIE liefern.',
+      'Konkrete Angaben zu Renovierung und Sanierung (typische Maßnahmen, eigene Ausführung oder Zusammenarbeit mit Partnerbetrieben) sowie Vorher-/Nachher-Fotos – bitte von HaDie liefern.',
   },
   {
     slug: 'projektbegleitung',
@@ -121,7 +121,7 @@ export const leistungen: Leistung[] = [
     kurz: 'Das Ganze: Vorhaben, die das gesamte Gebäude betreffen, von der ersten Überlegung bis zum Abschluss an Ihrer Seite.',
     seoTitel: 'Projektbegleitung für Gebäude & Eigentümergemeinschaften',
     seoBeschreibung:
-      'Begleitung großer Projekte am ganzen Gebäude für Eigentümer, Eigentümergemeinschaften und Investoren im Kreis Paderborn – HADIE Immobilien.',
+      'Begleitung großer Projekte am ganzen Gebäude für Eigentümer, Eigentümergemeinschaften und Investoren im Kreis Paderborn – HaDie-Immobilien.',
     einleitung:
       'Manche Vorhaben betreffen nicht eine Wohnung, sondern das ganze Haus. Sie kosten viel, dauern lange und verlangen viele Entscheidungen. Wir begleiten solche Projekte – und sorgen dafür, dass Sie dabei den Überblick behalten.',
     umfang: [
@@ -141,7 +141,7 @@ export const leistungen: Leistung[] = [
     zusammenspiel:
       'Große Projekte gelingen leichter, wenn derjenige sie begleitet, der das Gebäude, die Eigentümer und die Zahlen ohnehin kennt. Hier schließt sich der Kreis.',
     platzhalter:
-      'Beispiele für begleitete Projekte (Art des Vorhabens, Umfang, gern mit Fotos) – nur echte Projekte, bitte von HADIE liefern.',
+      'Beispiele für begleitete Projekte (Art des Vorhabens, Umfang, gern mit Fotos) – nur echte Projekte, bitte von HaDie liefern.',
   },
 ];
 
