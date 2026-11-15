@@ -13,6 +13,15 @@ npm run build    # fertige Website im Ordner dist/
 
 Den Inhalt von `dist/` auf den Webspace laden (oder das Repository mit Netlify, Vercel, Cloudflare Pages o. Ä. verbinden).
 
+## Vorschau online stellen
+
+Am schnellsten über Netlify (kostenlos für diesen Zweck): dort mit GitHub anmelden, „Add new
+project → Import an existing project“, dieses Repository und den gewünschten Branch wählen,
+„Deploy“. Die Einstellungen stehen bereits in `netlify.toml`. Jeder Push aktualisiert die Vorschau.
+
+Die Vorschau ist per `X-Robots-Tag` für Suchmaschinen gesperrt. Diesen Block in `netlify.toml`
+vor dem echten Livegang entfernen.
+
 ## Inhalte ändern
 
 | Was | Wo |

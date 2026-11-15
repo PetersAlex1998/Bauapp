@@ -1,0 +1,16 @@
+# Einstellungen für eine Vorschau bei Netlify (https://www.netlify.com).
+# Repository dort verbinden – Build und Veröffentlichung laufen dann automatisch.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# VORSCHAU-SCHUTZ: Solange Platzhalter auf der Seite stehen, sollen Suchmaschinen
+# sie nicht aufnehmen. Diesen Block vor dem echten Livegang entfernen.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
