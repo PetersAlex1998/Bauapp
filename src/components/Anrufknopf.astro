@@ -1,0 +1,73 @@
+---
+/**
+ * «Direkt anrufen».
+ * Smartphone/Tablet: ein Tipp startet den Anruf.
+ * Computer (Maus): ein Klick öffnet ein Feld mit Nummer und Hinweisen.
+ * Ohne JavaScript ist es überall ein normaler Anruf-Link.
+ */
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+interface Props { ausrichtung?: 'links' | 'rechts' }
+const { ausrichtung = 'links' } = Astro.props;
+const id = 'anruf-' + Math.random().toString(36).slice(2, 8);
+---
+<span class="anruf" data-anruf>
+  <a class="knopf knopf--voll" href={`tel:${site.telefon.link}`} aria-controls={id} data-anruf-knopf>
+    <Icon name="telefon" />Direkt anrufen
+  </a>
+  <span class:list={['anruf__feld', `anruf__feld--${ausrichtung}`]} id={id} role="group" aria-label="Telefonischer Kontakt" hidden>
+    <span class="anruf__titel">Rufen Sie uns an</span>
+    <a class="anruf__nummer" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
+    <span class="anruf__zeile">
+      {site.erreichbarkeit ?? (site.platzhalterAnzeigen ? 'Platzhalter: Erreichbarkeit / Bürozeiten' : '')}
+    </span>
+    <span class="anruf__zeile">{site.name} · {site.adresse.ort}</span>
+    <span class="anruf__aktionen">
+      <button type="button" class="anruf__kopieren" data-nummer={site.telefon.anzeige}>Nummer kopieren</button>
+      <a href="/kontakt/#anfrage">Lieber schreiben</a>
+    </span>
+  </span>
+</span>
+
+<script>
+  // Nur auf Geräten mit Maus öffnet der Knopf das Infofeld; sonst wird direkt gewählt.
+  const mitMaus = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const alle = [...document.querySelectorAll<HTMLElement>('[data-anruf]')];
+
+  const schliessen = (ausser?: HTMLElement) =>
+    alle.forEach((a) => {
+      if (a === ausser) return;
+      a.querySelector<HTMLElement>('.anruf__feld')!.hidden = true;
+      a.querySelector('[data-anruf-knopf]')!.setAttribute('aria-expanded', 'false');
+    });
+
+  alle.forEach((anruf) => {
+    const knopf = anruf.querySelector<HTMLAnchorElement>('[data-anruf-knopf]')!;
+    const feld = anruf.querySelector<HTMLElement>('.anruf__feld')!;
+    knopf.addEventListener('click', (e) => {
+      if (!mitMaus.matches) return; // Handy: normaler tel:-Link
+      e.preventDefault();
+      const oeffnen = feld.hidden;
+      schliessen(anruf);
+      feld.hidden = !oeffnen;
+      knopf.setAttribute('aria-expanded', String(oeffnen));
+    });
+    const kopieren = anruf.querySelector<HTMLButtonElement>('.anruf__kopieren')!;
+    kopieren.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(kopieren.dataset.nummer ?? '');
+        kopieren.textContent = 'Kopiert ✓';
+      } catch {
+        kopieren.textContent = 'Bitte von Hand kopieren';
+      }
+      setTimeout(() => (kopieren.textContent = 'Nummer kopieren'), 2500);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element).closest('[data-anruf]')) schliessen();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') schliessen();
+  });
+</script>

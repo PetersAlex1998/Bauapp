@@ -14,7 +14,7 @@ export default defineConfig({
   vite: { build: { assetsInlineLimit: 0 } },
   integrations: [
     sitemap({
-      filter: (page) => !/\/(impressum|datenschutz|404)\/?$/.test(page),
+      filter: (page) => !/\/(impressum|datenschutz|404|kundenlogin|kundenbereich)\/?$/.test(page),
     }),
   ],
 });

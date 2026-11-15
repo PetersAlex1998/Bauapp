@@ -1,6 +1,7 @@
 ---
 import { site, navigation } from '../data/site';
 import Icon from './Icon.astro';
+import Anrufknopf from './Anrufknopf.astro';
 const pfad = Astro.url.pathname;
 ---
 <header class="kopf dunkel">
@@ -24,7 +25,8 @@ const pfad = Astro.url.pathname;
       {navigation.map((n) => (
         <a href={n.href} aria-current={pfad.startsWith(n.href) ? 'page' : undefined}>{n.text}</a>
       ))}
-      <a class="knopf knopf--voll" href={`tel:${site.telefon.link}`}><Icon name="telefon" />{site.telefon.anzeige}</a>
+      <a class="knopf knopf--linie nav__login" href="/kundenlogin/" aria-current={pfad.startsWith('/kunden') ? 'page' : undefined}><Icon name="nutzer" />Kunden-Login</a>
+      <Anrufknopf ausrichtung="rechts" />
     </nav>
   </div>
 </header>

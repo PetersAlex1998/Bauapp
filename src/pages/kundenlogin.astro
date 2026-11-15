@@ -1,0 +1,57 @@
+---
+import Seite from '../layouts/Seite.astro';
+import Platzhalter from '../components/Platzhalter.astro';
+import { site, demoZugang } from '../data/site';
+---
+<Seite titel="Kunden-Login" beschreibung={`Anmeldung zum Kundenbereich von ${site.name}.`} noindex>
+  <section class="seitenkopf dunkel login">
+    <div class="rahmen login__rahmen">
+      <div>
+        <p class="marke">Kundenbereich</p>
+        <h1>Kunden-Login</h1>
+        <p class="lead leise">Melden Sie sich mit Ihrer Kundennummer an, um Ihre Objekte, Dokumente und Vorgänge einzusehen.</p>
+      </div>
+
+      <form class="formular login__formular" id="login" data-nr={demoZugang.kundennummer} data-pw={demoZugang.passwort} novalidate>
+        <div class="feld">
+          <label for="l-nr">Kundennummer</label>
+          <input id="l-nr" name="kundennummer" type="text" inputmode="numeric" autocomplete="username" required />
+        </div>
+        <div class="feld">
+          <label for="l-pw">Passwort</label>
+          <input id="l-pw" name="passwort" type="password" autocomplete="current-password" required />
+        </div>
+        <p class="formular__status" role="alert" data-art="fehler"></p>
+        <div><button class="knopf knopf--voll" type="submit">Anmelden</button></div>
+        <p class="formular__hinweis">Zugangsdaten vergessen? Rufen Sie uns an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></p>
+        <Platzhalter>
+          <p><strong>Demo-Zugang.</strong> Der Kundenbereich ist eine Vorschau mit Beispieldaten und noch keine echte Anmeldung. Kundennummer und Passwort: {demoZugang.kundennummer}</p>
+        </Platzhalter>
+        <noscript><p class="formular__hinweis">Für die Anmeldung muss JavaScript im Browser aktiviert sein.</p></noscript>
+      </form>
+    </div>
+  </section>
+</Seite>
+
+<script>
+  const SCHLUESSEL = 'hadie-kunde';
+  const formular = document.querySelector<HTMLFormElement>('#login');
+  if (formular) {
+    if (sessionStorage.getItem(SCHLUESSEL)) location.replace('/kundenbereich/');
+    const status = formular.querySelector<HTMLElement>('.formular__status')!;
+    formular.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const daten = new FormData(formular);
+      const nr = String(daten.get('kundennummer') ?? '').replace(/\s/g, '');
+      const pw = String(daten.get('passwort') ?? '');
+      if (nr === formular.dataset.nr && pw === formular.dataset.pw) {
+        sessionStorage.setItem(SCHLUESSEL, nr);
+        location.assign('/kundenbereich/');
+      } else {
+        status.textContent = 'Kundennummer oder Passwort stimmen nicht. Bitte prüfen Sie Ihre Eingabe.';
+        formular.querySelector<HTMLInputElement>('#l-pw')!.value = '';
+        formular.querySelector<HTMLInputElement>('#l-nr')!.focus();
+      }
+    });
+  }
+</script>

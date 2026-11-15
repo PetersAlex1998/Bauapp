@@ -48,6 +48,19 @@ project → Import an existing project“, dieses Repository und den gewünschte
 Unternehmensdaten und Leistungen stehen nur an einer Stelle und erscheinen automatisch überall
 (Kopf, Fuß, Kontakt, Impressum, Suchmaschinen-Daten, 360°-Kreis).
 
+## Kunden-Login (Demo)
+
+`/kundenlogin/` und `/kundenbereich/` sind eine **Vorschau ohne echte Anmeldung**. Die
+Zugangsdaten stehen in `src/data/site.ts` (`demoZugang`) und damit offen im Code der Seite;
+geprüft wird nur im Browser. Im Kundenbereich dürfen deshalb ausschließlich Beispieldaten
+stehen. Für echte Kundendaten braucht es einen Server mit Benutzerverwaltung (Anmeldung,
+verschlüsselte Passwörter, Zugriffsschutz für Dokumente).
+
+## «Direkt anrufen»
+
+Der Knopf (`src/components/Anrufknopf.astro`) wählt auf Smartphones sofort und öffnet am
+Computer ein Feld mit Nummer und Hinweisen. Die Nummer steht in `src/data/site.ts`.
+
 ## Bewegung (Scroll-Effekte)
 
 Die Seite nutzt GSAP mit ScrollTrigger und Lenis (weiches Scrollen), lokal gebündelt, ohne CDN.

@@ -1,0 +1,103 @@
+---
+/**
+ * KUNDENBEREICH – reine Beispielansicht (Dummy).
+ * Alle Zahlen und Einträge sind erfundene Beispieldaten und als solche
+ * gekennzeichnet. Hier dürfen keine echten Kundendaten stehen, solange
+ * es keine echte Anmeldung mit Server gibt.
+ */
+import Seite from '../layouts/Seite.astro';
+import { site } from '../data/site';
+
+const kennzahlen = [
+  { wert: '3', text: 'Objekte in Verwaltung' },
+  { wert: '2', text: 'offene Vorgänge' },
+  { wert: '5', text: 'neue Dokumente' },
+  { wert: '1', text: 'anstehender Termin' },
+];
+const vorgaenge = [
+  { titel: 'Heizungswartung', objekt: 'Beispielstraße 1', stand: 'Termin vereinbart', art: 'laufend' },
+  { titel: 'Renovierung Wohnung 3', objekt: 'Beispielstraße 1', stand: 'In Arbeit', art: 'laufend' },
+  { titel: 'Betriebskostenabrechnung', objekt: 'Musterweg 12', stand: 'Abgeschlossen', art: 'fertig' },
+  { titel: 'Mieterwechsel Wohnung 2', objekt: 'Musterweg 12', stand: 'Abgeschlossen', art: 'fertig' },
+];
+const dokumente = ['Betriebskostenabrechnung (Beispiel)', 'Übergabeprotokoll (Beispiel)', 'Wartungsnachweis Heizung (Beispiel)', 'Versicherungsschein (Beispiel)'];
+---
+<Seite titel="Kundenbereich" beschreibung={`Kundenbereich von ${site.name}.`} noindex>
+  <div class="bereich" data-bereich>
+    <section class="seitenkopf dunkel">
+      <div class="rahmen bereich__kopf">
+        <div>
+          <p class="marke">Kundenbereich</p>
+          <h1>Guten Tag.</h1>
+          <p class="lead leise">Kundennummer <strong data-kundennummer></strong> · Hier sehen Sie auf einen Blick, was rund um Ihre Immobilien geschieht.</p>
+        </div>
+        <button class="knopf knopf--linie" type="button" data-abmelden>Abmelden</button>
+      </div>
+    </section>
+
+    <section class="abschnitt--eng abschnitt">
+      <div class="rahmen">
+        <p class="bereich__demo"><strong>Beispielansicht.</strong> Alle Angaben auf dieser Seite sind Beispieldaten und zeigen nur, wie der Kundenbereich später aussehen kann.</p>
+
+        <ul class="bereich__zahlen">
+          {kennzahlen.map((k) => (
+            <li><span class="bereich__wert">{k.wert}</span><span>{k.text}</span></li>
+          ))}
+        </ul>
+
+        <div class="bereich__raster">
+          <section class="bereich__karte" aria-labelledby="b-vorgaenge">
+            <h2 id="b-vorgaenge">Vorgänge</h2>
+            <ul class="bereich__liste">
+              {vorgaenge.map((v) => (
+                <li>
+                  <span><strong>{v.titel}</strong><small>{v.objekt}</small></span>
+                  <span class:list={['bereich__stand', `bereich__stand--${v.art}`]}>{v.stand}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section class="bereich__karte" aria-labelledby="b-dokumente">
+            <h2 id="b-dokumente">Dokumente</h2>
+            <ul class="bereich__liste">
+              {dokumente.map((d) => <li><span>{d}</span><span class="bereich__stand">PDF</span></li>)}
+            </ul>
+          </section>
+
+          <section class="bereich__karte" aria-labelledby="b-kontakt">
+            <h2 id="b-kontakt">Ihr Ansprechpartner</h2>
+            <p class="leise">Sie erreichen uns direkt unter</p>
+            <p><a class="telefon-gross" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></p>
+            <p><a class="pfeil-link" href="/kontakt/#anfrage">Nachricht schreiben</a></p>
+          </section>
+
+          <section class="bereich__karte" aria-labelledby="b-melden">
+            <h2 id="b-melden">Etwas melden</h2>
+            <p class="leise">Schaden, Frage oder Wunsch – hier können Sie künftig direkt einen Vorgang anlegen.</p>
+            <p><button class="knopf knopf--voll" type="button" disabled>Vorgang anlegen (folgt)</button></p>
+          </section>
+        </div>
+      </div>
+    </section>
+  </div>
+  <noscript><div class="rahmen abschnitt"><p>Für den Kundenbereich muss JavaScript im Browser aktiviert sein.</p></div></noscript>
+</Seite>
+
+<script>
+  const SCHLUESSEL = 'hadie-kunde';
+  const bereich = document.querySelector<HTMLElement>('[data-bereich]');
+  if (bereich) {
+    const nr = sessionStorage.getItem(SCHLUESSEL);
+    if (!nr) {
+      location.replace('/kundenlogin/');
+    } else {
+      bereich.classList.add('ist-offen');
+      bereich.querySelector('[data-kundennummer]')!.textContent = nr;
+      bereich.querySelector('[data-abmelden]')!.addEventListener('click', () => {
+        sessionStorage.removeItem(SCHLUESSEL);
+        location.assign('/kundenlogin/');
+      });
+    }
+  }
+</script>

@@ -21,8 +21,8 @@ export const site = {
   },
 
   telefon: {
-    anzeige: '05252 22122',
-    link: '+49525222122', // internationale Schreibweise für den Anruf-Link
+    anzeige: '0160 9500 6184',
+    link: '+4916095006184', // internationale Schreibweise für den Anruf-Link
   },
 
   // OFFEN – bitte ergänzen:
@@ -56,6 +56,18 @@ export const site = {
    * Vor dem Livegang: alle Platzhalter füllen, dann auf `false` stellen.
    */
   platzhalterAnzeigen: true,
+};
+
+/**
+ * KUNDEN-LOGIN – ZUGANG ZUR DEMO
+ * Das ist KEINE echte Anmeldung: Die Zugangsdaten stehen offen im Code der
+ * Seite und jeder kann sie auslesen. Hinter dem Login dürfen deshalb nur
+ * Beispieldaten liegen. Für echte Kundendaten braucht es einen Server mit
+ * Benutzerverwaltung.
+ */
+export const demoZugang = {
+  kundennummer: '123456789',
+  passwort: '123456789',
 };
 
 export const navigation = [

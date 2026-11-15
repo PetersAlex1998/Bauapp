@@ -1977,3 +1977,286 @@ summary {
     display: none;
   }
 }
+
+/* ==========================================================================
+   «DIREKT ANRUFEN» mit Infofeld, KUNDEN-LOGIN, KUNDENBEREICH
+   ========================================================================== */
+
+.anruf {
+  position: relative;
+  display: inline-flex;
+}
+.anruf__feld {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  z-index: 60;
+  display: grid;
+  gap: 0.35rem;
+  width: max-content;
+  min-width: 17.5rem;
+  max-width: min(22rem, 90vw);
+  padding: 1.25rem 1.4rem 1.1rem;
+  background: var(--weiss);
+  color: var(--tinte);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 50px -24px rgba(18, 38, 63, 0.5);
+  text-align: left;
+  font-weight: 400;
+}
+.anruf__feld[hidden] {
+  display: none;
+}
+.anruf__feld--links {
+  left: 0;
+}
+.anruf__feld--rechts {
+  right: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .anruf__feld:not([hidden]) {
+    animation: katalog-auf 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+.anruf__titel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--akzent-text);
+}
+.anruf__feld .anruf__nummer {
+  padding: 0;
+  font-family: var(--serif);
+  font-size: 1.9rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  color: var(--tinte);
+  text-decoration: none;
+  border-radius: 0;
+}
+.anruf__zeile {
+  font-size: 0.95rem;
+  color: var(--tinte-leise);
+}
+.anruf__zeile:empty {
+  display: none;
+}
+.anruf__aktionen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.6rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--linie);
+}
+.anruf__aktionen button,
+.anruf__feld .anruf__aktionen a {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--akzent-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  border-radius: 0;
+}
+.nav a.anruf__nummer:hover,
+.nav .anruf__aktionen a:hover {
+  background: none;
+}
+
+/* Navigation: Login-Knopf */
+.nav .nav__login {
+  margin-left: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.05rem;
+  border-color: var(--linie);
+  font-weight: 600;
+}
+.nav .nav__login:hover {
+  border-color: var(--akzent);
+}
+.nav .nav__login[aria-current='page'] {
+  background: none;
+  border-color: var(--akzent);
+}
+.nav .anruf .knopf {
+  margin-left: 0.5rem;
+}
+@media (max-width: 52rem) {
+  .nav .nav__login,
+  .nav .anruf,
+  .nav .anruf .knopf {
+    margin: 0.5rem 0 0;
+    min-height: 3.25rem;
+    width: 100%;
+  }
+  .nav .anruf {
+    display: flex;
+  }
+}
+/* Zwischen Tablet und kleinem Laptop wird es in der Kopfzeile eng. */
+@media (min-width: 52.01rem) and (max-width: 66rem) {
+  .nav a {
+    padding-inline: 0.6rem;
+  }
+  .nav .nav__login,
+  .nav .anruf .knopf {
+    padding-inline: 0.85rem;
+    margin-left: 0.35rem;
+  }
+  .nav .nav__login svg,
+  .nav .anruf .knopf svg {
+    display: none;
+  }
+}
+
+/* ---------- Login ---------- */
+.login {
+  min-height: calc(100svh - 4.5rem);
+  display: grid;
+  align-items: center;
+}
+.login__rahmen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: center;
+}
+@media (max-width: 52rem) {
+  .login {
+    min-height: 0;
+  }
+  .login__rahmen {
+    grid-template-columns: 1fr;
+  }
+}
+.login__formular {
+  box-shadow: 0 24px 60px -36px rgba(18, 38, 63, 0.5);
+}
+.login__formular .knopf {
+  width: 100%;
+}
+
+/* ---------- Kundenbereich (Beispielansicht) ---------- */
+.bereich__kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.bereich__demo {
+  margin: 0 0 2rem;
+  padding: 0.9rem 1.1rem;
+  border: 2px dashed var(--hinweis);
+  border-radius: 0.75rem;
+  background: rgba(180, 71, 47, 0.06);
+}
+.bereich__zahlen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+.bereich__zahlen li,
+.bereich__karte {
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.5rem;
+}
+.bereich__zahlen li {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--tinte-leise);
+}
+.bereich__wert {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--akzent);
+}
+.bereich__raster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.bereich__karte h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+.bereich__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bereich__liste li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--linie);
+}
+.bereich__liste small {
+  display: block;
+  color: var(--tinte-leise);
+}
+.bereich__stand {
+  flex: none;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--buehne);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bereich__stand--laufend {
+  background: rgba(31, 95, 166, 0.12);
+  color: var(--akzent-text);
+}
+.bereich__karte .telefon-gross {
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+}
+@media (max-width: 52rem) {
+  .bereich__zahlen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bereich__raster {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Kundenbereich bleibt unsichtbar, bis die Anmeldung geprüft ist (kein Aufblitzen). */
+.bereich:not(.ist-offen) {
+  visibility: hidden;
+}
+
+/* Telefonnummern werden nie mitten in der Nummer umbrochen. */
+a[href^='tel:'] {
+  white-space: nowrap;
+}
+.bereich__kopf {
+  align-items: center;
+}
+@media (max-width: 52rem) {
+  .bereich__raster {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bereich__liste li {
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+  }
+  .bereich__zahlen li,
+  .bereich__karte {
+    padding: 1.1rem 1.1rem;
+    min-width: 0;
+  }
+}

@@ -6,6 +6,7 @@ import Kontaktband from '../components/Kontaktband.astro';
 import Platzhalter from '../components/Platzhalter.astro';
 import Icon from '../components/Icon.astro';
 import Szene from '../components/Szene.astro';
+import Anrufknopf from '../components/Anrufknopf.astro';
 import { site } from '../data/site';
 ---
 <Seite
@@ -30,7 +31,7 @@ import { site } from '../data/site';
           Sie haben einen Ansprechpartner. Wir haben das Ganze im Blick.
         </p>
         <div class="knopfreihe">
-          <a class="knopf knopf--voll" href={`tel:${site.telefon.link}`}><Icon name="telefon" />{site.telefon.anzeige}</a>
+          <Anrufknopf />
           <a class="knopf knopf--linie" href="/kontakt/#anfrage">Anfrage schreiben</a>
         </div>
         <ul class="fakten">
