@@ -1,0 +1,54 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kreis from '../../components/Kreis.astro';
+import Leistungskarten from '../../components/Leistungskarten.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+---
+<Seite
+  titel="Leistungen: 360° Hausverwaltung"
+  beschreibung="Die vier Leistungsbereiche von HADIE Immobilien: klassische Hausverwaltung, Service rund ums Objekt, Renovierung & Sanierung und die Begleitung großer Projekte – in Bad Lippspringe, Paderborn und Umgebung."
+>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen seitenkopf__raster">
+      <div>
+        <p class="marke">Leistungen</p>
+        <h1>Alles, was eine Immobilie braucht. Aus einer Hand.</h1>
+        <p class="lead leise">
+          360° Hausverwaltung heißt: Die klassische Verwaltung ist der Anfang, nicht das Ende.
+          Vier Bereiche ergeben zusammen den vollen Kreis – mit Ihrer Immobilie im Mittelpunkt.
+        </p>
+      </div>
+      <div class="seitenkopf__kreis"><Kreis /></div>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="bereiche">
+    <div class="rahmen">
+      <h2 id="bereiche" class="sr-only">Die vier Bereiche</h2>
+      <Leistungskarten ebene="h3" />
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="warum">
+    <div class="rahmen">
+      <p class="marke">Warum aus einer Hand</p>
+      <h2 id="warum">Weil an einer Immobilie alles zusammenhängt.</h2>
+      <ul class="dreier" style="margin-top:2.5rem">
+        <li>
+          <h3>Nichts geht verloren</h3>
+          <p class="leise">Was im Alltag am Objekt auffällt, kommt in der Verwaltung an – ohne Umweg über Dritte.</p>
+        </li>
+        <li>
+          <h3>Niemand fängt bei null an</h3>
+          <p class="leise">Wer Ihr Gebäude verwaltet, kennt es bereits, wenn eine Renovierung oder ein Projekt ansteht.</p>
+        </li>
+        <li>
+          <h3>Sie haben einen Ansprechpartner</h3>
+          <p class="leise">Für die kleine Frage genauso wie für die große Entscheidung.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <Kontaktband titel="Welche Leistung braucht Ihre Immobilie?" text="Sie müssen das nicht vorher wissen. Rufen Sie an und schildern Sie uns Ihre Situation – wir sortieren gemeinsam." />
+</Seite>

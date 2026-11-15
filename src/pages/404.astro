@@ -1,0 +1,18 @@
+---
+import Seite from '../layouts/Seite.astro';
+import { site } from '../data/site';
+---
+<Seite titel="Seite nicht gefunden" beschreibung="Diese Seite gibt es nicht (mehr)." noindex>
+  <section class="seitenkopf dunkel" style="min-height:60vh;display:grid;align-items:center">
+    <div class="rahmen">
+      <p class="marke">Fehler 404</p>
+      <h1>Hier haben wir uns einmal im Kreis gedreht.</h1>
+      <p class="lead leise">Die gesuchte Seite gibt es nicht oder nicht mehr. So kommen Sie weiter:</p>
+      <div class="knopfreihe">
+        <a class="knopf knopf--voll" href="/">Zur Startseite</a>
+        <a class="knopf knopf--linie" href="/leistungen/">Leistungen</a>
+        <a class="knopf knopf--linie" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
+      </div>
+    </div>
+  </section>
+</Seite>

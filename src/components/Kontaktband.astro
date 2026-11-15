@@ -1,0 +1,42 @@
+---
+/** Abschluss jeder Seite: der direkte Weg zu HADIE. */
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+import Platzhalter from './Platzhalter.astro';
+interface Props { titel?: string; text?: string }
+const {
+  titel = 'Sprechen wir über Ihre Immobilie.',
+  text = 'Ein Anruf genügt. Erzählen Sie uns, was Ihre Immobilie braucht – wir sagen Ihnen offen, was wir für Sie tun können.',
+} = Astro.props;
+---
+<section class="abschnitt dunkel" aria-labelledby="kontaktband-titel">
+  <div class="rahmen kontaktband">
+    <div>
+      <p class="marke">360° – der Kreis schließt sich</p>
+      <h2 id="kontaktband-titel">{titel}</h2>
+      <p class="lead leise">{text}</p>
+      <div class="knopfreihe">
+        <a class="knopf knopf--voll" href="/kontakt/#anfrage"><Icon name="brief" />Anfrage schreiben</a>
+      </div>
+    </div>
+    <div class="kontaktkarte">
+      <dl class="kontaktliste">
+        <div>
+          <dt>Telefon</dt>
+          <dd>
+            <a class="telefon-gross" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
+            {site.erreichbarkeit
+              ? <div class="leise">{site.erreichbarkeit}</div>
+              : <div><Platzhalter art="inline">Erreichbarkeit / Bürozeiten</Platzhalter></div>}
+          </dd>
+        </div>
+        <div>
+          <dt>Büro</dt>
+          <dd>
+            <address>{site.adresse.strasse}<br />{site.adresse.plz} {site.adresse.ort}</address>
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>

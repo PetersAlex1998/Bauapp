@@ -1,0 +1,49 @@
+---
+import { site } from '../data/site';
+import { leistungen } from '../data/leistungen';
+import Icon from './Icon.astro';
+---
+<footer class="fuss dunkel">
+  <div class="rahmen">
+    <div class="fuss__raster">
+      <div>
+        <p class="logo__name" style="margin:0 0 .75rem">{site.kurzname} <span style="font-size:.8em;letter-spacing:.02em">Immobilien</span></p>
+        <p class="leise" style="max-width:22em">{site.claim} für {site.regionText}. Ein Partner für alles rund um Ihre Immobilie – seit {site.gruendungsjahr}.</p>
+      </div>
+      <nav aria-label="Leistungen">
+        <h2>Leistungen</h2>
+        <ul>
+          {leistungen.map((l) => <li><a href={`/leistungen/${l.slug}/`}>{l.titel}</a></li>)}
+        </ul>
+      </nav>
+      <nav aria-label="Unternehmen">
+        <h2>Unternehmen</h2>
+        <ul>
+          <li><a href="/ueber-uns/">Über uns</a></li>
+          <li><a href="/kontakt/">Kontakt</a></li>
+          <li><a href="/impressum/">Impressum</a></li>
+          <li><a href="/datenschutz/">Datenschutz</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h2>Kontakt</h2>
+        <address>
+          {site.name}<br />
+          {site.adresse.strasse}<br />
+          {site.adresse.plz} {site.adresse.ort}<br />
+          <a href={`tel:${site.telefon.link}`}>Telefon {site.telefon.anzeige}</a>
+          {site.email && <><br /><a href={`mailto:${site.email}`}>{site.email}</a></>}
+        </address>
+      </div>
+    </div>
+    <div class="fuss__unten">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <span>Diese Website verwendet keine Cookies und kein Tracking.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="schnellkontakt">
+  <a href={`tel:${site.telefon.link}`}><Icon name="telefon" />Anrufen</a>
+  <a href="/kontakt/#anfrage"><Icon name="brief" />Anfrage</a>
+</div>

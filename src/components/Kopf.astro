@@ -1,0 +1,47 @@
+---
+import { site, navigation } from '../data/site';
+import Icon from './Icon.astro';
+const pfad = Astro.url.pathname;
+---
+<header class="kopf dunkel">
+  <div class="rahmen kopf__innen">
+    <a class="logo" href="/" aria-label={`${site.name} – zur Startseite`}>
+      <svg class="logo__ring" viewBox="0 0 40 40" aria-hidden="true">
+        <circle class="spur" cx="20" cy="20" r="16" fill="none" stroke-width="3"></circle>
+        <circle class="lauf" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"></circle>
+      </svg>
+      <span>
+        <span class="logo__name">{site.kurzname}</span>
+        <span class="logo__zusatz">Immobilien</span>
+      </span>
+    </a>
+
+    <button class="menue-knopf" type="button" aria-expanded="false" aria-controls="hauptnavigation">Menü</button>
+
+    <nav class="nav" id="hauptnavigation" aria-label="Hauptnavigation">
+      {navigation.map((n) => (
+        <a href={n.href} aria-current={pfad.startsWith(n.href) ? 'page' : undefined}>{n.text}</a>
+      ))}
+      <a class="knopf knopf--voll" href={`tel:${site.telefon.link}`}><Icon name="telefon" />{site.telefon.anzeige}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const knopf = document.querySelector<HTMLButtonElement>('.menue-knopf');
+  const nav = document.getElementById('hauptnavigation');
+  if (knopf && nav) {
+    const setze = (offen: boolean) => {
+      knopf.setAttribute('aria-expanded', String(offen));
+      knopf.textContent = offen ? 'Schließen' : 'Menü';
+      nav.dataset.offen = String(offen);
+    };
+    knopf.addEventListener('click', () => setze(knopf.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && knopf.getAttribute('aria-expanded') === 'true') {
+        setze(false);
+        knopf.focus();
+      }
+    });
+  }
+</script>

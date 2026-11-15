@@ -1,0 +1,65 @@
+---
+import Seite from '../layouts/Seite.astro';
+import Kontaktformular from '../components/Kontaktformular.astro';
+import Platzhalter from '../components/Platzhalter.astro';
+import { site } from '../data/site';
+const a = site.adresse;
+const kartenSuche = encodeURIComponent(`${a.strasse}, ${a.plz} ${a.ort}`);
+---
+<Seite
+  titel="Kontakt: Hausverwaltung in Bad Lippspringe"
+  beschreibung={`So erreichen Sie HADIE Immobilien: Telefon ${site.telefon.anzeige}, ${a.strasse}, ${a.plz} ${a.ort}. Oder schreiben Sie uns über das Kontaktformular.`}
+>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke">Kontakt</p>
+      <h1>Ein Anruf genügt.</h1>
+      <p class="lead leise">
+        Erzählen Sie uns von Ihrer Immobilie. Ob Verwaltung, Renovierung oder ein größeres
+        Vorhaben – Sie landen immer beim selben Ansprechpartner.
+      </p>
+      <p style="margin:2rem 0 0"><a class="telefon-gross" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></p>
+    </div>
+  </section>
+
+  <section class="abschnitt">
+    <div class="rahmen zweier zweier--formular">
+      <div>
+        <h2 style="font-size:clamp(1.5rem,3vw,2rem)">So erreichen Sie uns</h2>
+        <dl class="kontaktliste" style="margin-top:1.5rem">
+          <div>
+            <dt>Telefon</dt>
+            <dd><a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></dd>
+          </div>
+          <div>
+            <dt>E-Mail</dt>
+            <dd>
+              {site.email
+                ? <a href={`mailto:${site.email}`}>{site.email}</a>
+                : <Platzhalter art="inline">E-Mail-Adresse</Platzhalter>}
+            </dd>
+          </div>
+          <div>
+            <dt>Erreichbarkeit</dt>
+            <dd>
+              {site.erreichbarkeit ?? <Platzhalter art="inline">Bürozeiten</Platzhalter>}
+            </dd>
+          </div>
+          <div>
+            <dt>Büro</dt>
+            <dd>
+              <address style="font-style:normal">
+                {site.name}<br />{a.strasse}<br />{a.plz} {a.ort}
+              </address>
+              <p style="margin:.6rem 0 0;font-size:1rem">
+                <a class="pfeil-link" href={`https://www.openstreetmap.org/search?query=${kartenSuche}`} rel="noopener">Auf der Karte ansehen</a>
+              </p>
+              <p class="leise" style="font-size:.9rem;margin:.3rem 0 0">Der Link öffnet OpenStreetMap. Auf dieser Seite selbst wird keine Karte geladen.</p>
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <Kontaktformular />
+    </div>
+  </section>
+</Seite>

@@ -1,0 +1,89 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kreis from '../../components/Kreis.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+import Platzhalter from '../../components/Platzhalter.astro';
+import { leistungen, gradbereich } from '../../data/leistungen';
+import { site } from '../../data/site';
+
+export function getStaticPaths() {
+  return leistungen.map((l, index) => ({ params: { slug: l.slug }, props: { index } }));
+}
+const { index } = Astro.props;
+const l = leistungen[index];
+const naechste = leistungen[(index + 1) % leistungen.length];
+const vorige = leistungen[(index + leistungen.length - 1) % leistungen.length];
+
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: l.titel,
+    description: l.seoBeschreibung,
+    provider: { '@id': new URL('/#unternehmen', Astro.site).href },
+    areaServed: site.region.map((ort) => ({ '@type': 'City', name: ort })),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Startseite', item: new URL('/', Astro.site).href },
+      { '@type': 'ListItem', position: 2, name: 'Leistungen', item: new URL('/leistungen/', Astro.site).href },
+      { '@type': 'ListItem', position: 3, name: l.titel },
+    ],
+  },
+];
+---
+<Seite titel={l.seoTitel} beschreibung={l.seoBeschreibung} schema={schema}>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen seitenkopf__raster">
+      <div>
+        <nav class="brotkrumen" aria-label="Sie sind hier">
+          <ol>
+            <li><a href="/">Startseite</a></li>
+            <li><a href="/leistungen/">Leistungen</a></li>
+            <li aria-current="page">{l.titel}</li>
+          </ol>
+        </nav>
+        <p class="marke">{gradbereich(index)} · {l.verb}</p>
+        <h1>{l.titel}</h1>
+        <p class="lead leise">{l.einleitung}</p>
+      </div>
+      <div class="seitenkopf__kreis">
+        <Kreis aktiv={l.slug} titel={`Der 360°-Kreis von HADIE – hervorgehoben: ${l.titel}`} />
+      </div>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="umfang">
+    <div class="rahmen">
+      <p class="marke">Was dazugehört</p>
+      <h2 id="umfang">Das übernehmen wir für Sie.</h2>
+      <ul class="umfang" style="margin-top:2.5rem">
+        {l.umfang.map((u) => (
+          <li>
+            <h3>{u.titel}</h3>
+            <p>{u.text}</p>
+          </li>
+        ))}
+      </ul>
+      {l.platzhalter && (
+        <div style="margin-top:2rem"><Platzhalter><p>{l.platzhalter}</p></Platzhalter></div>
+      )}
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="zusammenspiel">
+    <div class="rahmen">
+      <p class="marke">Im Zusammenspiel</p>
+      <h2 id="zusammenspiel" class="sr-only">Wie dieser Bereich mit den anderen zusammenhängt</h2>
+      <p class="zitatblock">{l.zusammenspiel}</p>
+      <nav class="weiter" aria-label="Weitere Leistungsbereiche" style="margin-top:3rem">
+        <a class="pfeil-link" href={`/leistungen/${naechste.slug}/`}>Weiter im Kreis: {naechste.titel}</a>
+        <a href="/leistungen/">Alle vier Bereiche ansehen</a>
+      </nav>
+    </div>
+  </section>
+
+  <Kontaktband titel={`${l.titel}: Sprechen wir darüber.`} />
+</Seite>

@@ -1,0 +1,80 @@
+---
+/**
+ * Der 360°-Kreis: vier Viertel rund um «Ihre Immobilie».
+ * Wird aus src/data/leistungen.ts erzeugt.
+ *   aktiv  – Slug des hervorgehobenen Viertels (Leistungsseiten)
+ *   gross  – große Variante mit langsam drehender Skala (Startseite)
+ */
+import { leistungen } from '../data/leistungen';
+
+interface Props {
+  aktiv?: string;
+  gross?: boolean;
+  titel?: string;
+}
+const { aktiv, gross = false, titel = 'Der 360°-Kreis von HADIE: vier Leistungsbereiche rund um Ihre Immobilie' } = Astro.props;
+
+const C = 250;
+const R_AUSSEN = 205;
+const R_INNEN = 128;
+const LUECKE = 1.6; // Grad Abstand zwischen den Vierteln
+const id = 'k' + Math.random().toString(36).slice(2, 8);
+
+// 0° liegt oben, Winkel laufen im Uhrzeigersinn.
+const p = (grad: number, r: number) => {
+  const a = (grad * Math.PI) / 180;
+  return `${(C + r * Math.sin(a)).toFixed(2)} ${(C - r * Math.cos(a)).toFixed(2)}`;
+};
+
+const segmente = leistungen.map((l, i) => {
+  const a0 = i * 90 + LUECKE;
+  const a1 = (i + 1) * 90 - LUECKE;
+  const flaeche = `M ${p(a0, R_AUSSEN)} A ${R_AUSSEN} ${R_AUSSEN} 0 0 1 ${p(a1, R_AUSSEN)} L ${p(a1, R_INNEN)} A ${R_INNEN} ${R_INNEN} 0 0 0 ${p(a0, R_INNEN)} Z`;
+  // Beschriftung: untere Hälfte läuft gegen den Uhrzeigersinn, damit sie lesbar bleibt.
+  const unten = i === 1 || i === 2;
+  const rt = unten ? 175 : 158;
+  const schrift = unten
+    ? `M ${p(a1, rt)} A ${rt} ${rt} 0 0 0 ${p(a0, rt)}`
+    : `M ${p(a0, rt)} A ${rt} ${rt} 0 0 1 ${p(a1, rt)}`;
+  return { ...l, flaeche, schrift, pfadId: `${id}-${i}` };
+});
+
+const ticks = Array.from({ length: 72 }, (_, i) => {
+  const g = i * 5;
+  const lang = g % 90 === 0 ? 14 : g % 45 === 0 ? 10 : 6;
+  return `M ${p(g, 218)} L ${p(g, 218 + lang)}`;
+}).join(' ');
+
+const gradmarken = [
+  { g: '0°', x: C, y: C - 244, anker: 'middle' },
+  { g: '90°', x: C + 240, y: C + 5, anker: 'start' },
+  { g: '180°', x: C, y: C + 256, anker: 'middle' },
+  { g: '270°', x: C - 240, y: C + 5, anker: 'end' },
+];
+---
+
+<svg class:list={['kreis', { 'kreis--gross': gross }]} viewBox="-30 -15 560 535" role="group" aria-label={titel}>
+  <path class="kreis__ticks" d={ticks} fill="none" stroke-width="1.5" aria-hidden="true"></path>
+  <g aria-hidden="true">
+    {gradmarken.map((m) => <text class="kreis__grad" x={m.x} y={m.y} text-anchor={m.anker}>{m.g}</text>)}
+  </g>
+
+  {
+    segmente.map((s) => (
+      <a class="kreis__segment" href={`/leistungen/${s.slug}/`} data-aktiv={s.slug === aktiv ? 'true' : undefined} aria-label={`${s.verb}: ${s.titel}`} aria-current={s.slug === aktiv ? 'page' : undefined}>
+        <path class="flaeche" d={s.flaeche} />
+        <path id={s.pfadId} d={s.schrift} fill="none" />
+        <text aria-hidden="true">
+          <textPath href={`#${s.pfadId}`} startOffset="50%" text-anchor="middle">{s.verb}</textPath>
+        </text>
+      </a>
+    ))
+  }
+
+  <g aria-hidden="true">
+    <circle class="kreis__mitte" cx={C} cy={C} r="112"></circle>
+    <path class="kreis__haus" d="M222 240 L250 214 L278 240 M229 235 V268 H271 V235 M244 268 V250 H256 V268"></path>
+    <text class="kreis__mittetext" x={C} y={C + 48} text-anchor="middle">Ihre Immobilie</text>
+    <text class="kreis__mittetext kreis__mittetext--klein" x={C} y={C + 68} text-anchor="middle">im Mittelpunkt</text>
+  </g>
+</svg>

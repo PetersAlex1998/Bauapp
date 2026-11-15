@@ -1,0 +1,115 @@
+---
+/**
+ * Kontaktformular.
+ * Versand an die in src/data/site.ts hinterlegte Adresse `formularEndpoint`.
+ * Ohne JavaScript wird das Formular klassisch abgeschickt; mit JavaScript
+ * bleibt der Besucher auf der Seite und erhält eine Rückmeldung.
+ */
+import { site } from '../data/site';
+import { leistungen } from '../data/leistungen';
+import Platzhalter from './Platzhalter.astro';
+const bereit = site.formularEndpoint !== '';
+---
+<form class="formular" id="anfrage" method="post" action={bereit ? site.formularEndpoint : undefined} data-bereit={String(bereit)} aria-labelledby="anfrage-titel">
+  <div>
+    <h2 id="anfrage-titel" style="font-size:clamp(1.5rem,3vw,2rem);margin-bottom:.3em">Ihre Anfrage</h2>
+    <p class="formular__hinweis">Pflichtfelder sind mit * gekennzeichnet.</p>
+  </div>
+
+  {!bereit && (
+    <Platzhalter>
+      <p><strong>Formularversand noch nicht eingerichtet.</strong> Es fehlt die Empfänger-Anbindung (siehe README, Abschnitt „Kontaktformular“). Bis dahin erreichen Sie uns telefonisch unter <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p>
+    </Platzhalter>
+  )}
+
+  <div class="formular__reihe">
+    <div class="feld">
+      <label for="f-name">Name *</label>
+      <input id="f-name" name="name" type="text" autocomplete="name" required />
+    </div>
+    <div class="feld">
+      <label for="f-telefon">Telefon</label>
+      <input id="f-telefon" name="telefon" type="tel" autocomplete="tel" />
+    </div>
+  </div>
+
+  <div class="formular__reihe">
+    <div class="feld">
+      <label for="f-email">E-Mail *</label>
+      <input id="f-email" name="email" type="email" autocomplete="email" required />
+    </div>
+    <div class="feld">
+      <label for="f-rolle">Ich bin …</label>
+      <select id="f-rolle" name="rolle">
+        <option value="">Bitte wählen</option>
+        <option>Eigentümer/in</option>
+        <option>Teil einer Eigentümergemeinschaft</option>
+        <option>Investor/in</option>
+        <option>Sonstiges</option>
+      </select>
+    </div>
+  </div>
+
+  <fieldset>
+    <legend>Worum geht es? <span class="leise" style="font-weight:400">(Mehrfachauswahl möglich)</span></legend>
+    <div class="auswahl">
+      {leistungen.map((l) => (
+        <label><input type="checkbox" name="bereich" value={l.titel} />{l.titel}</label>
+      ))}
+      <label><input type="checkbox" name="bereich" value="Alles – 360°" />Alles – 360°</label>
+    </div>
+  </fieldset>
+
+  <div class="feld">
+    <label for="f-nachricht">Ihre Nachricht *</label>
+    <textarea id="f-nachricht" name="nachricht" required aria-describedby="f-nachricht-hilfe"></textarea>
+    <small id="f-nachricht-hilfe">Hilfreich: Ort und Art der Immobilie, Anzahl der Einheiten.</small>
+  </div>
+
+  <div class="honig" aria-hidden="true">
+    <label for="f-website">Bitte leer lassen</label>
+    <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <p class="formular__hinweis">
+    Wir verwenden Ihre Angaben ausschließlich, um Ihre Anfrage zu bearbeiten.
+    Näheres in der <a href="/datenschutz/">Datenschutzerklärung</a>.
+  </p>
+
+  <div>
+    <button class="knopf knopf--voll" type="submit" disabled={!bereit}>Anfrage senden</button>
+  </div>
+  <p class="formular__status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  const formular = document.querySelector<HTMLFormElement>('form#anfrage');
+  const status = formular?.querySelector<HTMLElement>('.formular__status');
+  if (formular && status && formular.dataset.bereit === 'true') {
+    formular.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const daten = new FormData(formular);
+      if (daten.get('website')) return; // Spam-Falle
+      const knopf = formular.querySelector<HTMLButtonElement>('button[type=submit]')!;
+      knopf.disabled = true;
+      status.dataset.art = '';
+      status.textContent = 'Wird gesendet …';
+      try {
+        const antwort = await fetch(formular.action, {
+          method: 'POST',
+          body: daten,
+          headers: { Accept: 'application/json' },
+        });
+        if (!antwort.ok) throw new Error(String(antwort.status));
+        formular.reset();
+        status.dataset.art = 'ok';
+        status.textContent = 'Vielen Dank! Ihre Anfrage ist bei uns angekommen. Wir melden uns bei Ihnen.';
+      } catch {
+        status.dataset.art = 'fehler';
+        status.textContent = 'Das hat leider nicht geklappt. Bitte versuchen Sie es erneut oder rufen Sie uns an.';
+      } finally {
+        knopf.disabled = false;
+      }
+    });
+  }
+</script>

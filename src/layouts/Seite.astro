@@ -1,0 +1,72 @@
+---
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/fraunces/wght-italic.css';
+import '@fontsource-variable/instrument-sans';
+import '../styles/global.css';
+import { site } from '../data/site';
+import Kopf from '../components/Kopf.astro';
+import Fuss from '../components/Fuss.astro';
+
+interface Props {
+  titel: string;
+  beschreibung: string;
+  noindex?: boolean;
+  schema?: object[];
+}
+const { titel, beschreibung, noindex = false, schema = [] } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ganzerTitel = titel.includes(site.kurzname) ? titel : `${titel} | ${site.name}`;
+
+// Strukturierte Daten für Suchmaschinen (lokales Unternehmen)
+const unternehmen = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': new URL('/#unternehmen', Astro.site).href,
+  name: site.name,
+  description: `${site.claim} in ${site.regionText}: klassische Hausverwaltung, Service rund ums Objekt, Renovierung und Sanierung sowie Begleitung großer Projekte.`,
+  url: Astro.site?.href,
+  telephone: site.telefon.link,
+  ...(site.email ? { email: site.email } : {}),
+  foundingDate: String(site.gruendungsjahr),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.adresse.strasse,
+    postalCode: site.adresse.plz,
+    addressLocality: site.adresse.ort,
+    addressRegion: 'Nordrhein-Westfalen',
+    addressCountry: 'DE',
+  },
+  areaServed: site.region.map((ort) => ({ '@type': 'City', name: ort })),
+};
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{ganzerTitel}</title>
+    <meta name="description" content={beschreibung} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="theme-color" content="#15302a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={ganzerTitel} />
+    <meta property="og:description" content={beschreibung} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/og-bild.png', Astro.site).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="format-detection" content="telephone=no" />
+    {[unternehmen, ...schema].map((s) => <script type="application/ld+json" is:inline set:html={JSON.stringify(s)} />)}
+  </head>
+  <body>
+    <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+    <Kopf />
+    <main id="inhalt">
+      <slot />
+    </main>
+    <Fuss />
+  </body>
+</html>

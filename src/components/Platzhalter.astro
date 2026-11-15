@@ -1,0 +1,18 @@
+---
+/**
+ * Gut sichtbarer Hinweis auf noch fehlende Inhalte.
+ * Wird ausgeblendet, sobald in src/data/site.ts
+ * `platzhalterAnzeigen: false` gesetzt ist.
+ */
+import { site } from '../data/site';
+interface Props { art?: 'kasten' | 'bild' | 'inline' }
+const { art = 'kasten' } = Astro.props;
+---
+{site.platzhalterAnzeigen && (
+  art === 'inline'
+    ? <span class="platzhalter platzhalter--inline"><strong>Platzhalter:</strong> <slot /></span>
+    : <div class:list={['platzhalter', { 'platzhalter--bild': art === 'bild' }]}>
+        <span class="platzhalter__marke">Platzhalter</span>
+        <slot />
+      </div>
+)}

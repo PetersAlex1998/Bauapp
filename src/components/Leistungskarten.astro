@@ -1,0 +1,22 @@
+---
+import { leistungen, gradbereich } from '../data/leistungen';
+import Viertelzeichen from './Viertelzeichen.astro';
+interface Props { ebene?: 'h2' | 'h3' }
+const { ebene: H = 'h3' } = Astro.props;
+---
+<ul class="viertel">
+  {leistungen.map((l, i) => (
+    <li>
+      <article class="viertel__karte">
+        <div class="viertel__kopf">
+          <span class="viertel__grad">{gradbereich(i)}</span>
+          <Viertelzeichen index={i} />
+        </div>
+        <p class="viertel__verb">{l.verb}</p>
+        <H><a href={`/leistungen/${l.slug}/`}>{l.titel}</a></H>
+        <p>{l.kurz}</p>
+        <span class="viertel__mehr" aria-hidden="true">Mehr erfahren →</span>
+      </article>
+    </li>
+  ))}
+</ul>

@@ -1,0 +1,85 @@
+---
+import Seite from '../layouts/Seite.astro';
+import Kontaktband from '../components/Kontaktband.astro';
+import Platzhalter from '../components/Platzhalter.astro';
+import { site } from '../data/site';
+---
+<Seite
+  titel="Über uns: Hausverwaltung aus Bad Lippspringe seit 2015"
+  beschreibung="HADIE Immobilien wurde 2015 gegründet und betreut Immobilien in Bad Lippspringe, Paderborn und Umgebung – ganzheitlich, als ein Partner für alles rund um das Gebäude."
+>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke">Über uns</p>
+      <h1>Wir betrachten Ihre Immobilie als Ganzes.</h1>
+      <p class="lead leise">
+        {site.name} gibt es seit {site.gruendungsjahr}. Unser Büro liegt an der {site.adresse.strasse.replace(/\s\d+.*$/, '')}
+        in {site.adresse.ort} – mitten in der Region, in der wir arbeiten.
+      </p>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="haltung">
+    <div class="rahmen zweier">
+      <div>
+        <p class="marke">Unsere Haltung</p>
+        <h2 id="haltung">Warum 360°?</h2>
+        <p class="lead">
+          Weil ein Gebäude sich nicht in Zuständigkeiten aufteilen lässt.
+        </p>
+        <p class="leise">
+          Die Abrechnung hängt mit dem Zustand des Hauses zusammen, der Zustand mit der Pflege im
+          Alltag, und die Pflege entscheidet mit darüber, wann die nächste größere Maßnahme fällig
+          wird. Wer nur einen Ausschnitt sieht, übersieht die Zusammenhänge.
+        </p>
+        <p class="leise">
+          Deshalb bieten wir die klassische Hausverwaltung und alles, was eine Immobilie darüber
+          hinaus braucht, aus einer Hand an. Für Sie als Eigentümer heißt das: ein Partner, der
+          zuständig ist – für alles.
+        </p>
+      </div>
+      <Platzhalter art="bild">
+        <p><strong>Foto:</strong> Inhaber bzw. Team von HADIE Immobilien</p>
+      </Platzhalter>
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="versprechen">
+    <div class="rahmen">
+      <p class="marke">Worauf Sie sich verlassen können</p>
+      <h2 id="versprechen">Drei Dinge, an denen Sie uns messen dürfen.</h2>
+      <ul class="dreier" style="margin-top:2.5rem">
+        <li>
+          <h3>Wir denken mit</h3>
+          <p class="leise">Wir warten nicht, bis etwas kaputt ist. Wer das ganze Gebäude im Blick hat, sieht früher, was auf Sie zukommt.</p>
+        </li>
+        <li>
+          <h3>Wir sind zuständig</h3>
+          <p class="leise">Sie werden nicht weitergereicht. Was Ihre Immobilie betrifft, betrifft uns.</p>
+        </li>
+        <li>
+          <h3>Wir sind in der Nähe</h3>
+          <p class="leise">Unser Büro ist in {site.adresse.ort}. Ihre Immobilie ist für uns kein Aktenzeichen, sondern ein Haus, das wir kennen.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="menschen">
+    <div class="rahmen">
+      <p class="marke">Die Menschen hinter HADIE</p>
+      <h2 id="menschen">Ihre Ansprechpartner.</h2>
+      <div class="zweier" style="margin-top:2rem">
+        <Platzhalter>
+          <p><strong>Team:</strong> Namen, Funktionen und Fotos der Ansprechpartner – bitte von HADIE liefern.</p>
+          <p><strong>Geschichte:</strong> Zwei bis drei Sätze zur Gründung 2015 (wer hat gegründet, warum, was bedeutet der Name HADIE?).</p>
+        </Platzhalter>
+        <Platzhalter>
+          <p><strong>Qualifikationen und Mitgliedschaften:</strong> z. B. Ausbildungen, Verbandsmitgliedschaften, Versicherungen – nur tatsächlich vorhandene Nachweise eintragen.</p>
+        </Platzhalter>
+      </div>
+    </div>
+  </section>
+
+  <Kontaktband titel="Lernen wir uns kennen." text="Am besten im Gespräch. Rufen Sie an oder schreiben Sie uns – wir nehmen uns Zeit für Ihre Immobilie." />
+</Seite>

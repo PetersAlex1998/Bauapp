@@ -1,0 +1,56 @@
+/**
+ * ZENTRALE UNTERNEHMENSDATEN
+ * ---------------------------------------------------------------
+ * Alles, was hier steht, erscheint automatisch überall auf der
+ * Website (Kopfzeile, Fußzeile, Kontaktseite, Impressum,
+ * Suchmaschinen-Daten). Änderungen bitte nur hier vornehmen.
+ *
+ * Felder mit `null` sind noch offen. Solange sie leer sind, zeigt
+ * die Website an der Stelle einen gut sichtbaren Platzhalter.
+ */
+export const site = {
+  name: 'HADIE Immobilien',
+  kurzname: 'HADIE',
+  claim: '360° Hausverwaltung',
+  gruendungsjahr: 2015,
+
+  adresse: {
+    strasse: 'Detmolder Straße 142',
+    plz: '33175',
+    ort: 'Bad Lippspringe',
+  },
+
+  telefon: {
+    anzeige: '05252 22122',
+    link: '+49525222122', // internationale Schreibweise für den Anruf-Link
+  },
+
+  // OFFEN – bitte ergänzen:
+  email: null as string | null, // z. B. 'info@…'
+  erreichbarkeit: null as string | null, // z. B. 'Mo–Fr 8–17 Uhr'
+
+  // Orte für Texte und Suchmaschinen-Daten.
+  // «Bad Lippspringe» und «Paderborn» stammen aus dem Briefing,
+  // weitere Orte bitte nur eintragen, wenn HADIE dort wirklich tätig ist.
+  region: ['Bad Lippspringe', 'Paderborn'],
+  regionText: 'Bad Lippspringe, Paderborn und Umgebung',
+
+  /**
+   * Kontaktformular: Adresse des Dienstes, der die Anfragen per E-Mail
+   * zustellt (z. B. eigenes PHP-Skript beim Hoster, Formspree, Web3Forms).
+   * Solange leer, ist das Formular sichtbar, aber deaktiviert.
+   */
+  formularEndpoint: '' as string,
+
+  /**
+   * Platzhalter-Hinweise (gestrichelte Kästen) ein-/ausblenden.
+   * Vor dem Livegang: alle Platzhalter füllen, dann auf `false` stellen.
+   */
+  platzhalterAnzeigen: true,
+};
+
+export const navigation = [
+  { text: 'Leistungen', href: '/leistungen/' },
+  { text: 'Über uns', href: '/ueber-uns/' },
+  { text: 'Kontakt', href: '/kontakt/' },
+];

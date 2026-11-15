@@ -1,0 +1,202 @@
+---
+import Seite from '../layouts/Seite.astro';
+import Kreis from '../components/Kreis.astro';
+import Leistungskarten from '../components/Leistungskarten.astro';
+import Kontaktband from '../components/Kontaktband.astro';
+import Platzhalter from '../components/Platzhalter.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+---
+<Seite
+  titel="360° Hausverwaltung in Bad Lippspringe & Paderborn | HADIE Immobilien"
+  beschreibung="HADIE Immobilien: Hausverwaltung und alles, was Ihre Immobilie sonst noch braucht – vom Mülltonnendienst über Renovierung und Sanierung bis zum Großprojekt. Seit 2015 in Bad Lippspringe."
+>
+  <!-- HERO -->
+  <section class="hero dunkel">
+    <div class="rahmen hero__raster">
+      <div class="hero__text">
+        <h1>
+          <span class="hero__dach">360° Hausverwaltung in Bad Lippspringe und Umgebung</span>
+          Ein Partner für alles, was Ihre Immobilie <em>braucht.</em>
+        </h1>
+        <p class="lead leise">
+          HADIE Immobilien verwaltet Ihr Haus – und kümmert sich um alles Weitere:
+          vom Mülltonnendienst über die Renovierung bis zum Projekt, das das ganze Gebäude betrifft.
+          Sie haben einen Ansprechpartner. Wir haben das Ganze im Blick.
+        </p>
+        <div class="knopfreihe">
+          <a class="knopf knopf--voll" href={`tel:${site.telefon.link}`}><Icon name="telefon" />{site.telefon.anzeige}</a>
+          <a class="knopf knopf--linie" href="/kontakt/#anfrage">Anfrage schreiben</a>
+        </div>
+        <ul class="fakten">
+          <li>Seit {site.gruendungsjahr}</li>
+          <li>Vor Ort in Bad Lippspringe</li>
+          <li>Alles aus einer Hand</li>
+        </ul>
+      </div>
+      <div class="hero__kreis">
+        <Kreis gross />
+        <p class="kreis-hinweis leise" data-standard="Vier Bereiche, ein Partner – wählen Sie ein Viertel aus.">Vier Bereiche, ein Partner – wählen Sie ein Viertel aus.</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Zeigt beim Überfahren/Fokussieren eines Viertels dessen Namen unter dem Kreis an.
+    const hinweis = document.querySelector<HTMLElement>('.hero .kreis-hinweis');
+    if (hinweis) {
+      document.querySelectorAll<SVGAElement>('.hero a.kreis__segment').forEach((seg) => {
+        const zeigen = () => (hinweis.textContent = `${seg.getAttribute('aria-label')} →`);
+        const zurueck = () => (hinweis.textContent = hinweis.dataset.standard ?? '');
+        seg.addEventListener('mouseenter', zeigen);
+        seg.addEventListener('focus', zeigen);
+        seg.addEventListener('mouseleave', zurueck);
+        seg.addEventListener('blur', zurueck);
+      });
+    }
+  </script>
+
+  <!-- MEHR ALS HAUSVERWALTUNG -->
+  <section class="abschnitt" aria-labelledby="unterschied">
+    <div class="rahmen zweier">
+      <div>
+        <p class="marke">Der Unterschied</p>
+        <h2 id="unterschied">Mehr als eine Hausverwaltung.</h2>
+        <p class="lead">
+          Eine Immobilie braucht mehr als eine korrekte Abrechnung. Die Tonnen müssen an die Straße.
+          Eine Wohnung wird frei und muss renoviert werden. Und eines Tages steht ein Vorhaben an,
+          das das ganze Haus betrifft.
+        </p>
+        <p class="leise">
+          Meist bedeutet das: viele Firmen, viele Telefonnummern – und Sie mittendrin.
+          Bei HADIE bedeutet es: ein Anruf. Wir nennen das 360° Hausverwaltung, weil wir Ihre
+          Immobilie rundum betrachten und nicht nur den Teil, der in der Akte steht.
+        </p>
+      </div>
+      <div class="vergleich">
+        <div class="vergleich__karte">
+          <h3>Wie es oft läuft</h3>
+          <ul>
+            <li>Eine Verwaltung für die Abrechnung</li>
+            <li>Ein Dienstleister für den Alltag am Objekt</li>
+            <li>Handwerker für die Renovierung</li>
+            <li>Weitere Beteiligte für das große Projekt</li>
+          </ul>
+          <p class="vergleich__fazit">Sie halten alle Fäden zusammen.</p>
+        </div>
+        <div class="vergleich__karte vergleich__karte--hadie">
+          <h3>Mit HADIE</h3>
+          <ul>
+            <li>Ein Ansprechpartner für alles rund um die Immobilie</li>
+            <li>Jemand, der Ihr Gebäude kennt – nicht nur Ihre Unterlagen</li>
+            <li>Alltag, Bestand und Projekte greifen ineinander</li>
+          </ul>
+          <p class="vergleich__fazit">Sie entscheiden. Wir kümmern uns.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIE VIER VIERTEL -->
+  <section class="abschnitt hell" aria-labelledby="leistungen">
+    <div class="rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">4 × 90° = 360°</p>
+        <h2 id="leistungen">Der volle Kreis: vier Bereiche, ein Partner.</h2>
+        <p class="lead leise">
+          Vom täglichen Handgriff bis zum Vorhaben für das ganze Gebäude. Sie können mit einem
+          Bereich beginnen – oder uns gleich alles übergeben.
+        </p>
+      </div>
+      <Leistungskarten />
+    </div>
+  </section>
+
+  <!-- FÜR WEN -->
+  <section class="abschnitt" aria-labelledby="fuer-wen">
+    <div class="rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">Für wen wir arbeiten</p>
+        <h2 id="fuer-wen">Für alle, die Verantwortung für eine Immobilie tragen.</h2>
+      </div>
+      <ul class="dreier">
+        <li>
+          <h3>Eigentümer</h3>
+          <p class="leise">
+            Sie möchten, dass Ihre Immobilie läuft und ihren Wert behält – ohne sich selbst um
+            jede Kleinigkeit kümmern zu müssen. Sie rufen eine Nummer an, egal worum es geht.
+          </p>
+        </li>
+        <li>
+          <h3>Eigentümergemeinschaften</h3>
+          <p class="leise">
+            Sie brauchen eine Verwaltung, die Entscheidungen gut vorbereitet – und nach dem
+            Beschluss dafür sorgt, dass auch wirklich etwas passiert.
+          </p>
+        </li>
+        <li>
+          <h3>Investoren</h3>
+          <p class="leise">
+            Sie denken über das einzelne Jahr hinaus. Wir verbinden die laufende Verwaltung mit
+            Renovierung, Sanierung und Projekten, die Ihren Bestand weiterbringen.
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SO BEGINNT ES -->
+  <section class="abschnitt hell" aria-labelledby="ablauf">
+    <div class="rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">Der erste Schritt</p>
+        <h2 id="ablauf">So beginnt die Zusammenarbeit.</h2>
+      </div>
+      <ol class="dreier">
+        <li>
+          <span class="schritt-nr" aria-hidden="true">1</span>
+          <h3>Sie melden sich</h3>
+          <p class="leise">Per Telefon oder über das Formular. Sie erzählen, worum es geht – wir hören zu.</p>
+        </li>
+        <li>
+          <span class="schritt-nr" aria-hidden="true">2</span>
+          <h3>Wir lernen Ihre Immobilie kennen</h3>
+          <p class="leise">Wir schauen uns das Objekt und die Unterlagen an und klären, was es wirklich braucht.</p>
+        </li>
+        <li>
+          <span class="schritt-nr" aria-hidden="true">3</span>
+          <h3>Sie erhalten ein Angebot</h3>
+          <p class="leise">Passend zu Ihrer Immobilie: ein einzelner Bereich oder der volle Kreis.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- VOR ORT -->
+  <section class="abschnitt" aria-labelledby="vor-ort">
+    <div class="rahmen zweier">
+      <div>
+        <p class="marke">Wer wir sind</p>
+        <h2 id="vor-ort">Zuhause in Bad Lippspringe. Seit {site.gruendungsjahr}.</h2>
+        <p class="lead">
+          Wir sind dort, wo Ihre Immobilie steht: in {site.regionText}.
+        </p>
+        <p class="leise">
+          Kurze Wege sind für uns kein Zusatz, sondern Voraussetzung. Wer ein Gebäude rundum
+          betreuen will, muss es kennen – und schnell dort sein können.
+        </p>
+        <p><a class="pfeil-link" href="/ueber-uns/">Mehr über HADIE</a></p>
+      </div>
+      <div style="display:grid;gap:1rem">
+        <Platzhalter art="bild">
+          <p><strong>Foto:</strong> Team oder Inhaber vor dem Büro in Bad Lippspringe</p>
+        </Platzhalter>
+        <Platzhalter>
+          <p><strong>Referenzen und Stimmen von Eigentümern:</strong> Hier ist Platz für echte Referenzobjekte oder Kundenstimmen – bitte von HADIE liefern (mit Einverständnis der Genannten).</p>
+        </Platzhalter>
+      </div>
+    </div>
+  </section>
+
+  <Kontaktband />
+</Seite>
