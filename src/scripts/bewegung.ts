@@ -96,22 +96,26 @@ function start() {
     const schmal = window.matchMedia('(max-width: 52rem)').matches;
     const startForm = schmal ? 'inset(20% 9% 20% 9% round 20px)' : 'inset(17% 27% 17% 27% round 28px)';
 
+    // Desktop: Bühne bleibt stehen, während das Bild aufgeht.
+    // Smartphone: kein Anhalten – das Bild öffnet sich im normalen Scrollfluss.
     const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: buehne,
-        start: () => `top ${kopfHoehe()}px`,
-        end: '+=140%',
-        pin: true,
-        scrub: 1.2,
-        invalidateOnRefresh: true,
-      },
+      scrollTrigger: schmal
+        ? { trigger: buehne, start: 'top 92%', end: 'top 8%', scrub: 0.9, invalidateOnRefresh: true }
+        : {
+            trigger: buehne,
+            start: () => `top ${kopfHoehe()}px`,
+            end: '+=140%',
+            pin: true,
+            scrub: 1.2,
+            invalidateOnRefresh: true,
+          },
     });
     tl.fromTo(bild, { clipPath: startForm }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', duration: 1 }, 0)
       .fromTo(sektion.querySelector('.expand__inhalt'), { scale: 1.14 }, { scale: 1, ease: 'power2.inOut', duration: 1 }, 0)
       .fromTo(sektion.querySelector('.expand__vorspann'), { opacity: 1 }, { opacity: 0, duration: 0.25, ease: 'none' }, 0)
       .fromTo(sektion.querySelector('.expand__schleier'), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'none' }, 0.55)
       .fromTo(sektion.querySelectorAll('.expand__text > *'), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.08, ease: 'power2.out' }, 0.62)
-      .to({}, { duration: 0.25 }); // kurzer Halt am Ende
+      .to({}, { duration: schmal ? 0 : 0.25 }); // kurzer Halt am Ende (nur Desktop)
 
     // Ebenen im Bild verschieben sich gegeneinander
     sektion.querySelectorAll<SVGGElement>('.szene [data-tiefe]').forEach((ebene) => {

@@ -23,7 +23,7 @@ const unternehmen = {
   '@type': 'LocalBusiness',
   '@id': new URL('/#unternehmen', Astro.site).href,
   name: site.name,
-  description: `${site.claim} in ${site.regionText}: klassische Hausverwaltung, Service rund ums Objekt, Renovierung und Sanierung sowie Begleitung großer Projekte.`,
+  description: `${site.claim} im ${site.regionText}: klassische Hausverwaltung, Service rund ums Objekt, Renovierung und Sanierung sowie Begleitung großer Projekte.`,
   url: Astro.site?.href,
   telephone: site.telefon.link,
   ...(site.email ? { email: site.email } : {}),
@@ -36,7 +36,7 @@ const unternehmen = {
     addressRegion: 'Nordrhein-Westfalen',
     addressCountry: 'DE',
   },
-  areaServed: site.region.map((ort) => ({ '@type': 'City', name: ort })),
+  areaServed: site.region.map((ort) => ({ '@type': 'AdministrativeArea', name: ort })),
 };
 ---
 <!doctype html>

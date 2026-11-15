@@ -32,9 +32,9 @@ export const leistungen: Leistung[] = [
     verb: 'Verwalten',
     titel: 'Klassische Hausverwaltung',
     kurz: 'Das Fundament: Ihre Immobilie kaufmännisch, technisch und organisatorisch in Ordnung – für Eigentümergemeinschaften und Mietobjekte.',
-    seoTitel: 'Hausverwaltung in Bad Lippspringe & Paderborn',
+    seoTitel: 'Hausverwaltung im Kreis Paderborn',
     seoBeschreibung:
-      'Klassische Hausverwaltung für Eigentümer und Eigentümergemeinschaften in Bad Lippspringe, Paderborn und Umgebung – als Teil der 360° Hausverwaltung von HADIE Immobilien.',
+      'Klassische Hausverwaltung für Eigentümer und Eigentümergemeinschaften im Kreis Paderborn – als Teil der 360° Hausverwaltung von HADIE Immobilien.',
     einleitung:
       'Abrechnungen, die stimmen. Unterlagen, die vollständig sind. Ein Gebäude, bei dem jemand hinschaut. Die klassische Hausverwaltung ist das Fundament unserer Arbeit – und der Punkt, an dem bei HADIE alles Weitere zusammenläuft.',
     umfang: [
@@ -61,9 +61,9 @@ export const leistungen: Leistung[] = [
     verb: 'Betreuen',
     titel: 'Service rund ums Objekt',
     kurz: 'Der Alltag: Dienstleistungen wie der Mülltonnendienst, die niemandem auffallen – solange sie zuverlässig erledigt werden.',
-    seoTitel: 'Objektservice & Mülltonnendienst in Bad Lippspringe',
+    seoTitel: 'Objektservice & Mülltonnendienst im Kreis Paderborn',
     seoBeschreibung:
-      'Alltägliche Dienstleistungen rund um Ihre Immobilie, etwa der Mülltonnendienst – direkt von Ihrer Hausverwaltung HADIE Immobilien in Bad Lippspringe und Umgebung.',
+      'Alltägliche Dienstleistungen rund um Ihre Immobilie, etwa der Mülltonnendienst – direkt von Ihrer Hausverwaltung HADIE Immobilien im Kreis Paderborn.',
     einleitung:
       'Eine Immobilie zeigt im Alltag, wie gut sie betreut wird. Stehen die Tonnen rechtzeitig an der Straße? Kümmert sich jemand, bevor aus einer Kleinigkeit ein Ärgernis wird? Genau diese Aufgaben übernehmen wir gleich mit.',
     umfang: [
@@ -92,7 +92,7 @@ export const leistungen: Leistung[] = [
     kurz: 'Der Bestand: Wohnungen und Gebäudeteile wieder in einen Zustand bringen, der sich gut vermietet und seinen Wert behält.',
     seoTitel: 'Renovierung & Sanierung von Beständen – Raum Paderborn',
     seoBeschreibung:
-      'Renovierung und Sanierung von Wohnungen und Beständen in Bad Lippspringe, Paderborn und Umgebung – organisiert von Ihrer Hausverwaltung HADIE Immobilien.',
+      'Renovierung und Sanierung von Wohnungen und Beständen im Kreis Paderborn – organisiert von Ihrer Hausverwaltung HADIE Immobilien.',
     einleitung:
       'Irgendwann reicht Instandhalten nicht mehr. Eine Wohnung wird frei und braucht mehr als frische Farbe, ein Bestand ist in die Jahre gekommen. Wir kümmern uns um Renovierung und Sanierung – damit Sie nicht zum Bauleiter werden müssen.',
     umfang: [
@@ -121,7 +121,7 @@ export const leistungen: Leistung[] = [
     kurz: 'Das Ganze: Vorhaben, die das gesamte Gebäude betreffen, von der ersten Überlegung bis zum Abschluss an Ihrer Seite.',
     seoTitel: 'Projektbegleitung für Gebäude & Eigentümergemeinschaften',
     seoBeschreibung:
-      'Begleitung großer Projekte am ganzen Gebäude für Eigentümer, Eigentümergemeinschaften und Investoren in Bad Lippspringe, Paderborn und Umgebung – HADIE Immobilien.',
+      'Begleitung großer Projekte am ganzen Gebäude für Eigentümer, Eigentümergemeinschaften und Investoren im Kreis Paderborn – HADIE Immobilien.',
     einleitung:
       'Manche Vorhaben betreffen nicht eine Wohnung, sondern das ganze Haus. Sie kosten viel, dauern lange und verlangen viele Entscheidungen. Wir begleiten solche Projekte – und sorgen dafür, dass Sie dabei den Überblick behalten.',
     umfang: [

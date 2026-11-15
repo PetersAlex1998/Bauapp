@@ -21,7 +21,7 @@ const schema = [
     name: l.titel,
     description: l.seoBeschreibung,
     provider: { '@id': new URL('/#unternehmen', Astro.site).href },
-    areaServed: site.region.map((ort) => ({ '@type': 'City', name: ort })),
+    areaServed: site.region.map((ort) => ({ '@type': 'AdministrativeArea', name: ort })),
   },
   {
     '@context': 'https://schema.org',

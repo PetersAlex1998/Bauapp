@@ -16,7 +16,9 @@ const pfad = Astro.url.pathname;
       </span>
     </a>
 
-    <button class="menue-knopf" type="button" aria-expanded="false" aria-controls="hauptnavigation">Menü</button>
+    <button class="menue-knopf" type="button" aria-expanded="false" aria-controls="hauptnavigation" aria-label="Menü öffnen">
+      <span class="menue-knopf__striche" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
 
     <nav class="nav" id="hauptnavigation" aria-label="Hauptnavigation">
       {navigation.map((n) => (
@@ -33,7 +35,7 @@ const pfad = Astro.url.pathname;
   if (knopf && nav) {
     const setze = (offen: boolean) => {
       knopf.setAttribute('aria-expanded', String(offen));
-      knopf.textContent = offen ? 'Schließen' : 'Menü';
+      knopf.setAttribute('aria-label', offen ? 'Menü schließen' : 'Menü öffnen');
       nav.dataset.offen = String(offen);
     };
     knopf.addEventListener('click', () => setze(knopf.getAttribute('aria-expanded') !== 'true'));

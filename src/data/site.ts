@@ -30,10 +30,10 @@ export const site = {
   erreichbarkeit: null as string | null, // z. B. 'Mo–Fr 8–17 Uhr'
 
   // Orte für Texte und Suchmaschinen-Daten.
-  // «Bad Lippspringe» und «Paderborn» stammen aus dem Briefing,
-  // weitere Orte bitte nur eintragen, wenn HADIE dort wirklich tätig ist.
-  region: ['Bad Lippspringe', 'Paderborn'],
-  regionText: 'Bad Lippspringe, Paderborn und Umgebung',
+  // Das Tätigkeitsgebiet (Kreis Paderborn) steht so in allen Texten und Suchmaschinen-Daten.
+  // Die Büroadresse in Bad Lippspringe bleibt davon unberührt (Kontakt, Impressum, Fußzeile).
+  region: ['Kreis Paderborn'],
+  regionText: 'Kreis Paderborn',
 
   /**
    * Kontaktformular: Adresse des Dienstes, der die Anfragen per E-Mail
@@ -44,7 +44,7 @@ export const site = {
 
   /**
    * Fotos. Datei in den Ordner `public/bilder/` legen und hier eintragen,
-   * z. B. { src: '/bilder/objekt.jpg', alt: 'Mehrfamilienhaus in Bad Lippspringe' }.
+   * z. B. { src: '/bilder/objekt.jpg', alt: 'Mehrfamilienhaus im Kreis Paderborn' }.
    * Solange `null`, zeigt die Startseite eine gezeichnete Morgenszene.
    */
   bilder: {

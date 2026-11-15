@@ -372,16 +372,39 @@ a {
 .menue-knopf {
   display: none;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 2.75rem;
-  padding: 0.5rem 1rem;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
   background: none;
   color: inherit;
-  border: 1.5px solid var(--linie-hell);
-  border-radius: 999px;
-  font: inherit;
-  font-weight: 600;
+  border: 0;
+  border-radius: 50%;
   cursor: pointer;
+}
+/* Drei Striche, die sich beim Öffnen zum Kreuz drehen */
+.menue-knopf__striche {
+  display: grid;
+  gap: 0.36rem;
+  width: 1.65rem;
+}
+.menue-knopf__striche span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s;
+}
+.menue-knopf[aria-expanded='true'] .menue-knopf__striche span:nth-child(1) {
+  transform: translateY(0.52rem) rotate(45deg);
+}
+.menue-knopf[aria-expanded='true'] .menue-knopf__striche span:nth-child(2) {
+  opacity: 0;
+}
+.menue-knopf[aria-expanded='true'] .menue-knopf__striche span:nth-child(3) {
+  transform: translateY(-0.52rem) rotate(-45deg);
 }
 
 @media (max-width: 52rem) {
