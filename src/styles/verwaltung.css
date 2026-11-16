@@ -1303,3 +1303,26 @@ a.vw-kennzahl:hover {
     justify-content: flex-start;
   }
 }
+
+/* ---------- Speicherstatus, Zugänge ---------- */
+.vw-sicherung {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+.vw-sicherung[data-zustand='fehler'] {
+  color: #ffb4a5;
+  font-weight: 600;
+  opacity: 1;
+}
+.vw-sicherung[data-zustand='demo'] {
+  color: #ffd98a;
+}
+@media (max-width: 62rem) {
+  .vw-sicherung {
+    display: none;
+  }
+}
+.login__modus a {
+  font-weight: 600;
+}

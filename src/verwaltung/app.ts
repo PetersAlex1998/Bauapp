@@ -5,7 +5,8 @@
  * Funktion, die fertige Elemente zurückgibt. Listen und Formulare
  * entstehen aus dem Datenmodell (schema.ts).
  */
-import { alle, beiAenderung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
+import { modus } from './cloud';
+import { alle, beiAenderung, beiSicherung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
 import { ansichtBeschreibung, ansichtId, ansichtWahl, arbeitUebergeben, ds, ich, objektIdVon, offeneArbeit, setzeAnsicht, sichtbar, sichtbareObjektIds, standardZustaendig, unverteiltZuweisen } from './ansicht';
 import {
@@ -568,8 +569,11 @@ function daten(): HTMLElement {
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Daten & Sicherung')),
     h('section', { class: 'vw-karte vw-text' },
       h('h2', {}, 'Wo liegen die Daten?'),
-      h('p', {}, 'In dieser Ausbaustufe werden alle Eingaben ', h('strong', {}, 'nur im Browser dieses Geräts'), ' gespeichert. Sie verlassen das Gerät nicht, sind aber auch auf keinem anderen Gerät sichtbar und gehen verloren, wenn die Browserdaten gelöscht werden.'),
-      h('p', {}, h('strong', {}, 'Sichern Sie deshalb regelmäßig.'), ` Aktuell sind ${anzahl} Einträge gespeichert.`),
+      modus() === 'server'
+        ? [h('p', {}, 'Die Daten liegen in der ', h('strong', {}, 'Datenbank auf Ihrem Webspace'), '. Jede Änderung wird sofort dorthin gespeichert; angemeldete Kolleginnen und Kollegen sehen sie nach kurzer Zeit. Der Browser hält die Daten nur im Arbeitsspeicher.'),
+           h('p', {}, h('strong', {}, 'Sicherung:'), ` Zusätzlich zur Datensicherung Ihres Hosters können Sie hier jederzeit eine Kopie herunterladen. Aktuell sind ${anzahl} Einträge gespeichert.`)]
+        : [h('p', {}, 'Dies ist der ', h('strong', {}, 'Demo-Modus'), ': Alle Eingaben werden ', h('strong', {}, 'nur im Browser dieses Geräts'), ' gespeichert, sind auf keinem anderen Gerät sichtbar und gehen verloren, wenn die Browserdaten gelöscht werden.'),
+           h('p', {}, h('strong', {}, 'Sichern Sie deshalb regelmäßig.'), ` Aktuell sind ${anzahl} Einträge gespeichert.`)],
       h('div', { class: 'vw-reihe' },
         h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => {
           const a = h('a', { href: URL.createObjectURL(new Blob([exportiere()], { type: 'application/json' })), download: `hadie-verwaltung-${heute()}.json` });
@@ -593,7 +597,7 @@ const NAV: { titel: string; punkte: [string, string][] }[] = [
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
   { titel: 'Abrechnung', punkte: [['Eigentümerabrechnung', '#/abrechnung'], ['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
-  { titel: 'Stammdaten', punkte: [['Firmen & Handwerker', '#/liste/firmen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
+  { titel: 'Stammdaten', punkte: [['Firmen & Handwerker', '#/liste/firmen'], ['Absender & Bank', '#/liste/absender'], ['Zugänge', '#/konten'], ['Daten & Sicherung', '#/daten']] },
 ];
 
 let buehne: HTMLElement;
@@ -672,6 +676,11 @@ function suche(feld: HTMLInputElement, ausgabe: HTMLElement) {
 
 export function starte(wurzel: HTMLElement, nutzer: string, abmelden: () => void) {
   buehne = h('main', { class: 'vw-inhalt', id: 'inhalt' });
+  const sicherung = h('span', { class: 'vw-sicherung', role: 'status', 'aria-live': 'polite' });
+  beiSicherung((s, text) => {
+    sicherung.dataset.zustand = modus() === 'server' ? s : 'demo';
+    sicherung.textContent = modus() !== 'server' ? 'Demo · nur in diesem Browser' : s === 'speichert' ? 'Speichert …' : s === 'fehler' ? `⚠ ${text ?? 'Nicht gespeichert'}` : '● Gespeichert';
+  });
   const ergebnis = h('div', { class: 'vw-suchergebnis', hidden: true });
   const suchfeld = h('input', { type: 'search', placeholder: 'Suchen …', 'aria-label': 'Alles durchsuchen', oninput: () => suche(suchfeld, ergebnis) }) as HTMLInputElement;
   navEl = h('nav', { class: 'vw-nav', id: 'vw-nav', 'aria-label': 'Verwaltung' },
@@ -687,6 +696,7 @@ export function starte(wurzel: HTMLElement, nutzer: string, abmelden: () => void
       h('a', { class: 'vw-logo', href: '#/' }, h('strong', {}, 'HaDie'), h('span', {}, 'Verwaltung')),
       h('div', { class: 'vw-suchfeld' }, suchfeld, ergebnis),
       neueAnsichtWahl('vw-ansicht'),
+      sicherung,
       h('span', { class: 'vw-nutzer' }, nutzer),
       h('button', { class: 'vw-knopf', onclick: abmelden }, 'Abmelden')),
     h('div', { class: 'vw-rumpf' }, navEl, buehne));

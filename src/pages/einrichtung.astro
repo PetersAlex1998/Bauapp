@@ -1,0 +1,72 @@
+---
+/**
+ * Ersteinrichtung des Verwaltungs-Zugangs (einmalig).
+ * Nicht verlinkt. Funktioniert nur, solange es noch keinen Verwaltungs-Zugang gibt
+ * und in api/config.php ein Einrichtungscode hinterlegt ist.
+ */
+import Seite from '../layouts/Seite.astro';
+import { site } from '../data/site';
+---
+<Seite titel="Einrichtung" beschreibung={`Einrichtung des Verwaltungs-Zugangs von ${site.name}.`} noindex>
+  <section class="seitenkopf dunkel login">
+    <div class="rahmen login__rahmen">
+      <div>
+        <p class="marke">Einmalig</p>
+        <h1>Verwaltung einrichten</h1>
+        <p class="lead leise">Legen Sie hier den ersten Zugang der Verwaltung an. Den Einrichtungscode haben Sie bei der Veröffentlichung selbst festgelegt. Weitere Zugänge richten Sie danach im Verwaltertool ein.</p>
+      </div>
+      <form class="formular login__formular" id="einrichtung" novalidate>
+        <p class="formular__hinweis" id="e-hinweis" hidden></p>
+        <div class="feld">
+          <label for="e-code">Einrichtungscode</label>
+          <input id="e-code" name="code" type="password" autocomplete="off" required />
+        </div>
+        <div class="feld">
+          <label for="e-nr">Ihre Nummer</label>
+          <input id="e-nr" name="nummer" type="text" autocomplete="username" autocapitalize="characters" required aria-describedby="e-nr-hilfe" value="V-" />
+          <small id="e-nr-hilfe">Beginnt mit „V-“, z. B. V-123456789.</small>
+        </div>
+        <div class="feld">
+          <label for="e-pw">Passwort</label>
+          <input id="e-pw" name="passwort" type="password" autocomplete="new-password" minlength="10" required aria-describedby="e-pw-hilfe" />
+          <small id="e-pw-hilfe">Mindestens 10 Zeichen. Wählen Sie etwas, das nirgends sonst verwendet wird.</small>
+        </div>
+        <div class="feld">
+          <label for="e-pw2">Passwort wiederholen</label>
+          <input id="e-pw2" name="passwort2" type="password" autocomplete="new-password" required />
+        </div>
+        <p class="formular__status" role="alert" data-art="fehler"></p>
+        <div><button class="knopf knopf--voll" type="submit">Zugang einrichten</button></div>
+      </form>
+    </div>
+  </section>
+</Seite>
+
+<script>
+  import { api, serverStatus } from '../verwaltung/cloud';
+  const formular = document.querySelector<HTMLFormElement>('#einrichtung');
+  if (formular) {
+    const status = formular.querySelector<HTMLElement>('.formular__status')!;
+    const hinweis = formular.querySelector<HTMLElement>('#e-hinweis')!;
+    const knopf = formular.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const zeige = (t: string, art = 'fehler') => { status.textContent = t; status.dataset.art = art; };
+    (async () => {
+      const s = await serverStatus();
+      const sperre = s.art !== 'bereit' ? 'Hier läuft kein eingerichteter Server. Die Einrichtung ist nur auf dem Webspace möglich.' : s.eingerichtet ? 'Die Einrichtung ist bereits erfolgt. Bitte melden Sie sich an.' : '';
+      if (sperre) { knopf.disabled = true; hinweis.textContent = sperre; hinweis.hidden = false; }
+    })();
+    formular.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(formular);
+      if (d.get('passwort') !== d.get('passwort2')) return zeige('Die beiden Passwörter sind nicht gleich.');
+      if (String(d.get('passwort')).length < 10) return zeige('Das Passwort braucht mindestens 10 Zeichen.');
+      knopf.disabled = true;
+      zeige('Wird eingerichtet …', 'ok');
+      const a = await api('einrichten', { code: d.get('code'), nummer: d.get('nummer'), passwort: d.get('passwort') });
+      knopf.disabled = false;
+      if (a.json?.ok) { location.assign('/kundenlogin/?eingerichtet=1'); return; }
+      const g = a.json?.grund;
+      zeige(g === 'code' ? 'Der Einrichtungscode stimmt nicht.' : g === 'nummer' ? 'Die Nummer muss mit „V-“ beginnen, danach 3 bis 25 Ziffern oder Buchstaben.' : g === 'passwort' ? 'Das Passwort braucht mindestens 10 Zeichen.' : a.json?.fehler || 'Die Einrichtung ist gerade nicht möglich.');
+    });
+  }
+</script>

@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 // PLATZHALTER: Hier die endgültige Domain eintragen (wichtig für Sitemap,
 // Canonical-Links und die Vorschau in Suchmaschinen).
 // Bei Netlify wird automatisch die dort eingestellte Adresse verwendet.
-const DOMAIN = process.env.URL || 'https://www.hadie-immobilien.example';
+const DOMAIN = process.env.SITE_URL || process.env.URL || 'https://www.hadie-immobilien.example';
 
 export default defineConfig({
   site: DOMAIN,
@@ -14,7 +14,7 @@ export default defineConfig({
   vite: { build: { assetsInlineLimit: 0 } },
   integrations: [
     sitemap({
-      filter: (page) => !/\/(impressum|datenschutz|404|kundenlogin|kundenbereich|verwaltung)\/?$/.test(page),
+      filter: (page) => !/\/(impressum|datenschutz|404|kundenlogin|kundenbereich|verwaltung|einrichtung)\/?$/.test(page),
     }),
   ],
 });

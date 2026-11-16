@@ -150,3 +150,31 @@ bleibt das Formular sichtbar, aber deaktiviert. Der gewählte Dienst gehört in 
 
 Wird später etwas davon geändert (Statistik, Kartenanzeige, Bewertungs-Widget), müssen
 Datenschutzerklärung und ggf. Einwilligung angepasst werden.
+
+
+## Auf STRATO veröffentlichen (automatisch)
+
+Die Seite ist statisch (Astro). Zusätzlich liegt in `public/api/` eine kleine PHP-Schnittstelle (PHP 8 + MySQL/MariaDB), die Logins und die Daten des Verwaltertools speichert. Tabellen legt sie beim ersten Aufruf selbst an.
+
+**Einmalig bei STRATO**
+1. Domain dem Webspace/Paket zuordnen, HTTPS (SSL) aktivieren, PHP 8 einstellen.
+2. Datenbank anlegen (Kundenservicebereich → Datenbanken). Notieren: Host, Datenbankname, Benutzer, Passwort.
+3. SFTP/FTP-Zugang notieren (Host, Benutzer, Passwort, Zielordner der Domain).
+
+**Einmalig bei GitHub** (Settings → Secrets and variables → Actions → New repository secret) – niemals in den Chat oder ins Repo:
+
+| Secret | Inhalt |
+|---|---|
+| `SITE_URL` | z. B. `https://www.ihre-domain.de` |
+| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | Zugang der STRATO-Datenbank |
+| `DB_TYP` | optional, Standard `mysql` |
+| `EINRICHTUNGSCODE` | selbst gewählter langer Zufallscode (nur für die Ersteinrichtung) |
+| `FTP_HOST`, `FTP_USER`, `FTP_PASS` | STRATO-Zugang |
+| `FTP_VERZEICHNIS` | Zielordner der Domain, z. B. `/` oder `/ihre-domain` |
+| `FTP_PROTOKOLL` | `sftp` (Standard) oder `ftp` (FTP mit TLS) |
+
+**Danach läuft alles automatisch:** Jeder Push auf `main` baut die Seite, erzeugt `api/config.php` aus den Secrets, lädt per SFTP/FTPS hoch und prüft Seite und Datenbank (Workflow `.github/workflows/strato.yml`).
+
+**Erster Start:** `https://ihre-domain.de/einrichtung/` öffnen → Einrichtungscode, Verwaltungs-Nummer (`V-…`) und Passwort wählen. Weitere Mitarbeiter und Kunden legen Sie im Tool unter *Stammdaten → Zugänge* an. Danach den Secret `EINRICHTUNGSCODE` löschen oder ändern.
+
+Ohne `/api` (z. B. Netlify-Vorschau) läuft das Tool im Demo-Modus; Daten bleiben dann nur im Browser.

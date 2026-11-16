@@ -2,3 +2,8 @@ node_modules/
 dist/
 .astro/
 .DS_Store
+
+# Konfiguration mit Zugangsdaten niemals einchecken
+public/api/config.php
+dist/api/config.php
+*.sqlite

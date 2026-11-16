@@ -26,6 +26,7 @@ const zugaenge = [
           <label for="l-pw">Passwort</label>
           <input id="l-pw" name="passwort" type="password" autocomplete="current-password" required />
         </div>
+        <p class="formular__hinweis login__modus" id="modus-hinweis" hidden></p>
         <p class="formular__status" role="alert" data-art="fehler"></p>
         <div><button class="knopf knopf--voll" type="submit">Anmelden</button></div>
         <p class="formular__hinweis">Zugangsdaten vergessen? Rufen Sie uns an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></p>
@@ -39,29 +40,78 @@ const zugaenge = [
 </Seite>
 
 <script>
-  // Zwei Nutzerarten: «V-…» = Verwaltung → Verwaltertool, sonst Kunde → Kundenbereich.
+  // Mit Server (eigener Webspace): echte Anmeldung. Ohne Server (Vorschau): Demo nur im Browser.
+  // «V-…» = Verwaltung → Verwaltertool, sonst Kunde → Kundenbereich.
+  import { api, serverStatus } from '../verwaltung/cloud';
   const ZIEL = { verwaltung: ['hadie-verwaltung', '/verwaltung/'], kunde: ['hadie-kunde', '/kundenbereich/'] } as const;
   const formular = document.querySelector<HTMLFormElement>('#login');
   if (formular) {
-    if (sessionStorage.getItem('hadie-verwaltung')) location.replace('/verwaltung/');
-    else if (sessionStorage.getItem('hadie-kunde')) location.replace('/kundenbereich/');
-    const zugaenge: { nr: string; pw: string; rolle: keyof typeof ZIEL }[] = JSON.parse(formular.dataset.zugaenge || '[]');
     const status = formular.querySelector<HTMLElement>('.formular__status')!;
-    formular.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const daten = new FormData(formular);
-      const nr = String(daten.get('kundennummer') ?? '').replace(/\s/g, '').toUpperCase();
-      const pw = String(daten.get('passwort') ?? '');
-      const treffer = zugaenge.find((z) => z.nr.toUpperCase() === nr && z.pw === pw);
-      if (treffer) {
-        const [schluessel, ziel] = ZIEL[treffer.rolle];
-        sessionStorage.setItem(schluessel, treffer.nr);
-        location.assign(ziel);
+    const hinweis = formular.querySelector<HTMLElement>('#modus-hinweis')!;
+    const knopf = formular.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const zeige = (text: string, art = 'fehler') => { status.textContent = text; status.dataset.art = art; };
+    const zeigeHinweis = (html: string) => { hinweis.innerHTML = html; hinweis.hidden = false; };
+    if (new URLSearchParams(location.search).has('eingerichtet')) zeige('Die Einrichtung ist abgeschlossen. Bitte melden Sie sich jetzt an.', 'ok');
+
+    (async () => {
+      const server = await serverStatus();
+      const demoZugaenge: { nr: string; pw: string; rolle: keyof typeof ZIEL }[] = JSON.parse(formular.dataset.zugaenge || '[]');
+
+      if (server.art === 'bereit') {
+        // Besteht schon eine gültige Sitzung?
+        if (sessionStorage.getItem('hadie-modus') === 'server') {
+          const ich = await api('ich');
+          if (ich.json?.ok) { location.replace(ich.json.rolle === 'verwaltung' ? '/verwaltung/' : '/kundenbereich/'); return; }
+          ['hadie-verwaltung', 'hadie-kunde', 'hadie-modus'].forEach((k) => sessionStorage.removeItem(k));
+        }
+        if (!server.eingerichtet) zeigeHinweis('Der Zugang der Verwaltung ist noch nicht eingerichtet. <a href="/einrichtung/">Jetzt einrichten</a>');
+        formular.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const daten = new FormData(formular);
+          knopf.disabled = true;
+          zeige('Wird geprüft …', 'ok');
+          const a = await api('anmelden', { nummer: String(daten.get('kundennummer') ?? ''), passwort: String(daten.get('passwort') ?? '') });
+          knopf.disabled = false;
+          if (a.json?.ok) {
+            sessionStorage.setItem('hadie-modus', 'server');
+            sessionStorage.setItem(ZIEL[a.json.rolle as keyof typeof ZIEL][0], a.json.nummer);
+            location.assign(ZIEL[a.json.rolle as keyof typeof ZIEL][1]);
+          } else if (a.netz) zeige('Keine Verbindung zum Server. Bitte prüfen Sie Ihre Internetverbindung.');
+          else if (a.json?.grund === 'gesperrt') zeige('Zu viele Fehlversuche. Bitte warten Sie 15 Minuten oder rufen Sie uns an.');
+          else if (a.json?.grund === 'ungueltig') {
+            zeige('Nummer oder Passwort stimmen nicht. Bitte prüfen Sie Ihre Eingabe.');
+            formular.querySelector<HTMLInputElement>('#l-pw')!.value = '';
+            formular.querySelector<HTMLInputElement>('#l-nr')!.focus();
+          } else zeige(a.json?.fehler || 'Die Anmeldung ist gerade nicht möglich. Bitte versuchen Sie es später erneut.');
+        });
+      } else if (server.art === 'kein-server' || server.art === 'netzfehler') {
+        // Demo-Modus: keine echten Daten, alles bleibt in diesem Browser.
+        if (server.art === 'netzfehler') zeigeHinweis('Keine Verbindung zum Server. Es gilt der Demo-Modus.');
+        else zeigeHinweis('<strong>Demo-Modus:</strong> Unter dieser Adresse läuft kein Server. Alles bleibt nur in Ihrem Browser, es gibt keine echten Daten.');
+        if (sessionStorage.getItem('hadie-verwaltung')) { location.replace('/verwaltung/'); return; }
+        if (sessionStorage.getItem('hadie-kunde')) { location.replace('/kundenbereich/'); return; }
+        formular.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const daten = new FormData(formular);
+          const nr = String(daten.get('kundennummer') ?? '').replace(/\s/g, '').toUpperCase();
+          const pw = String(daten.get('passwort') ?? '');
+          const treffer = demoZugaenge.find((z) => z.nr.toUpperCase() === nr && z.pw === pw);
+          if (treffer) {
+            sessionStorage.setItem('hadie-modus', 'demo');
+            sessionStorage.setItem(ZIEL[treffer.rolle][0], treffer.nr);
+            location.assign(ZIEL[treffer.rolle][1]);
+          } else {
+            zeige('Nummer oder Passwort stimmen nicht. Bitte prüfen Sie Ihre Eingabe.');
+            formular.querySelector<HTMLInputElement>('#l-pw')!.value = '';
+            formular.querySelector<HTMLInputElement>('#l-nr')!.focus();
+          }
+        });
       } else {
-        status.textContent = 'Nummer oder Passwort stimmen nicht. Bitte prüfen Sie Ihre Eingabe.';
-        formular.querySelector<HTMLInputElement>('#l-pw')!.value = '';
-        formular.querySelector<HTMLInputElement>('#l-nr')!.focus();
+        knopf.disabled = true;
+        zeigeHinweis(server.art === 'nicht-konfiguriert'
+          ? '<strong>Der Server ist noch nicht fertig eingerichtet.</strong> Die Datei <code>api/config.php</code> fehlt. Bitte prüfen Sie die Veröffentlichung.'
+          : '<strong>Die Datenbank ist nicht erreichbar.</strong> Bitte prüfen Sie die Zugangsdaten der Datenbank in <code>api/config.php</code>.');
       }
-    });
+    })();
   }
 </script>

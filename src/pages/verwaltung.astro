@@ -33,15 +33,31 @@ import { site } from '../data/site';
       import '../verwaltung/ansichten4';
       import '../verwaltung/ansichten5';
       import '../verwaltung/ansichten6';
-      const SCHLUESSEL = 'hadie-verwaltung';
-      const nutzer = sessionStorage.getItem(SCHLUESSEL);
+      import '../verwaltung/ansichten7';
+      import { api, abmelden, modus } from '../verwaltung/cloud';
+      import { ladeVomServer } from '../verwaltung/speicher';
+
       const wurzel = document.getElementById('verwaltung')!;
-      if (!nutzer) location.replace('/kundenlogin/');
-      else
-        starte(wurzel, nutzer, () => {
-          sessionStorage.removeItem(SCHLUESSEL);
-          location.assign('/kundenlogin/');
-        });
+      const nutzer = sessionStorage.getItem('hadie-verwaltung');
+      const zumLogin = () => location.replace('/kundenlogin/');
+      const raus = async () => { await abmelden(); location.assign('/kundenlogin/'); };
+      const meldung = (text: string) => { wurzel.innerHTML = ''; const p = document.createElement('p'); p.style.cssText = 'padding:2rem;max-width:40rem'; p.textContent = text; wurzel.append(p); };
+
+      (async () => {
+        if (!nutzer) return zumLogin();
+        if (modus() === 'server') {
+          meldung('Daten werden geladen …');
+          const ich = await api('ich');
+          if (ich.status === 401 || !ich.json?.ok) { await abmelden(); return zumLogin(); }
+          if (ich.json.rolle !== 'verwaltung') { location.replace('/kundenbereich/'); return; }
+          try {
+            if (!(await ladeVomServer())) { await abmelden(); return zumLogin(); }
+          } catch {
+            return meldung('Die Daten konnten nicht geladen werden. Bitte prüfen Sie Ihre Verbindung und laden Sie die Seite neu.');
+          }
+        }
+        starte(wurzel, nutzer, raus);
+      })();
     </script>
   </body>
 </html>

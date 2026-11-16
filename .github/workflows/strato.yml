@@ -1,0 +1,74 @@
+name: Auf STRATO veröffentlichen
+
+# Läuft bei jedem Push auf main (oder von Hand unter „Actions“).
+# Zugangsdaten stehen ausschließlich in GitHub → Settings → Secrets and variables → Actions.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: strato
+permissions:
+  contents: read
+
+jobs:
+  veroeffentlichen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Bauen
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          ASTRO_TELEMETRY_DISABLED: 1
+        run: npm run build
+
+      - name: Server-Konfiguration erzeugen
+        env:
+          DB_TYP: ${{ secrets.DB_TYP }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          EINRICHTUNGSCODE: ${{ secrets.EINRICHTUNGSCODE }}
+        run: |
+          python3 - <<'PY'
+          import os, json
+          e = os.environ
+          def php(s): return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
+          for k in ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASS", "EINRICHTUNGSCODE"):
+              if not e.get(k): raise SystemExit(f"Secret {k} fehlt.")
+          out = "<?php\nreturn [\n  'db' => ['typ' => %s, 'host' => %s, 'name' => %s, 'user' => %s, 'pass' => %s],\n  'einrichtungscode' => %s,\n];\n" % (
+              php(e.get("DB_TYP") or "mysql"), php(e["DB_HOST"]), php(e["DB_NAME"]), php(e["DB_USER"]), php(e["DB_PASS"]), php(e["EINRICHTUNGSCODE"]))
+          open("dist/api/config.php", "w").write(out)
+          PY
+
+      - name: Hochladen
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+          FTP_VERZEICHNIS: ${{ secrets.FTP_VERZEICHNIS }}
+          FTP_PROTOKOLL: ${{ secrets.FTP_PROTOKOLL }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          proto="${FTP_PROTOKOLL:-sftp}"
+          ziel="${FTP_VERZEICHNIS:-/}"
+          if [ "$proto" = "sftp" ]; then
+            lftp -e "set sftp:auto-confirm yes; set net:max-retries 3; mirror -R --only-newer --parallel=4 dist '$ziel'; bye" -u "$FTP_USER,$FTP_PASS" "sftp://$FTP_HOST"
+          else
+            lftp -e "set ftp:ssl-force true; set ssl:verify-certificate yes; set net:max-retries 3; mirror -R --only-newer --parallel=4 dist '$ziel'; bye" -u "$FTP_USER,$FTP_PASS" "ftp://$FTP_HOST"
+          fi
+
+      - name: Prüfen
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          sleep 5
+          curl -fsS "$SITE_URL/" -o /dev/null
+          curl -fsS -H 'X-HaDie: 1' "$SITE_URL/api/?a=status" | tee status.json
+          python3 -c "import json;d=json.load(open('status.json'));assert d.get('datenbank') is True, d"
