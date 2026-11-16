@@ -63,6 +63,10 @@ alle anderen Nummern führen in den Kundenbereich.
 | `src/verwaltung/ansichten2.ts` | Kalender, Kautionen, Eigentümerbericht, Schreiben (Erinnerung, Mahnung, Übergabeprotokoll), Angebot, Mieterwechsel-Assistent. Die Schreiben sind Vorlagen und vor dem Versand zu prüfen. |
 | `src/verwaltung/beispiel.ts` | Erfundene Beispieldaten zum Ausprobieren. |
 
+Bankabgleich (CSV-Kontoauszug, Zuordnung der Mieten) und Eigentümerabrechnung (Monat/Jahr mit
+Auszahlungsbetrag und Aufstellung für den Steuerberater) liegen in `ansichten3.ts`. Der Kontoauszug
+wird nur im Browser gelesen.
+
 Rechnungen an Kunden: Preisvereinbarungen je Objekt, monatlicher Rechnungslauf und druckbare Rechnung
 liegen ebenfalls in `ansichten2.ts`. Rechnungsnummern (`RE-Jahr-0001`) werden erst beim Stellen vergeben.
 Das Tool erzeugt Rechnungen zum Drucken bzw. als PDF, keine elektronischen Rechnungen (XRechnung/ZUGFeRD).

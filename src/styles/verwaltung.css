@@ -1046,3 +1046,38 @@ a.vw-kennzahl:hover {
   border-radius: 1rem;
   text-align: center;
 }
+
+/* ---------- Bankabgleich, Eigentümerabrechnung ---------- */
+.vw-block {
+  display: block;
+  color: var(--tinte-leise);
+  max-width: 28rem;
+}
+.vw-tabelle input[type='month'] {
+  max-width: 11rem;
+}
+.vw-tabelle input[type='month'],
+.vw-tabelle select {
+  max-width: 12.5rem;
+  min-height: 2.25rem;
+  padding: 0.2rem 0.5rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.3);
+  border-radius: 0.5rem;
+  background: var(--weiss);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.vw-tabelle input[type='checkbox'] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--akzent);
+}
+.vw .vw-brief__tabelle th.vw-zwischen {
+  padding-top: 1.1rem;
+  border-bottom: 1px solid var(--tinte);
+  font-weight: 700;
+}
+.vw-brief__klein {
+  font-size: 0.82rem;
+  color: var(--tinte-leise);
+}

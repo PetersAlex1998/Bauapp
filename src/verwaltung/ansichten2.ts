@@ -13,17 +13,17 @@ import { ARTEN } from './schema';
 import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
-const absender = (): Satz =>
+export const absender = (): Satz =>
   alle('absender')[0] ?? ({ id: '', name: 'HaDie-Immobilien', strasse: 'Detmolder Straße 142', ort: '33175 Bad Lippspringe', telefon: '0160 9500 6184' } as Satz);
 
-const werkzeug = (zurueck: string, ...mehr: Node[]) =>
+export const werkzeug = (zurueck: string, ...mehr: Node[]) =>
   h('div', { class: 'vw-reihe vw-nichtdrucken' },
     h('a', { class: 'vw-knopf', href: zurueck }, '← Zurück'), ...mehr, h('span', { class: 'vw-platz' }),
     !alle('absender').length && h('a', { class: 'vw-knopf', href: '#/liste/absender' }, 'Absender & Bank hinterlegen'),
     h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF'));
 
 /** Briefbogen mit Absender, Empfänger, Datum und Betreff */
-function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (Node | string | false | null | undefined)[]): HTMLElement {
+export function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (Node | string | false | null | undefined)[]): HTMLElement {
   const a = absender();
   return h('article', { class: 'vw-brief' },
     h('p', { class: 'vw-brief__absender' }, [a.name, a.strasse, a.ort].filter(Boolean).join(' · ')),
@@ -37,7 +37,7 @@ function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (
       a.iban && [h('br'), [a.inhaber && `Kontoinhaber ${a.inhaber}`, `IBAN ${a.iban}`, a.bank].filter(Boolean).join(' · ')],
       (a.steuernummer || a.ustid) && [h('br'), [a.steuernummer && `Steuernummer ${a.steuernummer}`, a.ustid && `USt-IdNr. ${a.ustid}`].filter(Boolean).join(' · ')]));
 }
-const gruss = () => [h('p', {}, 'Mit freundlichen Grüßen'), h('p', { class: 'vw-brief__unterschrift' }, absender().gruss || absender().name)];
+export const gruss = () => [h('p', {}, 'Mit freundlichen Grüßen'), h('p', { class: 'vw-brief__unterschrift' }, absender().gruss || absender().name)];
 const vorlage = () => h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Vorlage: Bitte prüfen Sie Inhalt, Beträge und Fristen vor dem Versand.');
 
 /* ================= Schreiben an Mieter ================= */

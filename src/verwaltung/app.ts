@@ -344,7 +344,8 @@ function objektSeite(id: string): HTMLElement {
         h('div', { class: 'vw-reihe' },
           h('button', { class: 'vw-knopf', onclick: () => formular('objekte', o) }, 'Objekt bearbeiten'),
           h('a', { class: 'vw-knopf', href: `#/nebenkosten/${id}` }, 'Nebenkostenabrechnung'),
-          h('a', { class: 'vw-knopf', href: `#/bericht/${id}` }, 'Eigentümerbericht'))),
+          h('a', { class: 'vw-knopf', href: `#/bericht/${id}` }, 'Eigentümerbericht'),
+          h('a', { class: 'vw-knopf', href: `#/abrechnung/${id}` }, 'Eigentümerabrechnung'))),
       h('div', { class: 'vw-ringblock' }, ring(id, true), ringLegende(id))),
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(String(einheiten.length), 'Einheiten'),
@@ -495,11 +496,11 @@ function daten(): HTMLElement {
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
   { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden'], ['Aufgaben', '#/liste/aufgaben']] },
-  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
+  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
-  { titel: 'Abrechnung', punkte: [['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
+  { titel: 'Abrechnung', punkte: [['Eigentümerabrechnung', '#/abrechnung'], ['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
   { titel: 'Stammdaten', punkte: [['Einheiten', '#/liste/einheiten'], ['Firmen & Handwerker', '#/liste/firmen'], ['Zahlungseingänge', '#/liste/zahlungen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
 ];
 
