@@ -67,6 +67,10 @@ Bankabgleich (CSV-Kontoauszug, Zuordnung der Mieten) und Eigentümerabrechnung (
 Auszahlungsbetrag und Aufstellung für den Steuerberater) liegen in `ansichten3.ts`. Der Kontoauszug
 wird nur im Browser gelesen.
 
+Mieterhöhung nach § 558 BGB (Sperrfrist, Kappungsgrenze, Vergleichsmiete, Schreiben mit Fristen,
+Übernahme nach Zustimmung in den Mietverlauf) liegt in `ansichten4.ts`; die Annahmen stehen im Kopf
+der Datei. Das Tool ersetzt keine Rechtsprüfung der Begründung.
+
 Rechnungen an Kunden: Preisvereinbarungen je Objekt, monatlicher Rechnungslauf und druckbare Rechnung
 liegen ebenfalls in `ansichten2.ts`. Rechnungsnummern (`RE-Jahr-0001`) werden erst beim Stellen vergeben.
 Das Tool erzeugt Rechnungen zum Drucken bzw. als PDF, keine elektronischen Rechnungen (XRechnung/ZUGFeRD).

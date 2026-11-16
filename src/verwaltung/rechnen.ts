@@ -36,7 +36,47 @@ export const mieterVon = (objektId: string) => alle('mieter').filter((m) => obje
 
 /* ---------- Mieten ---------- */
 export const aktivIm = (m: Satz, monat: string) => !!m.beginn && monatVon(m.beginn) <= monat && (!m.ende || monatVon(m.ende) >= monat);
-export const soll = (m: Satz) => zahl(m.kaltmiete) + zahl(m.nebenkosten);
+/* ---------- Mietverlauf und Mieterhöhung ---------- */
+export const MODERNISIERUNG = 'Modernisierung (§ 559)';
+export const verlaufVon = (m: Satz) => alle('mietaenderungen').filter((x) => x.mieterId === m.id && x.ab).sort((a, b) => String(a.ab).localeCompare(String(b.ab)));
+/** Kaltmiete, die an einem Stichtag galt. Ohne erfasste Änderungen gilt: unverändert seit Mietbeginn. */
+export function mieteAm(m: Satz, tag: string): number {
+  const v = verlaufVon(m);
+  const bis = v.filter((x) => x.ab <= tag);
+  if (bis.length) return zahl(bis[bis.length - 1].kaltmiete);
+  if (v.length && v[0].alt !== undefined && v[0].alt !== '') return zahl(v[0].alt);
+  return zahl(m.kaltmiete);
+}
+export const sollIm = (m: Satz, monat: string) => mieteAm(m, `${monat}-01`) + zahl(m.nebenkosten);
+export const soll = (m: Satz) => sollIm(m, monatHeute());
+/** Beginn des dritten Monats nach Zugang des Erhöhungsverlangens (§ 558b BGB) */
+export const wirksamAb = (zugang: string) => `${monatPlus(monatVon(zugang), 3)}-01`;
+/** Ende des übernächsten Monats nach Zugang: Frist zur Zustimmung (§ 558b BGB) */
+export const zustimmungBis = (zugang: string) => datumPlus(wirksamAb(zugang), -1);
+
+/** Prüft, ob und wie weit die Miete nach § 558 BGB erhöht werden kann (Annahmen siehe README). */
+export function erhoehungspruefung(m: Satz, zugang: string) {
+  const einheit = finde('einheiten', m.einheitId);
+  const objekt = finde('objekte', einheit?.objektId);
+  const v = verlaufVon(m);
+  // Erhöhungen nach § 559 zählen für die Sperrfrist nicht mit.
+  const letzte = [m.beginn, ...v.filter((x) => x.grund !== MODERNISIERUNG).map((x) => x.ab)].filter(Boolean).sort().pop() as string;
+  const wirksam = wirksamAb(zugang);
+  const sperreOk = !!letzte && zugang >= datumPlusMonate(letzte, 12) && wirksam >= datumPlusMonate(letzte, 15);
+  let frueh = letzte ? datumPlusMonate(letzte, 12) : heute();
+  for (let i = 0; letzte && i < 200 && wirksamAb(frueh) < datumPlusMonate(letzte, 15); i++) frueh = datumPlus(frueh, 1);
+  const satz = objekt?.angespannt ? 0.15 : 0.2;
+  const stichtag = datumPlusMonate(wirksam, -36);
+  const basis = mieteAm(m, stichtag);
+  const modernisierung = v.filter((x) => x.grund === MODERNISIERUNG && x.ab > stichtag).reduce((s, x) => s + zahl(x.kaltmiete) - zahl(x.alt), 0);
+  const kappung = Math.round((basis * (1 + satz) + modernisierung) * 100) / 100;
+  const flaeche = zahl(einheit?.flaeche);
+  const vm = zahl(einheit?.vergleichsmiete);
+  const vergleich = flaeche && vm ? Math.round(flaeche * vm * 100) / 100 : 0;
+  const aktuell = mieteAm(m, heute()); // schon vereinbarte, aber noch nicht gültige Erhöhungen zählen noch nicht
+  const ziel = vergleich ? Math.round(Math.min(vergleich, kappung) * 100) / 100 : 0;
+  return { einheit, objekt, letzte, wirksam, sperreOk, frueh, satz, stichtag, basis, kappung, flaeche, vm, vergleich, aktuell, ziel, erhoehung: Math.max(0, Math.round((ziel - aktuell) * 100) / 100), keineEinheitsdaten: !vergleich };
+}
 export const gezahlt = (m: Satz, monat?: string) =>
   alle('zahlungen').filter((z) => z.mieterId === m.id && (!monat || z.monat === monat)).reduce((s, z) => s + zahl(z.betrag), 0);
 
@@ -44,9 +84,9 @@ export const gezahlt = (m: Satz, monat?: string) =>
 export function rueckstand(m: Satz): number {
   if (!m.beginn) return 0;
   const bis = m.ende && monatVon(m.ende) < monatHeute() ? monatVon(m.ende) : monatHeute();
-  let monate = 0;
-  for (let mo = monatVon(m.beginn); mo <= bis && monate < 600; mo = monatPlus(mo, 1)) monate++;
-  return Math.max(0, Math.round((monate * soll(m) - gezahlt(m)) * 100) / 100);
+  let sollSumme = 0, n = 0;
+  for (let mo = monatVon(m.beginn); mo <= bis && n < 600; mo = monatPlus(mo, 1), n++) sollSumme += sollIm(m, mo);
+  return Math.max(0, Math.round((sollSumme - gezahlt(m)) * 100) / 100);
 }
 export function mahnstufe(m: Satz): { stufe: 0 | 1 | 2 | 3; text: string } {
   const offen = rueckstand(m);

@@ -1081,3 +1081,19 @@ a.vw-kennzahl:hover {
   font-size: 0.82rem;
   color: var(--tinte-leise);
 }
+
+/* ---------- Mieterhöhung ---------- */
+.vw-warnung ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+.vw-brief__abschnitt {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 2px dashed var(--tinte-leise);
+}
+@media print {
+  .vw-brief__abschnitt {
+    break-inside: avoid;
+  }
+}

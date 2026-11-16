@@ -33,16 +33,16 @@ export function beispieldaten(): Record<string, Satz[]> {
       { id: 'k2', kundennummer: '234567891', name: 'Beispiel-WEG Musterweg 12', art: 'Eigentümergemeinschaft', ort: '33175 Bad Lippspringe' },
     ],
     objekte: [
-      { id: 'o1', bezeichnung: 'Beispielstraße 1', strasse: 'Beispielstraße 1', ort: '33100 Paderborn', art: 'Mietshaus', kundeId: 'k1', leistungen: ['Verwalten', 'Betreuen', 'Erneuern'], baujahr: 1978 },
+      { id: 'o1', bezeichnung: 'Beispielstraße 1', strasse: 'Beispielstraße 1', ort: '33100 Paderborn', art: 'Mietshaus', kundeId: 'k1', leistungen: ['Verwalten', 'Betreuen', 'Erneuern'], baujahr: 1978, mietspiegel: 'Mietspiegel (Beispiel)' },
       { id: 'o2', bezeichnung: 'Musterweg 12', strasse: 'Musterweg 12', ort: '33175 Bad Lippspringe', art: 'Eigentümergemeinschaft (WEG)', kundeId: 'k2', leistungen: ['Verwalten', 'Betreuen', 'Entwickeln'], baujahr: 1992 },
     ],
     einheiten: [
-      { id: 'e1', objektId: 'o1', bezeichnung: 'Wohnung 1', lage: 'EG links', art: 'Wohnung', flaeche: 68, zimmer: 3 },
-      { id: 'e2', objektId: 'o1', bezeichnung: 'Wohnung 2', lage: 'EG rechts', art: 'Wohnung', flaeche: 54, zimmer: 2 },
-      { id: 'e3', objektId: 'o1', bezeichnung: 'Wohnung 3', lage: '1. OG links', art: 'Wohnung', flaeche: 82, zimmer: 4 },
+      { id: 'e1', objektId: 'o1', bezeichnung: 'Wohnung 1', lage: 'EG links', art: 'Wohnung', flaeche: 68, zimmer: 3, vergleichsmiete: 10.2 },
+      { id: 'e2', objektId: 'o1', bezeichnung: 'Wohnung 2', lage: 'EG rechts', art: 'Wohnung', flaeche: 54, zimmer: 2, vergleichsmiete: 9.9 },
+      { id: 'e3', objektId: 'o1', bezeichnung: 'Wohnung 3', lage: '1. OG links', art: 'Wohnung', flaeche: 82, zimmer: 4, vergleichsmiete: 9.6 },
       { id: 'e4', objektId: 'o1', bezeichnung: 'Wohnung 4', lage: '1. OG rechts', art: 'Wohnung', flaeche: 54, zimmer: 2 },
-      { id: 'e5', objektId: 'o2', bezeichnung: 'Wohnung A', lage: 'EG', art: 'Wohnung', flaeche: 47, zimmer: 2 },
-      { id: 'e6', objektId: 'o2', bezeichnung: 'Wohnung B', lage: '1. OG', art: 'Wohnung', flaeche: 75, zimmer: 3 },
+      { id: 'e5', objektId: 'o2', bezeichnung: 'Wohnung A', lage: 'EG', art: 'Wohnung', flaeche: 47, zimmer: 2, vergleichsmiete: 8.9 },
+      { id: 'e6', objektId: 'o2', bezeichnung: 'Wohnung B', lage: '1. OG', art: 'Wohnung', flaeche: 75, zimmer: 3, vergleichsmiete: 9.8 },
     ],
     mieter: [
       { id: 'm1', einheitId: 'e1', name: 'Mieter Eins (Beispiel)', beginn: datumPlusMonate(h, -30).slice(0, 8) + '01', kaltmiete: 620, nebenkosten: 160, personen: 2, kautionSoll: 1860, kautionIst: 1860 },
@@ -103,7 +103,7 @@ export function beispieldaten(): Record<string, Satz[]> {
       { id: 'pv2', objektId: 'o1', leistung: 'Mülltonnendienst', abrechnung: 'Je dokumentiertem Einsatz', preis: 12, einsatzLeistung: 'Mülltonnendienst', aktiv: true },
       { id: 'pv3', objektId: 'o1', leistung: 'Treppenhausreinigung', abrechnung: 'Monatlich pauschal', preis: 140, aktiv: true },
     ],
-    rechnungen: [], versammlungen: [], dokumente: [], absender: [],
+    mietaenderungen: [], mieterhoehungen: [], rechnungen: [], versammlungen: [], dokumente: [], absender: [],
     zaehler: [], schluessel: [],
   };
 }

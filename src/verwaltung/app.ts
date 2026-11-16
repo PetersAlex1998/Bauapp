@@ -8,7 +8,7 @@
 import { alle, beiAenderung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, type Art, type Feld } from './schema';
 import {
-  aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
+  aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, sollIm, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
   nebenkosten, objektVonMieter, rechnungSumme, rechnungUeberfaellig, rueckstand, soll, status360, tageBis, zahl, type Zustand,
 } from './rechnen';
 import { beispieldaten } from './beispiel';
@@ -67,7 +67,7 @@ const MARKEN: Record<string, string> = {
   Offen: 'rot', Notfall: 'rot', Abgelehnt: 'rot', Angefochten: 'rot',
   'In Arbeit': 'blau', Beauftragt: 'blau', Bauphase: 'blau', Vergabe: 'blau', 'Angebot erstellt': 'blau', Planung: 'blau', Analyse: 'blau', 'Beschluss / Freigabe': 'blau',
   'Wartet auf Dritte': 'gelb', Abnahme: 'gelb', Anfrage: 'gelb', Idee: 'gelb', Störung: 'gelb',
-  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen', Bezahlt: 'gruen',
+  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen', Bezahlt: 'gruen', Zugestimmt: 'gruen', Versandt: 'blau',
 };
 export const marke = (text: string, farbe?: string) => h('span', { class: `vw-marke vw-marke--${farbe ?? MARKEN[text] ?? 'grau'}` }, text);
 
@@ -164,6 +164,7 @@ function zeilenAktion(artName: string, s: Satz): Node | null {
   if (artName === 'fristen' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); fristErledigt(s); } }, 'Erledigt');
   if (artName === 'service') return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); dienstErledigt(s); } }, 'Erledigt');
   if (artName === 'mieter' && !s.ende) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); aktionen.mieterwechsel?.(s); } }, 'Auszug …');
+  if (artName === 'mieterhoehungen') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/erhoehung/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Ansehen');
   if (artName === 'rechnungen') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/rechnung/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Ansehen');
   if (artName === 'auftraege') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/angebot/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Angebot');
   if (artName === 'aufgaben' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); speichere('aufgaben', { id: s.id, erledigt: true }); hinweis('Aufgabe erledigt'); } }, 'Erledigt');
@@ -361,7 +362,7 @@ function objektSeite(id: string): HTMLElement {
 let mietMonat = monatHeute();
 function mieten(): HTMLElement {
   const aktive = alle('mieter').filter((x) => aktivIm(x, mietMonat));
-  const zeilen = aktive.map((m) => ({ m, soll: soll(m), ist: gezahlt(m, mietMonat), offen: rueckstand(m), stufe: mahnstufe(m) }));
+  const zeilen = aktive.map((m) => ({ m, soll: sollIm(m, mietMonat), ist: gezahlt(m, mietMonat), offen: rueckstand(m), stufe: mahnstufe(m) }));
   const sumSoll = zeilen.reduce((s, z) => s + z.soll, 0);
   const sumIst = zeilen.reduce((s, z) => s + z.ist, 0);
   const fehlend = zeilen.filter((z) => z.ist < z.soll - 0.005);
@@ -496,7 +497,7 @@ function daten(): HTMLElement {
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
   { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden'], ['Aufgaben', '#/liste/aufgaben']] },
-  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
+  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
