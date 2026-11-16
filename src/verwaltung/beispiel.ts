@@ -87,8 +87,8 @@ export function beispieldaten(): Record<string, Satz[]> {
       { id: 'en2', objektId: 'o1', leistung: 'Treppenhausreinigung', datum: datumPlus(h, -5), uhrzeit: '09:15', wer: 'HaDie', dauer: 50 },
     ],
     vorgaenge: [
-      { id: 'vg1', objektId: 'o1', einheitId: 'e3', titel: 'Heizkörper im Bad wird nicht warm', kategorie: 'Störung', status: 'In Arbeit', gemeldet: datumPlus(h, -3), von: 'Mieter Drei (Beispiel)', firmaId: 'f1' },
-      { id: 'vg2', objektId: 'o2', titel: 'Außenleuchte am Eingang defekt', kategorie: 'Schaden', status: 'Offen', gemeldet: datumPlus(h, -1) },
+      { id: 'vg1', objektId: 'o1', einheitId: 'e3', titel: 'Heizkörper im Bad wird nicht warm', zustaendigId: 'ma3', kategorie: 'Störung', status: 'In Arbeit', gemeldet: datumPlus(h, -3), von: 'Mieter Drei (Beispiel)', firmaId: 'f1' },
+      { id: 'vg2', objektId: 'o2', titel: 'Außenleuchte am Eingang defekt', zustaendigId: 'ma1', kategorie: 'Schaden', status: 'Offen', gemeldet: datumPlus(h, -1) },
     ],
     auftraege: [
       { id: 'a1', objektId: 'o1', einheitId: 'e4', titel: 'Renovierung Wohnung 4 nach Auszug', gewerk: 'Wohnungsrenovierung', status: 'In Arbeit', start: datumPlus(h, -10), ende: datumPlus(h, 12), angebot: 8400, ist: 3150, leistungen: 'Malerarbeiten alle Räume\nNeuer Vinylboden 54 m²\nBad: Silikonfugen und Armaturen\nEndreinigung' },
@@ -100,8 +100,11 @@ export function beispieldaten(): Record<string, Satz[]> {
       { id: 'bs1', objektId: 'o2', datum: datumPlus(h, -60), nummer: `${jahr}/01`, art: 'Eigentümerversammlung', text: 'Die Fassade wird saniert und gedämmt. Die Verwaltung holt drei Angebote ein.', ergebnis: 'Angenommen', umgesetzt: false },
     ],
     aufgaben: [
-      { id: 't1', titel: 'Nachmieter für Wohnung 4 suchen', objektId: 'o1', faellig: datumPlus(h, 6) },
-      { id: 't2', titel: 'Angebot Gartenpflege einholen', objektId: 'o2', faellig: datumPlus(h, -2) },
+      { id: 't1', titel: 'Nachmieter für Wohnung 4 suchen', objektId: 'o1', zustaendigId: 'ma2', faellig: datumPlus(h, 6), prioritaet: 'Hoch', bereich: 'Verwalten' },
+      { id: 't2', titel: 'Angebot Gartenpflege einholen', objektId: 'o2', zustaendigId: 'ma1', faellig: datumPlus(h, -2), prioritaet: 'Normal', bereich: 'Betreuen' },
+      { id: 't3', titel: 'Versicherungsschutz aller Objekte prüfen', zustaendigId: 'ma1', faellig: datumPlus(h, 20), prioritaet: 'Normal', bereich: 'Büro / Sonstiges', wiederholung: 'Jährlich' },
+      { id: 't4', titel: 'Treppenhaus Beispielstraße 1 kontrollieren', objektId: 'o1', zustaendigId: 'ma3', faellig: h, prioritaet: 'Dringend', bereich: 'Betreuen', wiederholung: 'Wöchentlich' },
+      { id: 't5', titel: 'Schlüsselübergabe Wohnung 3 dokumentieren', objektId: 'o1', zustaendigId: 'ma2', faellig: datumPlus(h, -9), prioritaet: 'Niedrig', bereich: 'Verwalten', erledigt: true, erledigtAm: datumPlus(h, -8) },
     ],
     vereinbarungen: [
       { id: 'pv1', objektId: 'o1', leistung: 'Verwaltervergütung', abrechnung: 'Je Einheit und Monat', preis: 28, aktiv: true },

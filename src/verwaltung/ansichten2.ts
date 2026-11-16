@@ -11,7 +11,7 @@
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
 import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
-import { ds } from './ansicht';
+import { ds, standardZustaendig } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
 export const absender = (): Satz =>
@@ -201,7 +201,7 @@ routen.kalender = () => {
   const termine: Termin[] = [
     ...ds('fristen').filter((x) => !x.erledigt).map((x) => ({ tag: x.faellig, text: `${x.art} · ${name(x.objektId)}`, art: 'Frist', farbe: 'gelb', ziel: '#/liste/fristen' })),
     ...ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf').map((x) => ({ tag: x.naechster, text: `${x.leistung} · ${name(x.objektId)}`, art: 'Dienst', farbe: 'blau', ziel: '#/tagesplan' })),
-    ...ds('aufgaben').filter((x) => !x.erledigt && x.faellig).map((x) => ({ tag: x.faellig, text: x.titel, art: 'Aufgabe', farbe: 'grau', ziel: '#/liste/aufgaben' })),
+    ...ds('aufgaben').filter((x) => !x.erledigt && x.faellig).map((x) => ({ tag: x.faellig, text: x.titel, art: 'Aufgabe', farbe: 'grau', ziel: '#/aufgaben' })),
     ...ds('vertraege').filter((x) => x.kuendigenBis).map((x) => ({ tag: x.kuendigenBis, text: `Kündbar bis: ${x.art} · ${x.partner}`, art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
     ...ds('auftraege').filter((x) => x.ende && x.status !== 'Abgeschlossen').map((x) => ({ tag: x.ende, text: `Geplantes Ende: ${x.titel}`, art: 'Auftrag', farbe: 'blau', ziel: '#/liste/auftraege' })),
     ...ds('projekte').filter((x) => x.ziel && x.phase !== 'Abgeschlossen').map((x) => ({ tag: x.ziel, text: `Fertigstellung: ${x.titel}`, art: 'Projekt', farbe: 'blau', ziel: '#/liste/projekte' })),
@@ -249,7 +249,7 @@ aktionen.mieterwechsel = (m: Satz) => {
     const ende = String(d.get('ende'));
     if (!ende) return;
     const wo = einheit?.bezeichnung ?? 'Wohnung';
-    const aufgabe = (titel: string, faellig: string) => speichere('aufgaben', { titel, objektId, faellig });
+    const aufgabe = (titel: string, faellig: string) => speichere('aufgaben', { titel, objektId, faellig, zustaendigId: standardZustaendig(objektId), prioritaet: 'Normal', bereich: 'Verwalten' });
     speichere('mieter', { id: m.id, ende });
     if (d.get('uebergabe')) aufgabe(`Übergabe ${wo}: Zählerstände, Schlüssel, Protokoll (${m.name})`, ende);
     if (d.get('kaution')) aufgabe(`Kaution abrechnen: ${m.name}`, datumPlus(ende, 90));

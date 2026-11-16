@@ -7,7 +7,7 @@
  */
 import { alle, beiAenderung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
-import { ansichtBeschreibung, ansichtId, ansichtWahl, ds, ich, objektIdVon, setzeAnsicht, sichtbar, sichtbareObjektIds } from './ansicht';
+import { ansichtBeschreibung, ansichtId, ansichtWahl, arbeitUebergeben, ds, ich, objektIdVon, offeneArbeit, setzeAnsicht, sichtbar, sichtbareObjektIds, standardZustaendig, unverteiltZuweisen } from './ansicht';
 import {
   aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, sollIm, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
   nebenkosten, objektVonMieter, rechnungSumme, rechnungUeberfaellig, rueckstand, soll, status360, tageBis, zahl, type Zustand,
@@ -68,7 +68,7 @@ const MARKEN: Record<string, string> = {
   Offen: 'rot', Notfall: 'rot', Abgelehnt: 'rot', Angefochten: 'rot',
   'In Arbeit': 'blau', Beauftragt: 'blau', Bauphase: 'blau', Vergabe: 'blau', 'Angebot erstellt': 'blau', Planung: 'blau', Analyse: 'blau', 'Beschluss / Freigabe': 'blau',
   'Wartet auf Dritte': 'gelb', Abnahme: 'gelb', Anfrage: 'gelb', Idee: 'gelb', Störung: 'gelb',
-  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen', Bezahlt: 'gruen', Zugestimmt: 'gruen', Versandt: 'blau',
+  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen', Bezahlt: 'gruen', Zugestimmt: 'gruen', Versandt: 'blau', Dringend: 'rot', Hoch: 'gelb',
 };
 export const marke = (text: string, farbe?: string) => h('span', { class: `vw-marke vw-marke--${farbe ?? MARKEN[text] ?? 'grau'}` }, text);
 
@@ -131,6 +131,7 @@ export function formular(artName: string, satz: Partial<Satz> = {}, nachher?: (s
       else neuSatz[feld.name] = String(daten.get(feld.name) ?? '').trim();
     }
     if (artName === 'kunden' && !neuSatz.kundennummer) neuSatz.kundennummer = neueKundennummer();
+    if ((artName === 'aufgaben' || artName === 'vorgaenge') && !neuSatz.zustaendigId) neuSatz.zustaendigId = standardZustaendig(neuSatz.objektId);
     const fertig = speichere(artName, neuSatz);
     dialog.close();
     hinweis(`${art.einzahl} gespeichert`);
@@ -172,8 +173,21 @@ function zeilenAktion(artName: string, s: Satz): Node | null {
   if (artName === 'mieterhoehungen') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/erhoehung/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Ansehen');
   if (artName === 'rechnungen') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/rechnung/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Ansehen');
   if (artName === 'auftraege') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/angebot/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Angebot');
-  if (artName === 'aufgaben' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); speichere('aufgaben', { id: s.id, erledigt: true }); hinweis('Aufgabe erledigt'); } }, 'Erledigt');
+  if (artName === 'aufgaben' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); aufgabeAbhaken(s); } }, 'Erledigt');
   return null;
+}
+/** Aufgabe abhaken – wiederkehrende Aufgaben springen zum nächsten Termin. */
+export function aufgabeAbhaken(a: Satz) {
+  if (a.erledigt) { speichere('aufgaben', { id: a.id, erledigt: false, erledigtAm: '' }); return; }
+  const w = a.wiederholung && a.wiederholung !== 'Keine' ? a.wiederholung : '';
+  if (w && a.faellig) {
+    const naechste = naechsterTermin(a.faellig, w);
+    speichere('aufgaben', { id: a.id, faellig: naechste, erledigtAm: heute() });
+    hinweis(`Erledigt – nächster Termin ${datum(naechste)}`);
+  } else {
+    speichere('aufgaben', { id: a.id, erledigt: true, erledigtAm: heute() });
+    hinweis('Aufgabe erledigt');
+  }
 }
 function fristErledigt(s: Satz) {
   const n = zahl(s.intervall);
@@ -191,7 +205,7 @@ function dienstErledigt(s: Satz) {
 function zelle(artName: string, art: Art, name: string, s: Satz): Node | string {
   const feld = feldVon(art, name);
   const text = wert(feld, s);
-  if (['status', 'phase', 'ergebnis', 'kategorie'].includes(name) && text !== '–') return marke(text);
+  if (['status', 'phase', 'ergebnis', 'kategorie', 'prioritaet'].includes(name) && text !== '–') return marke(text);
   const terminFeld = { fristen: 'faellig', service: 'naechster', aufgaben: 'faellig', vertraege: 'kuendigenBis', auftraege: 'ende', projekte: 'ziel', rechnungen: 'faellig' }[artName];
   if (name === terminFeld && s[name] && !s.erledigt && !['Abgeschlossen', 'Bezahlt', 'Storniert', 'Entwurf'].includes(s.status ?? s.phase)) {
     const tage = tageBis(s[name]);
@@ -277,6 +291,7 @@ function cockpit(): HTMLElement {
   const dienste = ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0);
   const meldungen = ds('vorgaenge').filter((x) => x.status !== 'Erledigt');
   const wichtig = wichtigFuer();
+  const meine = ds('aufgaben').filter((a) => !a.erledigt && (!ich() || a.zustaendigId === ich()!.id));
 
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Cockpit'), h('p', {}, new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), ' · ', ansichtBeschreibung())),
@@ -286,6 +301,7 @@ function cockpit(): HTMLElement {
       kennzahl(geld(mieter.reduce((sum, x) => sum + soll(x), 0)), 'Sollmiete im Monat', '#/mieten'),
       kennzahl(geld(offen), 'offene Mieten', '#/mieten', offen > 0 ? 'vw-kennzahl--rot' : ''),
       kennzahl(String(meldungen.length), 'offene Meldungen', '#/liste/vorgaenge', meldungen.length ? 'vw-kennzahl--gelb' : ''),
+      kennzahl(String(meine.length), ich() ? 'meine offenen Aufgaben' : 'offene Aufgaben', '#/aufgaben', meine.some((a) => a.faellig && a.faellig < h0) ? 'vw-kennzahl--rot' : meine.length ? 'vw-kennzahl--blau' : ''),
       kennzahl(String(dienste.length), 'Dienste heute fällig', '#/tagesplan', dienste.length ? 'vw-kennzahl--blau' : ''),
       kennzahl(geld(ds('rechnungen').filter((r) => r.status === 'Offen').reduce((sum, r) => sum + rechnungSumme(r).brutto, 0)), 'offene Rechnungen an Kunden', '#/rechnungen')),
     h('div', { class: 'vw-zwei' },
@@ -313,7 +329,7 @@ export function wichtigFuer(objektId?: string): Punkt[] {
     ...quelle('fristen').filter((x) => !x.erledigt && tageBis(x.faellig) <= 30).map((x) => ({ datum: x.faellig, text: mit(x.art, x.objektId), art: 'Frist', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/fristen' })),
     ...quelle('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0).map((x) => ({ datum: x.naechster, text: mit(x.leistung, x.objektId), art: 'Dienst', farbe: x.naechster < h0 ? 'rot' : 'blau', ziel: '#/tagesplan' })),
     ...quelle('rechnungen').filter(rechnungUeberfaellig).map((x) => ({ datum: x.faellig, text: `Rechnung ${x.nummer ?? ''} überfällig · ${finde('kunden', x.kundeId)?.name ?? ''}`, art: 'Rechnung', farbe: 'rot', ziel: `#/rechnung/${x.id}` })),
-    ...quelle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/aufgaben' })),
+    ...quelle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/aufgaben' })),
     ...quelle('vertraege').filter((x) => x.kuendigenBis && tageBis(x.kuendigenBis) >= 0 && tageBis(x.kuendigenBis) <= 60).map((x) => ({ datum: x.kuendigenBis, text: mit(`Kündbar bis: ${x.art} · ${x.partner}`, x.objektId), art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
   ].sort((a, b) => a.datum.localeCompare(b.datum));
 }
@@ -327,7 +343,18 @@ let reiter = 'Übersicht';
 export function personWahl(o: Satz, feld: 'betreuerId' | 'vertretungId'): HTMLElement {
   const leute = alle('mitarbeiter').filter((m) => m.aktiv !== false || m.id === o[feld]);
   return h('select', { 'aria-label': feld === 'betreuerId' ? 'Objektbetreuer' : 'Vertretung',
-    onchange: (e: Event) => { speichere('objekte', { id: o.id, [feld]: (e.target as HTMLSelectElement).value }); hinweis('Zuständigkeit gespeichert'); } },
+    onchange: (e: Event) => {
+      const alt = o[feld] as string;
+      const neu = (e.target as HTMLSelectElement).value;
+      speichere('objekte', { id: o.id, [feld]: neu });
+      if (feld === 'betreuerId' && neu) {
+        unverteiltZuweisen(o.id, neu);
+        const arbeit = alt && alt !== neu ? offeneArbeit([o.id], alt) : null;
+        const n = arbeit ? arbeit.aufgaben.length + arbeit.meldungen.length : 0;
+        if (arbeit && n && confirm(`${n} offene Aufgaben und Meldungen dieses Objekts liegen noch bei ${finde('mitarbeiter', alt)?.name ?? 'dem bisherigen Betreuer'}. Auch an ${finde('mitarbeiter', neu)?.name} übergeben?`)) arbeitUebergeben(arbeit, neu);
+      }
+      hinweis('Zuständigkeit gespeichert');
+    } },
     h('option', { value: '' }, '– nicht zugewiesen –'), leute.map((m) => h('option', { value: m.id, selected: m.id === o[feld] }, m.name)));
 }
 
@@ -384,7 +411,8 @@ function objektSeite(id: string): HTMLElement {
           h('dt', {}, 'Gebuchte Leistungen'), h('dd', {}, (o.leistungen ?? []).join(', ') || '–'),
           h('dt', {}, 'Baujahr'), h('dd', {}, o.baujahr || '–'),
           h('dt', {}, 'Mietspiegel'), h('dd', {}, o.mietspiegel || '–'),
-          o.notiz && [h('dt', {}, 'Notiz'), h('dd', {}, o.notiz)])))],
+          o.notiz && [h('dt', {}, 'Notiz'), h('dd', {}, o.notiz)]))),
+      liste('aufgaben', { filter: (s) => s.objektId === id && !s.erledigt, vorgaben: { objektId: id }, ohneSpalte: 'objektId', titel: 'Offene Aufgaben', kompakt: true })],
     'Einheiten & Mieter': () => [einheitenTabelle(o)],
     Verwalten: () => [
       L('fristen'), L('vertraege'), L('kosten'), L('zaehler'), L('schluessel'), L('vereinbarungen'), L('dokumente', { datum: heute() }),
@@ -558,7 +586,7 @@ function daten(): HTMLElement {
 
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
-  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Aufgaben', '#/liste/aufgaben']] },
+  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Aufgaben', '#/aufgaben']] },
   { titel: 'Objekte', punkte: [['Alle Objekte', '#/liste/objekte'], ['Team & Zuweisung', '#/team'], ['Kunden', '#/liste/kunden']] },
   { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },

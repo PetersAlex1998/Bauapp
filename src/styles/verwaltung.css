@@ -1194,3 +1194,112 @@ a.vw-kennzahl:hover {
     display: block;
   }
 }
+
+/* ---------- Aufgaben ---------- */
+.vw-schnellerfassung {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.vw-schnellerfassung input {
+  flex: 1;
+  min-width: 14rem;
+  height: 3rem;
+  padding: 0 1.1rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.35);
+  border-radius: 999px;
+  background: var(--weiss);
+  font: inherit;
+}
+.vw-schnellerfassung input:focus-visible {
+  border-color: var(--akzent);
+}
+.vw-filterleiste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem 1rem;
+}
+.vw-filter {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinte-leise);
+}
+.vw-filter select {
+  max-width: 12rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.vw-aufgaben {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.vw-aufgabe {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-aufgabe:last-child {
+  border-bottom: 0;
+}
+.vw-aufgabe > input[type='checkbox'] {
+  width: 1.35rem;
+  height: 1.35rem;
+  accent-color: var(--akzent);
+  cursor: pointer;
+}
+.vw-aufgabe__pkt {
+  min-width: 1.35rem;
+}
+.vw-aufgabe__text {
+  display: grid;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.vw-aufgabe__text small {
+  color: var(--tinte-leise);
+}
+.vw-aufgabe__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--tinte-leise);
+}
+.vw-aufgabe__meta select {
+  max-width: 11rem;
+  min-height: 2rem;
+  font-size: 0.88rem;
+}
+.vw-aufgabe--erledigt .vw-aufgabe__text strong {
+  text-decoration: line-through;
+  color: var(--tinte-leise);
+}
+.vw-rot {
+  color: #9b2c1c;
+}
+@media (max-width: 52rem) {
+  .vw-aufgabe {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .vw-aufgabe__meta {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}

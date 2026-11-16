@@ -9,7 +9,7 @@
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { rueckstand } from './rechnen';
-import { setzeAnsicht } from './ansicht';
+import { arbeitUebergeben, offeneArbeit, setzeAnsicht, unverteiltZuweisen } from './ansicht';
 import { formular, h, hinweis, kennzahl, marke, personWahl, routen, zeichne } from './app';
 
 const gewaehlt = new Set<string>();
@@ -28,6 +28,8 @@ function auslastung(id: string) {
     vertretung: alle('objekte').filter((o) => o.vertretungId === id).length,
     einheiten: imObjekt('einheiten').length,
     meldungen: imObjekt('vorgaenge').filter((v) => v.status !== 'Erledigt').length,
+    aufgaben: alle('aufgaben').filter((a) => !a.erledigt && a.zustaendigId === id).length,
+    aufgabenUeberfaellig: alle('aufgaben').filter((a) => !a.erledigt && a.zustaendigId === id && a.faellig && a.faellig < heute()).length,
     fristen: imObjekt('fristen').filter((f) => !f.erledigt && f.faellig < heute()).length,
     rueckstaende: alle('mieter').filter((m) => !m.ende && rueckstand(m) > 0 && ids.has(finde('einheiten', m.einheitId)?.objektId)).length,
   };
@@ -43,7 +45,12 @@ routen.team = () => {
   const objekte = alle('objekte');
   const ohne = objekte.filter((o) => !o.betreuerId);
   const zuweisen = (ids: string[], feld: 'betreuerId' | 'vertretungId', wer: string) => {
+    const arbeit = { aufgaben: [] as Satz[], meldungen: [] as Satz[] };
+    if (feld === 'betreuerId') ids.forEach((id) => { const alt = finde('objekte', id)?.betreuerId; if (alt && alt !== wer) { const a = offeneArbeit([id], alt); arbeit.aufgaben.push(...a.aufgaben); arbeit.meldungen.push(...a.meldungen); } });
     ids.forEach((id) => speichere('objekte', { id, [feld]: wer }));
+    if (feld === 'betreuerId') ids.forEach((id) => unverteiltZuweisen(id, wer));
+    const n = arbeit.aufgaben.length + arbeit.meldungen.length;
+    if (n && confirm(`${n} offene Aufgaben und Meldungen dieser Objekte liegen noch beim bisherigen Betreuer. Auch an ${finde('mitarbeiter', wer)?.name} übergeben?`)) arbeitUebergeben(arbeit, wer);
     gewaehlt.clear();
     hinweis(`${ids.length} Objekt(e) zugewiesen`);
   };
@@ -59,12 +66,12 @@ routen.team = () => {
       h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Team ', h('span', { class: 'vw-zahl' }, String(leute.length))),
         h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => formular('mitarbeiter', {}) }, '+ Mitarbeiter')),
       h('div', { class: 'vw-tabelle' }, h('table', {},
-        h('thead', {}, h('tr', {}, ['Mitarbeiter', 'Objekte', 'Einheiten', 'Vertretung', 'Meldungen', 'Fristen', 'Rückstände', ''].map((t) => h('th', { scope: 'col' }, t)))),
+        h('thead', {}, h('tr', {}, ['Mitarbeiter', 'Objekte', 'Einheiten', 'Aufgaben', 'Meldungen', 'Fristen', 'Rückstände', ''].map((t) => h('th', { scope: 'col' }, t)))),
         h('tbody', {}, leute.length ? leute.map((m) => { const a = auslastung(m.id); return h('tr', { tabindex: 0, onclick: () => formular('mitarbeiter', m) },
           h('td', { 'data-spalte': 'Mitarbeiter' }, h('strong', {}, m.name), h('small', { class: 'vw-block' }, [m.rolle, m.nummer].filter(Boolean).join(' · '))),
-          h('td', { 'data-spalte': 'Objekte', class: 'vw-zahlspalte' }, String(a.objekte)),
+          h('td', { 'data-spalte': 'Objekte', class: 'vw-zahlspalte' }, String(a.objekte), a.vertretung > 0 && h('small', { class: 'vw-block' }, `+ ${a.vertretung} Vertretung`)),
           h('td', { 'data-spalte': 'Einheiten', class: 'vw-zahlspalte' }, String(a.einheiten)),
-          h('td', { 'data-spalte': 'Vertretung', class: 'vw-zahlspalte' }, String(a.vertretung)),
+          h('td', { 'data-spalte': 'Aufgaben', class: 'vw-zahlspalte' }, String(a.aufgaben), a.aufgabenUeberfaellig > 0 && h('small', { class: 'vw-block' }, `${a.aufgabenUeberfaellig} überfällig`)),
           h('td', { 'data-spalte': 'Meldungen', class: 'vw-zahlspalte' }, String(a.meldungen)),
           h('td', { 'data-spalte': 'Fristen', class: 'vw-zahlspalte' }, a.fristen ? marke(String(a.fristen), 'rot') : '0'),
           h('td', { 'data-spalte': 'Rückstände', class: 'vw-zahlspalte' }, a.rueckstaende ? marke(String(a.rueckstaende), 'gelb') : '0'),
@@ -92,7 +99,7 @@ routen.team = () => {
 
     h('section', { class: 'vw-karte vw-text' },
       h('h2', {}, 'Übergabe bei Urlaub oder Weggang'),
-      h('p', {}, 'Überträgt alle Objekte einer Person auf eine andere: Betreuung und Vertretung. Die Daten bleiben unverändert, nur die Zuständigkeit wechselt.'),
+      h('p', {}, 'Überträgt alle Objekte einer Person auf eine andere: Betreuung und Vertretung. Offene Aufgaben und Meldungen gehen mit. Die Daten bleiben unverändert, nur die Zuständigkeit wechselt.'),
       h('div', { class: 'vw-reihe' },
         mitarbeiterWahl(uebergabeVon, (id) => { uebergabeVon = id; }, '– von –', 'Übergabe von'),
         h('span', {}, '→'),
@@ -103,6 +110,7 @@ routen.team = () => {
           if (!betroffen.length) return alert('Diese Person hat keine Objekte.');
           if (!confirm(`${betroffen.length} Objekt(e) von ${finde('mitarbeiter', uebergabeVon)?.name} an ${finde('mitarbeiter', uebergabeAn)?.name} übergeben?`)) return;
           betroffen.forEach((o) => speichere('objekte', { id: o.id, ...(o.betreuerId === uebergabeVon ? { betreuerId: uebergabeAn } : {}), ...(o.vertretungId === uebergabeVon ? { vertretungId: uebergabeAn } : {}) }));
-          hinweis(`${betroffen.length} Objekt(e) übergeben`);
+          const mit = arbeitUebergeben({ aufgaben: alle('aufgaben').filter((a) => !a.erledigt && a.zustaendigId === uebergabeVon), meldungen: alle('vorgaenge').filter((v) => v.status !== 'Erledigt' && v.zustaendigId === uebergabeVon) }, uebergabeAn);
+          hinweis(`${betroffen.length} Objekt(e) und ${mit} offene Aufgaben/Meldungen übergeben`);
         } }, 'Übergeben'))));
 };

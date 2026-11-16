@@ -11,7 +11,7 @@
  * Mitarbeiter gehört auf den Server (Datenbank) – die Zuweisung
  * `betreuerId` ist dafür die Grundlage.
  */
-import { alle, finde, type Satz } from './speicher';
+import { alle, finde, speichere, type Satz } from './speicher';
 import { objektVonMieter } from './rechnen';
 
 const KEY = 'hadie-ansicht';
@@ -78,4 +78,27 @@ export function ansichtBeschreibung(): string {
   if (w === 'offen') return 'Nicht zugewiesene Objekte';
   const m = finde('mitarbeiter', w);
   return m && m.id === ich()?.id ? 'Meine Objekte' : `Objekte von ${m?.name ?? '?'}`;
+}
+
+/* ---------- Aufgaben und Meldungen folgen dem Objektbetreuer ---------- */
+/** Wer bekommt eine neue Aufgabe oder Meldung? Der Betreuer des Objekts, sonst der Angemeldete. */
+export const standardZustaendig = (objektId?: string): string => (objektId && finde('objekte', objektId)?.betreuerId) || ich()?.id || '';
+
+/** Offene Aufgaben und Meldungen an Objekten, die gerade bei `von` liegen. */
+export function offeneArbeit(objektIds: string[], von: string) {
+  const ids = new Set(objektIds);
+  return {
+    aufgaben: alle('aufgaben').filter((a) => !a.erledigt && a.zustaendigId === von && a.objektId && ids.has(a.objektId)),
+    meldungen: alle('vorgaenge').filter((v) => v.status !== 'Erledigt' && v.zustaendigId === von && ids.has(v.objektId)),
+  };
+}
+export function arbeitUebergeben(arbeit: { aufgaben: Satz[]; meldungen: Satz[] }, an: string): number {
+  arbeit.aufgaben.forEach((a) => speichere('aufgaben', { id: a.id, zustaendigId: an }));
+  arbeit.meldungen.forEach((v) => speichere('vorgaenge', { id: v.id, zustaendigId: an }));
+  return arbeit.aufgaben.length + arbeit.meldungen.length;
+}
+/** Nicht zugeordnete Aufgaben und Meldungen eines Objekts bekommen den (neuen) Betreuer. */
+export function unverteiltZuweisen(objektId: string, an: string) {
+  alle('aufgaben').filter((a) => !a.erledigt && !a.zustaendigId && a.objektId === objektId).forEach((a) => speichere('aufgaben', { id: a.id, zustaendigId: an }));
+  alle('vorgaenge').filter((v) => v.status !== 'Erledigt' && !v.zustaendigId && v.objektId === objektId).forEach((v) => speichere('vorgaenge', { id: v.id, zustaendigId: an }));
 }

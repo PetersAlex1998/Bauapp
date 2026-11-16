@@ -63,6 +63,11 @@ alle anderen Nummern führen in den Kundenbereich.
 | `src/verwaltung/ansichten2.ts` | Kalender, Kautionen, Eigentümerbericht, Schreiben (Erinnerung, Mahnung, Übergabeprotokoll), Angebot, Mieterwechsel-Assistent. Die Schreiben sind Vorlagen und vor dem Versand zu prüfen. |
 | `src/verwaltung/beispiel.ts` | Erfundene Beispieldaten zum Ausprobieren. |
 
+**Aufgaben** (`ansichten6.ts`): Jede Aufgabe gehört einer Person, hat Priorität, Bereich und optional eine
+Wiederholung. „Meine Aufgaben“ gruppiert nach Fälligkeit und zeigt zugewiesene Meldungen mit. Neue Aufgaben
+und Meldungen an einem Objekt gehen automatisch an dessen Objektbetreuer; bei einem Betreuerwechsel oder
+einer Übergabe können offene Aufgaben und Meldungen mitgehen.
+
 **Das Objekt ist die Arbeitseinheit.** Jedem Objekt sind ein Objektbetreuer und eine Vertretung
 zugewiesen (`betreuerId`, `vertretungId`), nie einzelne Einheiten. Einheiten und Mieter liegen im
 Arbeitsraum des Objekts. Die Ansicht oben (`ansicht.ts`) begrenzt alle Seiten auf „Meine Objekte“,
