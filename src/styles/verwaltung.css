@@ -891,3 +891,153 @@ a.vw-kennzahl:hover {
 .vw-tabelle {
   position: relative;
 }
+
+/* ---------- Schreiben, Angebote, Berichte (Briefbogen) ---------- */
+.vw-brief {
+  max-width: 50rem;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  background: #fff;
+  border: 1px solid var(--linie);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.vw-brief__absender {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  color: var(--tinte-leise);
+  text-decoration: underline;
+}
+.vw-brief__an {
+  display: grid;
+  min-height: 6.5rem;
+  align-content: start;
+  font-style: normal;
+}
+.vw-brief__datum {
+  text-align: right;
+  margin: 0 0 2rem;
+}
+.vw-brief h2 {
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 1.2rem;
+}
+.vw-brief h3 {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 1.6rem 0 0.5rem;
+}
+.vw-brief__unterschrift {
+  margin-top: 2.5rem;
+}
+.vw-brief__summe {
+  margin: 1.2rem 0;
+  padding: 0.7rem 0;
+  border-block: 1px solid var(--tinte);
+  font-size: 1.1rem;
+}
+.vw-brief__tabelle {
+  margin-bottom: 0.5rem;
+}
+.vw .vw-brief__tabelle th,
+.vw .vw-brief__tabelle td {
+  padding: 0.4rem 0.6rem 0.4rem 0;
+  background: none;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+.vw .vw-brief__tabelle thead th {
+  border-bottom: 1.5px solid var(--tinte);
+  font-weight: 700;
+}
+.vw .vw-brief__tabelle tfoot th {
+  border-top: 1.5px solid var(--tinte);
+  border-bottom: 0;
+}
+.vw-linie {
+  min-width: 9rem;
+  height: 2.1rem;
+}
+.vw-brief__leer {
+  height: 5rem;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-brief__sign {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 4rem;
+}
+.vw-brief__sign span {
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--tinte);
+  font-size: 0.85rem;
+}
+.vw-brief__fuss {
+  margin-top: 3rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--linie);
+  font-size: 0.78rem;
+  color: var(--tinte-leise);
+}
+
+/* ---------- Kalender ---------- */
+.vw-tag {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  border-bottom: 1px solid var(--linie);
+}
+.vw-tag:last-child {
+  border-bottom: 0;
+}
+.vw-tag__datum {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  background: var(--papier);
+}
+.vw-tag__datum small {
+  font-weight: 400;
+  color: var(--tinte-leise);
+}
+.vw-tag--heute .vw-tag__datum {
+  background: var(--dunkel);
+  color: #fff;
+}
+@media (max-width: 40rem) {
+  .vw-tag {
+    grid-template-columns: 1fr;
+  }
+  .vw-brief__sign {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+@media print {
+  .vw-brief {
+    max-width: none;
+    padding: 0;
+    border: 0;
+  }
+  .vw-stapel {
+    display: block;
+  }
+  @page {
+    margin: 2cm;
+  }
+}
+@media (max-width: 40rem) {
+  .vw-brief {
+    overflow-x: auto;
+  }
+  .vw-linie {
+    min-width: 3.5rem;
+  }
+}

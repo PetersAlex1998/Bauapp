@@ -30,12 +30,16 @@ export function h(tag: string, attrs: Record<string, any> = {}, ...kinder: Kind[
   kinder.forEach(anhaengen);
   return el;
 }
-const euro = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
-const geld = (x: any) => euro.format(zahl(x));
-const datum = (d?: string) => (d ? d.split('-').reverse().join('.') : '–');
-const monatText = (m: string) => new Date(m + '-01T00:00:00Z').toLocaleDateString('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+/** Erweiterungen (ansichten2.ts) hängen hier ihre Seiten und Aktionen ein. */
+export const routen: Record<string, (a?: string, b?: string) => HTMLElement> = {};
+export const aktionen: Record<string, (s: Satz) => void> = {};
 
-function hinweis(text: string) {
+const euro = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
+export const geld = (x: any) => euro.format(zahl(x));
+export const datum = (d?: string) => (d ? d.split('-').reverse().join('.') : '–');
+export const monatText = (m: string) => new Date(m + '-01T00:00:00Z').toLocaleDateString('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+export function hinweis(text: string) {
   const el = h('div', { class: 'vw-toast', role: 'status' }, text);
   document.body.append(el);
   setTimeout(() => el.remove(), 3200);
@@ -64,7 +68,7 @@ const MARKEN: Record<string, string> = {
   'Wartet auf Dritte': 'gelb', Abnahme: 'gelb', Anfrage: 'gelb', Idee: 'gelb', Störung: 'gelb',
   Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen',
 };
-const marke = (text: string, farbe?: string) => h('span', { class: `vw-marke vw-marke--${farbe ?? MARKEN[text] ?? 'grau'}` }, text);
+export const marke = (text: string, farbe?: string) => h('span', { class: `vw-marke vw-marke--${farbe ?? MARKEN[text] ?? 'grau'}` }, text);
 
 /* ================= Formular (Dialog) ================= */
 function neueKundennummer(): string {
@@ -158,6 +162,8 @@ const suchtext: Record<string, string> = {};
 function zeilenAktion(artName: string, s: Satz): Node | null {
   if (artName === 'fristen' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); fristErledigt(s); } }, 'Erledigt');
   if (artName === 'service') return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); dienstErledigt(s); } }, 'Erledigt');
+  if (artName === 'mieter' && !s.ende) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); aktionen.mieterwechsel?.(s); } }, 'Auszug …');
+  if (artName === 'auftraege') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/angebot/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Angebot');
   if (artName === 'aufgaben' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); speichere('aufgaben', { id: s.id, erledigt: true }); hinweis('Aufgabe erledigt'); } }, 'Erledigt');
   return null;
 }
@@ -240,7 +246,7 @@ function ringLegende(objektId: string): HTMLElement {
 }
 
 /* ================= Ansichten ================= */
-function kennzahl(wertText: string, text: string, ziel?: string, ton = '') {
+export function kennzahl(wertText: string, text: string, ziel?: string, ton = '') {
   return h(ziel ? 'a' : 'div', { class: `vw-kennzahl ${ton}`, href: ziel }, h('span', { class: 'vw-kennzahl__wert' }, wertText), h('span', {}, text));
 }
 
@@ -312,7 +318,8 @@ function objektSeite(id: string): HTMLElement {
       liste('kosten', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
       liste('zaehler', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
       liste('schluessel', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      ...(String(o.art).includes('WEG') ? [liste('beschluesse', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })] : []),
+      liste('dokumente', { filter: eigene, vorgaben: { ...vg, datum: heute() }, ohneSpalte: 'objektId', kompakt: true }),
+      ...(String(o.art).includes('WEG') ? [liste('versammlungen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }), liste('beschluesse', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })] : []),
     ],
     Betreuen: () => [
       liste('service', { filter: eigene, vorgaben: { ...vg, naechster: heute() }, ohneSpalte: 'objektId', kompakt: true }),
@@ -331,7 +338,8 @@ function objektSeite(id: string): HTMLElement {
         h('p', {}, [o.strasse, o.ort].filter(Boolean).join(', ') || 'Keine Adresse hinterlegt', kunde && [' · Kunde: ', h('strong', {}, kunde.name), ` (${kunde.kundennummer})`]),
         h('div', { class: 'vw-reihe' },
           h('button', { class: 'vw-knopf', onclick: () => formular('objekte', o) }, 'Objekt bearbeiten'),
-          h('a', { class: 'vw-knopf', href: `#/nebenkosten/${id}` }, 'Nebenkostenabrechnung'))),
+          h('a', { class: 'vw-knopf', href: `#/nebenkosten/${id}` }, 'Nebenkostenabrechnung'),
+          h('a', { class: 'vw-knopf', href: `#/bericht/${id}` }, 'Eigentümerbericht'))),
       h('div', { class: 'vw-ringblock' }, ring(id, true), ringLegende(id))),
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(String(einheiten.length), 'Einheiten'),
@@ -379,7 +387,9 @@ function mieten(): HTMLElement {
         h('td', { 'data-spalte': 'Eingegangen', class: 'vw-zahlspalte' }, geld(z.ist)),
         h('td', { 'data-spalte': 'Rückstand gesamt', class: 'vw-zahlspalte' }, z.offen > 0 ? h('strong', {}, geld(z.offen)) : '–'),
         h('td', { 'data-spalte': 'Stand' }, marke(z.stufe.text, ['gruen', 'gelb', 'gelb', 'rot'][z.stufe.stufe])),
-        h('td', { class: 'vw-aktion' }, h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => buche(z.m, Math.max(0, z.soll - z.ist) || z.soll) }, 'Zahlung buchen'))))
+        h('td', { class: 'vw-aktion' },
+          z.offen > 0 && h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/brief/${z.stufe.stufe >= 2 ? 'mahnung' : 'erinnerung'}/${z.m.id}` }, z.stufe.stufe >= 2 ? 'Mahnung' : 'Erinnerung'), ' ',
+          h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => buche(z.m, Math.max(0, z.soll - z.ist) || z.soll) }, 'Zahlung buchen'))))
         : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'In diesem Monat läuft kein Mietverhältnis. Legen Sie unter „Mietverhältnisse“ eines an.'))])))),
     leerstand.length > 0 && h('section', { class: 'vw-karte vw-karte--kompakt' },
       h('header', { class: 'vw-karte__kopf' }, h('h3', {}, 'Leerstand ', h('span', { class: 'vw-zahl' }, String(leerstand.length)))),
@@ -479,19 +489,20 @@ function daten(): HTMLElement {
 
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
-  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden'], ['Aufgaben', '#/liste/aufgaben']] },
-  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Mietverhältnisse', '#/liste/mieter'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Schlüssel', '#/liste/schluessel']] },
+  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden'], ['Aufgaben', '#/liste/aufgaben']] },
+  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
-  { titel: 'Stammdaten', punkte: [['Einheiten', '#/liste/einheiten'], ['Firmen & Handwerker', '#/liste/firmen'], ['Zahlungseingänge', '#/liste/zahlungen'], ['Daten & Sicherung', '#/daten']] },
+  { titel: 'Stammdaten', punkte: [['Einheiten', '#/liste/einheiten'], ['Firmen & Handwerker', '#/liste/firmen'], ['Zahlungseingänge', '#/liste/zahlungen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
 ];
 
 let buehne: HTMLElement;
 let navEl: HTMLElement;
 
 function ansicht(): HTMLElement {
-  const [, bereich, id] = location.hash.split('/');
+  const [, bereich, id, id2] = location.hash.split('/');
+  if (routen[bereich]) return routen[bereich](id, id2);
   if (bereich === 'liste' && ARTEN[id]) {
     const vorgaben: Partial<Satz> = id === 'vorgaenge' ? { gemeldet: heute() } : id === 'service' ? { naechster: heute() } : id === 'einsaetze' || id === 'kosten' || id === 'zaehler' ? { datum: heute() } : {};
     return h('div', { class: 'vw-stapel' }, liste(id, { vorgaben }));
@@ -504,7 +515,7 @@ function ansicht(): HTMLElement {
   return cockpit();
 }
 
-function zeichne() {
+export function zeichne() {
   if (!buehne) return;
   if (document.querySelector('dialog[open]')) return; // nicht unter einem offenen Formular neu aufbauen
   const y = window.scrollY;

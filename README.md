@@ -60,6 +60,7 @@ alle anderen Nummern führen in den Kundenbereich.
 | `src/verwaltung/speicher.ts` | Datenspeicher. **Einzige** Stelle, die Daten liest und schreibt. |
 | `src/verwaltung/rechnen.ts` | Mieten, Rückstände, Nebenkostenabrechnung, 360°-Status. |
 | `src/verwaltung/app.ts` | Oberfläche: Cockpit, Listen, Formulare, Objektseite, Tagesplan. |
+| `src/verwaltung/ansichten2.ts` | Kalender, Kautionen, Eigentümerbericht, Schreiben (Erinnerung, Mahnung, Übergabeprotokoll), Angebot, Mieterwechsel-Assistent. Die Schreiben sind Vorlagen und vor dem Versand zu prüfen. |
 | `src/verwaltung/beispiel.ts` | Erfundene Beispieldaten zum Ausprobieren. |
 
 **Stand der Ausbaustufe:** Die Daten liegen im Browser des jeweiligen Geräts (localStorage),

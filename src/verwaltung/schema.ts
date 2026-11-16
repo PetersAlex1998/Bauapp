@@ -146,7 +146,9 @@ export const ARTEN: Record<string, Art> = {
       f('betrag', 'Betrag', 'geld', { pflicht: true }),
       f('umlage', 'Auf Mieter umlagefähig', 'ja', { vorgabe: true }),
       f('schluessel', 'Umlageschlüssel', 'wahl', { optionen: ['Wohnfläche', 'Einheiten', 'Personen'], vorgabe: 'Wohnfläche' }),
-      f('empfaenger', 'Rechnungssteller'), f('notiz', 'Notiz'),
+      f('empfaenger', 'Rechnungssteller'),
+      f('auftragId', 'Gehört zu Auftrag', 'ref', { auf: 'auftraege', hilfe: 'Zählt dann zu den Kosten dieses Auftrags.' }),
+      f('projektId', 'Gehört zu Projekt', 'ref', { auf: 'projekte' }), f('notiz', 'Notiz'),
     ],
     spalten: ['objektId', 'datum', 'kostenart', 'betrag', 'umlage'],
     anzeige: (s) => `${s.kostenart} ${s.datum}`,
@@ -199,6 +201,29 @@ export const ARTEN: Record<string, Art> = {
     spalten: ['objektId', 'datum', 'nummer', 'ergebnis', 'umgesetzt'],
     anzeige: (s) => `Beschluss ${s.nummer ?? ''} ${s.datum}`,
     leer: 'Beschlüsse der Eigentümergemeinschaft – und ob sie schon umgesetzt sind.',
+  },
+  versammlungen: {
+    titel: 'Versammlungen (WEG)', einzahl: 'Versammlung', kreis: 'verwalten',
+    felder: [
+      objekt, f('datum', 'Termin', 'datum', { pflicht: true }), f('uhrzeit', 'Uhrzeit'), f('ort', 'Ort'),
+      f('art', 'Art', 'wahl', { optionen: ['Ordentliche Eigentümerversammlung', 'Außerordentliche Versammlung', 'Beiratssitzung'], vorgabe: 'Ordentliche Eigentümerversammlung' }),
+      f('eingeladen', 'Einladung verschickt am', 'datum', { hilfe: 'Die Ladungsfrist beträgt in der Regel drei Wochen.' }),
+      f('tagesordnung', 'Tagesordnung', 'lang', { hilfe: 'Ein Punkt pro Zeile.' }), f('protokoll', 'Protokoll / Ergebnis', 'lang'),
+    ],
+    spalten: ['objektId', 'datum', 'art', 'eingeladen'],
+    anzeige: (s) => `${s.art} ${s.datum}`,
+    leer: 'Eigentümerversammlungen mit Einladung, Tagesordnung und Protokoll.',
+  },
+  dokumente: {
+    titel: 'Dokumente', einzahl: 'Dokument', kreis: 'verwalten',
+    felder: [
+      objekt, f('titel', 'Dokument', 'text', { pflicht: true }),
+      f('art', 'Art', 'wahl', { optionen: ['Mietvertrag', 'Übergabeprotokoll', 'Abrechnung', 'Rechnung', 'Versicherung', 'Wartungsnachweis', 'Energieausweis', 'Plan / Grundriss', 'Schriftverkehr', 'Protokoll', 'Sonstiges'], vorgabe: 'Sonstiges' }),
+      f('datum', 'Datum', 'datum'), f('ablage', 'Ablageort oder Link', 'text', { hilfe: 'Wo liegt das Dokument? z. B. Ordner, Laufwerk oder Internetadresse.' }), f('notiz', 'Notiz'),
+    ],
+    spalten: ['objektId', 'titel', 'art', 'datum', 'ablage'],
+    anzeige: (s) => s.titel,
+    leer: 'Ein Register, das zeigt, welche Unterlagen es gibt und wo sie liegen.',
   },
   schluessel: {
     titel: 'Schlüssel', einzahl: 'Schlüssel', kreis: 'verwalten',
@@ -279,6 +304,18 @@ export const ARTEN: Record<string, Art> = {
     spalten: ['objektId', 'titel', 'art', 'phase', 'budget', 'ziel'],
     anzeige: (s) => s.titel,
     leer: 'Vorhaben am ganzen Gebäude, die Fachfirmen ausführen und HaDie steuert.',
+  },
+
+  absender: {
+    titel: 'Absender & Bank', einzahl: 'Absender', kreis: 'basis',
+    felder: [
+      f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }), f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Detmolder Straße 142' }),
+      f('ort', 'PLZ und Ort', 'text', { vorgabe: '33175 Bad Lippspringe' }), f('telefon', 'Telefon', 'text', { vorgabe: '0160 9500 6184' }), f('email', 'E-Mail'),
+      f('inhaber', 'Kontoinhaber'), f('iban', 'IBAN'), f('bank', 'Bank'), f('gruss', 'Unterschrift (Name)'),
+    ],
+    spalten: ['name', 'ort', 'telefon', 'iban'],
+    anzeige: (s) => s.name,
+    leer: 'Diese Angaben erscheinen als Absender auf Schreiben, Angeboten und Berichten. Legen Sie genau einen Eintrag an.',
   },
 
   /* ---------------- Übergreifend ---------------- */
