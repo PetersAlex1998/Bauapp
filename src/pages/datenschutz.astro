@@ -16,8 +16,7 @@ const a = site.adresse;
 
       <h2>1. Verantwortlicher</h2>
       <p>
-        {site.name}<br />
-        {site.platzhalterAnzeigen && <><Platzhalter art="inline">Vollständiger Name / Rechtsform des Verantwortlichen</Platzhalter><br /></>}
+        {site.name} ({site.rechtsform}), Inhaber/in: {site.inhaber}<br />
         {a.strasse}, {a.plz} {a.ort}<br />
         Telefon: {site.telefon.anzeige}<br />
         {site.email ? <>E-Mail: {site.email}</> : site.platzhalterAnzeigen && <>E-Mail: <Platzhalter art="inline">E-Mail-Adresse</Platzhalter></>}

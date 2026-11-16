@@ -384,7 +384,7 @@ export const ARTEN: Record<string, Art> = {
   absender: {
     titel: 'Absender & Bank', einzahl: 'Absender', kreis: 'basis',
     felder: [
-      f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }), f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Detmolder Straße 142' }),
+      f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }), f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Kirsperbaumweg 23' }),
       f('ort', 'PLZ und Ort', 'text', { vorgabe: '33175 Bad Lippspringe' }), f('telefon', 'Telefon', 'text', { vorgabe: '0160 9500 6184' }), f('email', 'E-Mail'),
       f('inhaber', 'Kontoinhaber'), f('iban', 'IBAN'), f('bank', 'Bank'), f('gruss', 'Unterschrift (Name)'),
       f('steuernummer', 'Steuernummer', 'text', { hilfe: 'Auf Rechnungen ist die Steuernummer oder die USt-IdNr. Pflicht.' }), f('ustid', 'USt-IdNr.'),

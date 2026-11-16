@@ -15,7 +15,7 @@ export const site = {
   gruendungsjahr: 2015,
 
   adresse: {
-    strasse: 'Detmolder Straße 142',
+    strasse: 'Kirsperbaumweg 23',
     plz: '33175',
     ort: 'Bad Lippspringe',
   },
@@ -26,7 +26,9 @@ export const site = {
   },
 
   // OFFEN – bitte ergänzen:
-  email: null as string | null, // z. B. 'info@…'
+  email: 'HaDie.info@gmail.com' as string | null,
+  inhaber: 'Sandra Peters',
+  rechtsform: 'Einzelunternehmen',
   erreichbarkeit: 'Mo–Fr 8–17 Uhr' as string | null,
 
   // Orte für Texte und Suchmaschinen-Daten.

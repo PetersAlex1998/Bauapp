@@ -15,7 +15,7 @@ import { ds, standardZustaendig } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
 export const absender = (): Satz =>
-  alle('absender')[0] ?? ({ id: '', name: 'HaDie-Immobilien', strasse: 'Detmolder Straße 142', ort: '33175 Bad Lippspringe', telefon: '0160 9500 6184' } as Satz);
+  alle('absender')[0] ?? ({ id: '', name: 'HaDie-Immobilien', strasse: 'Kirsperbaumweg 23', ort: '33175 Bad Lippspringe', telefon: '0160 9500 6184' } as Satz);
 
 export const werkzeug = (zurueck: string, ...mehr: Node[]) =>
   h('div', { class: 'vw-reihe vw-nichtdrucken' },

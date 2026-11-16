@@ -16,16 +16,11 @@ const a = site.adresse;
 
       <h2>Angaben gemäß § 5 DDG</h2>
       <p>
-        {site.name}<br />
-        {site.platzhalterAnzeigen && <><Platzhalter art="inline">Vollständiger Firmenname mit Rechtsform (z. B. e. K., GmbH) bzw. Vor- und Nachname des Inhabers</Platzhalter><br /></>}
+        {site.name} ({site.rechtsform})<br />
+        Inhaber/in: {site.inhaber}<br />
         {a.strasse}<br />
         {a.plz} {a.ort}
       </p>
-
-      {site.platzhalterAnzeigen && (<>
-        <h2>Vertreten durch</h2>
-        <p><Platzhalter art="inline">Inhaber/in bzw. Geschäftsführer/in</Platzhalter></p>
-      </>)}
 
       <h2>Kontakt</h2>
       <p>
@@ -45,18 +40,16 @@ const a = site.adresse;
         <h2>Registereintrag</h2>
         <p><Platzhalter art="inline">Registergericht und Registernummer – falls eingetragen, sonst Abschnitt entfernen</Platzhalter></p>
 
-        <h2>Umsatzsteuer-ID</h2>
-        <p><Platzhalter art="inline">Umsatzsteuer-Identifikationsnummer nach § 27a UStG – falls vorhanden</Platzhalter></p>
-
         <h2>Berufshaftpflichtversicherung</h2>
         <p><Platzhalter art="inline">Name und Anschrift des Versicherers, räumlicher Geltungsbereich – falls zutreffend</Platzhalter></p>
 
         <h2>Verbraucherstreitbeilegung</h2>
         <p><Platzhalter art="inline">Erklärung, ob HaDie an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilnimmt (§ 36 VSBG)</Platzhalter></p>
 
-        <h2>Verantwortlich für den Inhalt</h2>
-        <p><Platzhalter art="inline">Name und Anschrift der verantwortlichen Person (§ 18 Abs. 2 MStV)</Platzhalter></p>
       </>)}
+
+      <h2>Verantwortlich für den Inhalt</h2>
+      <p>{site.inhaber}, {a.strasse}, {a.plz} {a.ort} (§ 18 Abs. 2 MStV)</p>
     </div>
   </section>
 </Seite>
