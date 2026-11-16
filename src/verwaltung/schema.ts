@@ -306,12 +306,43 @@ export const ARTEN: Record<string, Art> = {
     leer: 'Vorhaben am ganzen Gebäude, die Fachfirmen ausführen und HaDie steuert.',
   },
 
+  vereinbarungen: {
+    titel: 'Preisvereinbarungen', einzahl: 'Vereinbarung', kreis: 'basis',
+    felder: [
+      objekt, f('leistung', 'Leistung (Text auf der Rechnung)', 'text', { pflicht: true, hilfe: 'z. B. Verwaltervergütung, Mülltonnendienst' }),
+      f('abrechnung', 'Abrechnung', 'wahl', { optionen: ['Monatlich pauschal', 'Je Einheit und Monat', 'Je dokumentiertem Einsatz'], pflicht: true, vorgabe: 'Monatlich pauschal' }),
+      f('preis', 'Preis netto', 'geld', { pflicht: true }),
+      f('einsatzLeistung', 'Gezählte Serviceleistung', 'wahl', { optionen: SERVICELEISTUNGEN, hilfe: 'Nur bei „Je dokumentiertem Einsatz“: Diese Einsätze werden im Monat gezählt.' }),
+      f('aktiv', 'Wird abgerechnet', 'ja', { vorgabe: true }), f('notiz', 'Notiz'),
+    ],
+    spalten: ['objektId', 'leistung', 'abrechnung', 'preis', 'aktiv'],
+    anzeige: (s) => s.leistung,
+    leer: 'Was Sie mit dem Kunden je Objekt vereinbart haben. Daraus erzeugt der Rechnungslauf jeden Monat die Rechnungen.',
+  },
+  rechnungen: {
+    titel: 'Rechnungen', einzahl: 'Rechnung', kreis: 'basis',
+    felder: [
+      f('nummer', 'Rechnungsnummer', 'text', { hilfe: 'Wird automatisch vergeben, sobald die Rechnung gestellt wird.' }),
+      f('kundeId', 'Kunde', 'ref', { auf: 'kunden', pflicht: true }), f('objektId', 'Objekt', 'ref', { auf: 'objekte' }),
+      f('datum', 'Rechnungsdatum', 'datum', { pflicht: true }), f('zeitraum', 'Leistungszeitraum', 'text', { hilfe: 'z. B. November 2026' }),
+      f('positionen', 'Positionen', 'lang', { pflicht: true, hilfe: 'Eine Zeile je Position: Leistung | Menge | Einzelpreis netto. Beispiel: Mülltonnendienst | 4 | 12,00' }),
+      f('ust', 'Umsatzsteuer in %', 'zahl', { vorgabe: 19, hilfe: '0 bei Kleinunternehmern oder steuerfreien Leistungen.' }),
+      f('status', 'Status', 'wahl', { optionen: ['Entwurf', 'Offen', 'Bezahlt', 'Storniert'], vorgabe: 'Entwurf' }),
+      f('faellig', 'Zahlbar bis', 'datum'), f('bezahltAm', 'Bezahlt am', 'datum'), f('notiz', 'Hinweis auf der Rechnung', 'lang'),
+    ],
+    spalten: ['nummer', 'kundeId', 'objektId', 'datum', 'status', 'faellig'],
+    anzeige: (s) => s.nummer || 'Entwurf',
+    leer: 'Ihre Rechnungen an Kunden. Am schnellsten entstehen sie über den Rechnungslauf.',
+  },
   absender: {
     titel: 'Absender & Bank', einzahl: 'Absender', kreis: 'basis',
     felder: [
       f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }), f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Detmolder Straße 142' }),
       f('ort', 'PLZ und Ort', 'text', { vorgabe: '33175 Bad Lippspringe' }), f('telefon', 'Telefon', 'text', { vorgabe: '0160 9500 6184' }), f('email', 'E-Mail'),
       f('inhaber', 'Kontoinhaber'), f('iban', 'IBAN'), f('bank', 'Bank'), f('gruss', 'Unterschrift (Name)'),
+      f('steuernummer', 'Steuernummer', 'text', { hilfe: 'Auf Rechnungen ist die Steuernummer oder die USt-IdNr. Pflicht.' }), f('ustid', 'USt-IdNr.'),
+      f('kleinunternehmer', 'Kleinunternehmer nach § 19 UStG (keine Umsatzsteuer)', 'ja'),
+      f('zahlungsziel', 'Zahlungsziel in Tagen', 'zahl', { vorgabe: 14 }),
     ],
     spalten: ['name', 'ort', 'telefon', 'iban'],
     anzeige: (s) => s.name,

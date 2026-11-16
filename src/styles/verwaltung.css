@@ -1041,3 +1041,8 @@ a.vw-kennzahl:hover {
     min-width: 3.5rem;
   }
 }
+.vw-toast {
+  max-width: calc(100vw - 2rem);
+  border-radius: 1rem;
+  text-align: center;
+}

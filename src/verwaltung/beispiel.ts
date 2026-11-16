@@ -98,6 +98,12 @@ export function beispieldaten(): Record<string, Satz[]> {
       { id: 't1', titel: 'Nachmieter für Wohnung 4 suchen', objektId: 'o1', faellig: datumPlus(h, 6) },
       { id: 't2', titel: 'Angebot Gartenpflege einholen', objektId: 'o2', faellig: datumPlus(h, -2) },
     ],
+    vereinbarungen: [
+      { id: 'pv1', objektId: 'o1', leistung: 'Verwaltervergütung', abrechnung: 'Je Einheit und Monat', preis: 28, aktiv: true },
+      { id: 'pv2', objektId: 'o1', leistung: 'Mülltonnendienst', abrechnung: 'Je dokumentiertem Einsatz', preis: 12, einsatzLeistung: 'Mülltonnendienst', aktiv: true },
+      { id: 'pv3', objektId: 'o1', leistung: 'Treppenhausreinigung', abrechnung: 'Monatlich pauschal', preis: 140, aktiv: true },
+    ],
+    rechnungen: [], versammlungen: [], dokumente: [], absender: [],
     zaehler: [], schluessel: [],
   };
 }

@@ -150,6 +150,25 @@ export function status360(objektId: string): Record<'Verwalten' | 'Betreuen' | '
   return { Verwalten: verwalten, Betreuen: betreuen, Erneuern: erneuern, Entwickeln: entwickeln };
 }
 
+/* ---------- Rechnungen an Kunden ---------- */
+const dezimal = (x?: string) => zahl(String(x ?? '').replace(/\s|€/g, '').replace(',', '.'));
+/** Positionen stehen zeilenweise im Format «Leistung | Menge | Einzelpreis». */
+export function positionen(r: Satz) {
+  return String(r.positionen ?? '').split('\n').map((z) => z.trim()).filter(Boolean).map((z) => {
+    const [text, menge, einzel] = z.split('|').map((x) => x.trim());
+    const m = menge === undefined || menge === '' ? 1 : dezimal(menge);
+    const e = dezimal(einzel);
+    return { text, menge: m, einzel: e, summe: Math.round(m * e * 100) / 100 };
+  });
+}
+export function rechnungSumme(r: Satz) {
+  const netto = Math.round(positionen(r).reduce((s, p) => s + p.summe, 0) * 100) / 100;
+  const satz = zahl(r.ust);
+  const ust = Math.round(netto * satz) / 100;
+  return { netto, satz, ust, brutto: Math.round((netto + ust) * 100) / 100 };
+}
+export const rechnungUeberfaellig = (r: Satz) => r.status === 'Offen' && !!r.faellig && r.faellig < heute();
+
 /** Nächster Termin eines wiederkehrenden Dienstes */
 export function naechsterTermin(datum: string, rhythmus: string): string {
   const basis = datum < heute() ? heute() : datum;

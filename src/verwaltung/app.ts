@@ -9,7 +9,7 @@ import { alle, beiAenderung, ersetze, exportiere, finde, heute, importiere, istL
 import { ARTEN, KREISE, abhaengige, type Art, type Feld } from './schema';
 import {
   aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
-  nebenkosten, objektVonMieter, rueckstand, soll, status360, tageBis, zahl, type Zustand,
+  nebenkosten, objektVonMieter, rechnungSumme, rechnungUeberfaellig, rueckstand, soll, status360, tageBis, zahl, type Zustand,
 } from './rechnen';
 import { beispieldaten } from './beispiel';
 
@@ -40,6 +40,7 @@ export const datum = (d?: string) => (d ? d.split('-').reverse().join('.') : '�
 export const monatText = (m: string) => new Date(m + '-01T00:00:00Z').toLocaleDateString('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 export function hinweis(text: string) {
+  document.querySelectorAll('.vw-toast').forEach((alt) => alt.remove()); // immer nur ein Hinweis
   const el = h('div', { class: 'vw-toast', role: 'status' }, text);
   document.body.append(el);
   setTimeout(() => el.remove(), 3200);
@@ -66,7 +67,7 @@ const MARKEN: Record<string, string> = {
   Offen: 'rot', Notfall: 'rot', Abgelehnt: 'rot', Angefochten: 'rot',
   'In Arbeit': 'blau', Beauftragt: 'blau', Bauphase: 'blau', Vergabe: 'blau', 'Angebot erstellt': 'blau', Planung: 'blau', Analyse: 'blau', 'Beschluss / Freigabe': 'blau',
   'Wartet auf Dritte': 'gelb', Abnahme: 'gelb', Anfrage: 'gelb', Idee: 'gelb', Störung: 'gelb',
-  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen',
+  Erledigt: 'gruen', Abgeschlossen: 'gruen', Angenommen: 'gruen', Bezahlt: 'gruen',
 };
 export const marke = (text: string, farbe?: string) => h('span', { class: `vw-marke vw-marke--${farbe ?? MARKEN[text] ?? 'grau'}` }, text);
 
@@ -163,6 +164,7 @@ function zeilenAktion(artName: string, s: Satz): Node | null {
   if (artName === 'fristen' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); fristErledigt(s); } }, 'Erledigt');
   if (artName === 'service') return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); dienstErledigt(s); } }, 'Erledigt');
   if (artName === 'mieter' && !s.ende) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); aktionen.mieterwechsel?.(s); } }, 'Auszug …');
+  if (artName === 'rechnungen') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/rechnung/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Ansehen');
   if (artName === 'auftraege') return h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/angebot/${s.id}`, onclick: (e: Event) => e.stopPropagation() }, 'Angebot');
   if (artName === 'aufgaben' && !s.erledigt) return h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (e: Event) => { e.stopPropagation(); speichere('aufgaben', { id: s.id, erledigt: true }); hinweis('Aufgabe erledigt'); } }, 'Erledigt');
   return null;
@@ -184,8 +186,8 @@ function zelle(artName: string, art: Art, name: string, s: Satz): Node | string 
   const feld = feldVon(art, name);
   const text = wert(feld, s);
   if (['status', 'phase', 'ergebnis', 'kategorie'].includes(name) && text !== '–') return marke(text);
-  const terminFeld = { fristen: 'faellig', service: 'naechster', aufgaben: 'faellig', vertraege: 'kuendigenBis', auftraege: 'ende', projekte: 'ziel' }[artName];
-  if (name === terminFeld && s[name] && !s.erledigt && !['Abgeschlossen'].includes(s.status ?? s.phase)) {
+  const terminFeld = { fristen: 'faellig', service: 'naechster', aufgaben: 'faellig', vertraege: 'kuendigenBis', auftraege: 'ende', projekte: 'ziel', rechnungen: 'faellig' }[artName];
+  if (name === terminFeld && s[name] && !s.erledigt && !['Abgeschlossen', 'Bezahlt', 'Storniert', 'Entwurf'].includes(s.status ?? s.phase)) {
     const tage = tageBis(s[name]);
     const bedarf = artName === 'service' && s.rhythmus === 'Nach Bedarf';
     if (!bedarf && tage < 0) return h('span', { class: 'vw-faellig vw-faellig--rot' }, text, h('small', {}, ` ${-tage} T. überfällig`));
@@ -274,6 +276,7 @@ function cockpit(): HTMLElement {
     ...meldungen.filter((x) => x.kategorie === 'Notfall').map((x) => ({ datum: x.gemeldet, text: x.titel, art: 'Notfall', farbe: 'rot', ziel: '#/liste/vorgaenge' })),
     ...fristen.map((x) => ({ datum: x.faellig, text: `${x.art} · ${finde('objekte', x.objektId)?.bezeichnung ?? ''}`, art: 'Frist', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/fristen' })),
     ...dienste.map((x) => ({ datum: x.naechster, text: `${x.leistung} · ${finde('objekte', x.objektId)?.bezeichnung ?? ''}`, art: 'Dienst', farbe: x.naechster < h0 ? 'rot' : 'blau', ziel: '#/tagesplan' })),
+    ...alle('rechnungen').filter(rechnungUeberfaellig).map((x) => ({ datum: x.faellig, text: `Rechnung ${x.nummer ?? ''} überfällig · ${finde('kunden', x.kundeId)?.name ?? ''}`, art: 'Rechnung', farbe: 'rot', ziel: `#/rechnung/${x.id}` })),
     ...alle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/aufgaben' })),
     ...alle('vertraege').filter((x) => x.kuendigenBis && tageBis(x.kuendigenBis) >= 0 && tageBis(x.kuendigenBis) <= 60).map((x) => ({ datum: x.kuendigenBis, text: `Kündbar bis: ${x.art} · ${x.partner}`, art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
   ].sort((a, b) => a.datum.localeCompare(b.datum));
@@ -286,7 +289,8 @@ function cockpit(): HTMLElement {
       kennzahl(geld(mieter.reduce((s, x) => s + soll(x), 0)), 'Sollmiete im Monat', '#/mieten'),
       kennzahl(geld(offen), 'offene Mieten', '#/mieten', offen > 0 ? 'vw-kennzahl--rot' : ''),
       kennzahl(String(meldungen.length), 'offene Meldungen', '#/liste/vorgaenge', meldungen.length ? 'vw-kennzahl--gelb' : ''),
-      kennzahl(String(dienste.length), 'Dienste heute fällig', '#/tagesplan', dienste.length ? 'vw-kennzahl--blau' : '')),
+      kennzahl(String(dienste.length), 'Dienste heute fällig', '#/tagesplan', dienste.length ? 'vw-kennzahl--blau' : ''),
+      kennzahl(geld(alle('rechnungen').filter((r) => r.status === 'Offen').reduce((s, r) => s + rechnungSumme(r).brutto, 0)), 'offene Rechnungen an Kunden', '#/rechnungen')),
     h('div', { class: 'vw-zwei' },
       h('section', { class: 'vw-karte' },
         h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Jetzt wichtig ', h('span', { class: 'vw-zahl' }, String(wichtig.length)))),
@@ -318,6 +322,7 @@ function objektSeite(id: string): HTMLElement {
       liste('kosten', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
       liste('zaehler', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
       liste('schluessel', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
+      liste('vereinbarungen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
       liste('dokumente', { filter: eigene, vorgaben: { ...vg, datum: heute() }, ohneSpalte: 'objektId', kompakt: true }),
       ...(String(o.art).includes('WEG') ? [liste('versammlungen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }), liste('beschluesse', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })] : []),
     ],
@@ -494,6 +499,7 @@ const NAV: { titel: string; punkte: [string, string][] }[] = [
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
+  { titel: 'Abrechnung', punkte: [['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
   { titel: 'Stammdaten', punkte: [['Einheiten', '#/liste/einheiten'], ['Firmen & Handwerker', '#/liste/firmen'], ['Zahlungseingänge', '#/liste/zahlungen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
 ];
 

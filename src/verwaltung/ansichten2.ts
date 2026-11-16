@@ -10,8 +10,8 @@
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
-import { aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
-import { aktionen, datum, formular, geld, h, hinweis, kennzahl, marke, monatText, routen, zeichne } from './app';
+import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
+import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
 const absender = (): Satz =>
   alle('absender')[0] ?? ({ id: '', name: 'HaDie-Immobilien', strasse: 'Detmolder Straße 142', ort: '33175 Bad Lippspringe', telefon: '0160 9500 6184' } as Satz);
@@ -34,7 +34,8 @@ function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (
     h('footer', { class: 'vw-brief__fuss' },
       [a.name, a.strasse, a.ort].filter(Boolean).join(' · '), h('br'),
       [a.telefon && `Telefon ${a.telefon}`, a.email].filter(Boolean).join(' · '),
-      a.iban && [h('br'), [a.inhaber && `Kontoinhaber ${a.inhaber}`, `IBAN ${a.iban}`, a.bank].filter(Boolean).join(' · ')]));
+      a.iban && [h('br'), [a.inhaber && `Kontoinhaber ${a.inhaber}`, `IBAN ${a.iban}`, a.bank].filter(Boolean).join(' · ')],
+      (a.steuernummer || a.ustid) && [h('br'), [a.steuernummer && `Steuernummer ${a.steuernummer}`, a.ustid && `USt-IdNr. ${a.ustid}`].filter(Boolean).join(' · ')]));
 }
 const gruss = () => [h('p', {}, 'Mit freundlichen Grüßen'), h('p', { class: 'vw-brief__unterschrift' }, absender().gruss || absender().name)];
 const vorlage = () => h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Vorlage: Bitte prüfen Sie Inhalt, Beträge und Fristen vor dem Versand.');
@@ -94,7 +95,13 @@ routen.angebot = (auftragId) => {
   const einheit = finde('einheiten', auftrag.einheitId);
   const positionen = String(auftrag.leistungen ?? '').split('\n').map((z) => z.trim()).filter(Boolean);
   const belege = alle('kosten').filter((k) => k.auftragId === auftrag.id);
-  return h('div', { class: 'vw-stapel' }, werkzeug('#/liste/auftraege'), vorlage(),
+  return h('div', { class: 'vw-stapel' },
+    werkzeug('#/liste/auftraege', h('button', { class: 'vw-knopf', onclick: () => {
+      if (!kunde) return alert('Dem Objekt ist noch kein Kunde zugeordnet.');
+      const r = speichere('rechnungen', { kundeId: kunde.id, objektId: objekt.id, datum: heute(), zeitraum: [auftrag.start, auftrag.ende].filter(Boolean).map((d: string) => datum(d)).join(' – '), positionen: `${auftrag.titel} gemäß Angebot | 1 | ${zahl(auftrag.angebot)}`, ust: absender().kleinunternehmer ? 0 : 19, status: 'Entwurf' });
+      hinweis('Rechnungsentwurf angelegt');
+      location.hash = `#/rechnung/${r.id}`;
+    } }, 'Rechnung daraus erstellen')), vorlage(),
     belege.length > 0 && h('p', { class: 'vw-fein vw-nichtdrucken' }, `Diesem Auftrag sind ${belege.length} Beleg(e) über ${geld(belege.reduce((s, k) => s + zahl(k.betrag), 0))} zugeordnet.`),
     bogen([kunde?.name ?? 'Kunde nicht hinterlegt', kunde?.strasse, kunde?.ort], `Angebot: ${auftrag.titel}`,
       h('p', {}, `Objekt: ${objekt.bezeichnung}${einheit ? `, ${einheit.bezeichnung}` : ''} · ${auftrag.gewerk}`),
@@ -257,4 +264,102 @@ aktionen.mieterwechsel = (m: Satz) => {
   dialog.addEventListener('close', () => { dialog.remove(); zeichne(); });
   document.body.append(dialog);
   dialog.showModal();
+};
+
+/* ================= Rechnungen an Kunden ================= */
+function naechsteNummer(): string {
+  const jahr = heute().slice(0, 4);
+  const vor = `RE-${jahr}-`;
+  const hoechste = Math.max(0, ...alle('rechnungen').map((r) => (String(r.nummer ?? '').startsWith(vor) ? Number(String(r.nummer).slice(vor.length)) || 0 : 0)));
+  return vor + String(hoechste + 1).padStart(4, '0');
+}
+/** Aus dem Entwurf wird eine gestellte Rechnung: Nummer, Datum und Zahlungsziel werden gesetzt. */
+function stelle(r: Satz) {
+  const ziel = zahl(absender().zahlungsziel) || 14;
+  speichere('rechnungen', { id: r.id, nummer: r.nummer || naechsteNummer(), status: 'Offen', datum: r.datum || heute(), faellig: r.faellig || datumPlus(heute(), ziel) });
+  hinweis('Rechnung gestellt');
+}
+
+let laufMonat = monatPlus(monatHeute(), -1);
+/** Erzeugt für einen Monat Entwürfe aus den Preisvereinbarungen und den dokumentierten Einsätzen. */
+function rechnungslauf() {
+  const a = absender();
+  let neu = 0;
+  const ohneKunde: string[] = [];
+  for (const objekt of alle('objekte')) {
+    const vb = alle('vereinbarungen').filter((v) => v.objektId === objekt.id && v.aktiv);
+    if (!vb.length) continue;
+    if (!finde('kunden', objekt.kundeId)) { ohneKunde.push(objekt.bezeichnung); continue; }
+    if (alle('rechnungen').some((r) => r.objektId === objekt.id && r.lauf === laufMonat && r.status !== 'Storniert')) continue;
+    const einheiten = einheitenVon(objekt.id).length;
+    const zeilen = vb.map((v) => {
+      const menge = v.abrechnung === 'Je Einheit und Monat' ? einheiten
+        : v.abrechnung === 'Je dokumentiertem Einsatz' ? alle('einsaetze').filter((e) => e.objektId === objekt.id && monatVon(e.datum) === laufMonat && e.leistung === (v.einsatzLeistung || v.leistung)).length
+        : 1;
+      return menge > 0 ? `${v.leistung} | ${menge} | ${zahl(v.preis).toFixed(2).replace('.', ',')}` : '';
+    }).filter(Boolean);
+    if (!zeilen.length) continue;
+    speichere('rechnungen', { kundeId: objekt.kundeId, objektId: objekt.id, datum: heute(), zeitraum: monatText(laufMonat), lauf: laufMonat, positionen: zeilen.join('\n'), ust: a.kleinunternehmer ? 0 : 19, status: 'Entwurf' });
+    neu++;
+  }
+  hinweis(neu ? `${neu} Rechnungsentwurf/-entwürfe für ${monatText(laufMonat)} angelegt` : `Für ${monatText(laufMonat)} gibt es nichts Neues abzurechnen`);
+  if (ohneKunde.length) alert(`Ohne Rechnung, weil kein Kunde zugeordnet ist: ${ohneKunde.join(', ')}`);
+}
+
+routen.rechnungen = () => {
+  const alleR = alle('rechnungen');
+  const offen = alleR.filter((r) => r.status === 'Offen');
+  const jahr = heute().slice(0, 4);
+  const summe = (liste: Satz[], feld: 'netto' | 'brutto') => liste.reduce((s, r) => s + rechnungSumme(r)[feld], 0);
+  return h('div', { class: 'vw-stapel' },
+    h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Rechnungen'), h('p', {}, 'Ihre eigenen Leistungen aus allen vier Bereichen, abgerechnet gegenüber dem Kunden.')),
+    h('div', { class: 'vw-kennzahlen' },
+      kennzahl(geld(summe(offen, 'brutto')), `offen (${offen.length})`, undefined, offen.length ? 'vw-kennzahl--gelb' : ''),
+      kennzahl(geld(summe(offen.filter(rechnungUeberfaellig), 'brutto')), 'davon überfällig', undefined, offen.some(rechnungUeberfaellig) ? 'vw-kennzahl--rot' : ''),
+      kennzahl(String(alleR.filter((r) => r.status === 'Entwurf').length), 'Entwürfe'),
+      kennzahl(geld(summe(alleR.filter((r) => ['Offen', 'Bezahlt'].includes(r.status) && String(r.datum).startsWith(jahr)), 'netto')), `Umsatz netto ${jahr}`)),
+    h('section', { class: 'vw-karte vw-text' },
+      h('h2', {}, 'Rechnungslauf'),
+      h('p', {}, 'Erzeugt für jedes Objekt mit Preisvereinbarungen einen Entwurf: Pauschalen, Beträge je Einheit und die im Monat dokumentierten Einsätze. Bereits abgerechnete Objekte werden übersprungen.'),
+      h('div', { class: 'vw-reihe vw-monat' },
+        h('button', { class: 'vw-knopf', 'aria-label': 'Vorheriger Monat', onclick: () => { laufMonat = monatPlus(laufMonat, -1); zeichne(); } }, '←'),
+        h('strong', {}, monatText(laufMonat)),
+        h('button', { class: 'vw-knopf', 'aria-label': 'Nächster Monat', onclick: () => { laufMonat = monatPlus(laufMonat, 1); zeichne(); } }, '→'),
+        h('button', { class: 'vw-knopf vw-knopf--voll', onclick: rechnungslauf }, 'Entwürfe erzeugen'),
+        h('a', { class: 'vw-knopf', href: '#/liste/vereinbarungen' }, 'Preisvereinbarungen'))),
+    liste('rechnungen', { vorgaben: { datum: heute(), ust: absender().kleinunternehmer ? 0 : 19 } }));
+};
+
+routen.rechnung = (id) => {
+  const r = finde('rechnungen', id);
+  const kunde = r && finde('kunden', r.kundeId);
+  if (!r) return h('p', { class: 'vw-leer' }, 'Diese Rechnung gibt es nicht mehr. ', h('a', { href: '#/rechnungen' }, 'Zu den Rechnungen'));
+  const a = absender();
+  const objekt = finde('objekte', r.objektId);
+  const pos = positionen(r);
+  const s = rechnungSumme(r);
+  const fehlt = [!a.steuernummer && !a.ustid && 'Steuernummer oder USt-IdNr.', !a.iban && 'Bankverbindung', !kunde?.strasse && 'Anschrift des Kunden', !r.zeitraum && 'Leistungszeitraum'].filter(Boolean);
+  return h('div', { class: 'vw-stapel' },
+    werkzeug('#/rechnungen',
+      marke(r.status),
+      h('button', { class: 'vw-knopf', onclick: () => formular('rechnungen', r) }, 'Bearbeiten'),
+      r.status === 'Entwurf' && h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => stelle(r) }, 'Rechnung stellen'),
+      r.status === 'Offen' && h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => { speichere('rechnungen', { id: r.id, status: 'Bezahlt', bezahltAm: heute() }); hinweis('Als bezahlt gebucht'); } }, 'Zahlung eingegangen')),
+    fehlt.length > 0 && h('p', { class: 'vw-warnung vw-nichtdrucken' }, `Für eine vollständige Rechnung fehlt noch: ${fehlt.join(', ')}.`),
+    r.status === 'Entwurf' && h('p', { class: 'vw-fein vw-nichtdrucken' }, 'Entwurf: Die Rechnungsnummer wird vergeben, sobald Sie die Rechnung stellen.'),
+    bogen([kunde?.name ?? 'Kunde nicht hinterlegt', kunde?.strasse, kunde?.ort], r.status === 'Storniert' ? `Rechnung ${r.nummer ?? ''} (storniert)` : `Rechnung ${r.nummer || '– Entwurf –'}`,
+      h('p', {}, [`Rechnungsdatum: ${datum(r.datum)}`, r.zeitraum && `Leistungszeitraum: ${r.zeitraum}`, kunde?.kundennummer && `Kundennummer: ${kunde.kundennummer}`, objekt && `Objekt: ${objekt.bezeichnung}`].filter(Boolean).map((t, i) => [i > 0 && h('br'), t])),
+      h('table', { class: 'vw-brief__tabelle' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'Pos.'), h('th', {}, 'Leistung'), h('th', { class: 'vw-zahlspalte' }, 'Menge'), h('th', { class: 'vw-zahlspalte' }, 'Einzelpreis'), h('th', { class: 'vw-zahlspalte' }, 'Gesamt'))),
+        h('tbody', {}, pos.map((p, i) => h('tr', {}, h('td', {}, String(i + 1)), h('td', {}, p.text), h('td', { class: 'vw-zahlspalte' }, String(p.menge).replace('.', ',')), h('td', { class: 'vw-zahlspalte' }, geld(p.einzel)), h('td', { class: 'vw-zahlspalte' }, geld(p.summe))))),
+        h('tfoot', {},
+          h('tr', {}, h('td', { colspan: 4 }, 'Summe netto'), h('td', { class: 'vw-zahlspalte' }, geld(s.netto))),
+          s.satz > 0 && h('tr', {}, h('td', { colspan: 4 }, `zuzüglich ${String(s.satz).replace('.', ',')} % Umsatzsteuer`), h('td', { class: 'vw-zahlspalte' }, geld(s.ust))),
+          h('tr', {}, h('th', { colspan: 4 }, 'Rechnungsbetrag'), h('th', { class: 'vw-zahlspalte' }, geld(s.brutto))))),
+      s.satz === 0 && a.kleinunternehmer && h('p', {}, 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.'),
+      r.status !== 'Bezahlt'
+        ? h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${a.iban ? ` auf das Konto ${a.iban}${a.inhaber ? ` (${a.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`)
+        : h('p', {}, `Der Rechnungsbetrag wurde am ${datum(r.bezahltAm)} beglichen. Vielen Dank.`),
+      r.notiz && h('p', {}, r.notiz),
+      ...gruss()));
 };
