@@ -1,6 +1,6 @@
 # Apache-Einstellungen für STRATO (Webspace). Entspricht netlify.toml.
 Options -Indexes
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
