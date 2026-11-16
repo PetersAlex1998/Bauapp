@@ -82,15 +82,30 @@ export const ARTEN: Record<string, Art> = {
       f('strasse', 'Straße und Hausnummer'), f('ort', 'PLZ und Ort'),
       f('art', 'Objektart', 'wahl', { optionen: ['Mietshaus', 'Eigentümergemeinschaft (WEG)', 'Einzelwohnung', 'Gewerbeobjekt', 'Gemischt genutzt'], vorgabe: 'Mietshaus' }),
       f('kundeId', 'Kunde (Eigentümer)', 'ref', { auf: 'kunden' }),
+      f('betreuerId', 'Objektbetreuer (verantwortlich)', 'ref', { auf: 'mitarbeiter', hilfe: 'Ein Mitarbeiter betreut das ganze Objekt – nicht einzelne Einheiten.' }),
+      f('vertretungId', 'Vertretung', 'ref', { auf: 'mitarbeiter' }),
       f('leistungen', 'Gebuchte Leistungen (360°)', 'mehr', { optionen: Object.values(KREISE), vorgabe: ['Verwalten'] }),
       f('baujahr', 'Baujahr', 'zahl'),
       f('mietspiegel', 'Mietspiegel / Quelle der Vergleichsmiete', 'text', { hilfe: 'z. B. „Mietspiegel Paderborn 2024“. Erscheint im Erhöhungsschreiben.' }),
       f('angespannt', 'Gebiet mit angespanntem Wohnungsmarkt (Kappungsgrenze 15 %)', 'ja', { hilfe: 'Gilt nur, wenn die Gemeinde per Landesverordnung festgelegt ist. Sonst gilt 20 %.' }),
       f('notiz', 'Notiz', 'lang'),
     ],
-    spalten: ['bezeichnung', 'ort', 'art', 'kundeId'],
+    spalten: ['bezeichnung', 'ort', 'art', 'kundeId', 'betreuerId'],
     anzeige: (s) => s.bezeichnung,
     leer: 'Legen Sie Ihr erstes Objekt an. Alles Weitere – Einheiten, Mieter, Service, Aufträge – hängt daran.',
+  },
+  mitarbeiter: {
+    titel: 'Mitarbeiter', einzahl: 'Mitarbeiter', kreis: 'basis',
+    felder: [
+      f('name', 'Name', 'text', { pflicht: true }), f('kuerzel', 'Kürzel'),
+      f('rolle', 'Rolle', 'wahl', { optionen: ['Geschäftsführung', 'Objektbetreuer/in', 'Buchhaltung', 'Hausmeister / Technik', 'Auszubildende/r', 'Sonstiges'], vorgabe: 'Objektbetreuer/in' }),
+      f('telefon', 'Telefon'), f('email', 'E-Mail'),
+      f('nummer', 'Login-Nummer', 'text', { hilfe: 'Die Nummer, mit der sich die Person anmeldet (z. B. V-123456789). Damit zeigt „Meine Objekte“ die richtigen Objekte.' }),
+      f('aktiv', 'Aktiv', 'ja', { vorgabe: true }), f('notiz', 'Notiz', 'lang'),
+    ],
+    spalten: ['name', 'rolle', 'telefon', 'nummer'],
+    anzeige: (s) => s.name,
+    leer: 'Ihr Team. Jedem Objekt wird ein Objektbetreuer zugewiesen – das ganze Objekt, nicht einzelne Einheiten.',
   },
   einheiten: {
     titel: 'Einheiten', einzahl: 'Einheit', kreis: 'basis',
@@ -390,16 +405,33 @@ export const ARTEN: Record<string, Art> = {
   },
 };
 
-/** Welche Tabellen verweisen auf welche? (für das Mitlöschen verknüpfter Einträge) */
+/**
+ * Beim Löschen: Was hängt zwingend daran (wird mitgelöscht) und was verweist nur
+ * (verliert die Zuordnung, bleibt aber erhalten)? Zwingend sind Pflicht-Verweise,
+ * etwa Einheit → Objekt. Ein optionaler Verweis (Firma, Kunde, Betreuer …) löscht nichts.
+ */
 export function abhaengige(tabelle: string, id: string): { tabelle: string; ids: string[] }[] {
   const treffer: { tabelle: string; ids: string[] }[] = [];
   for (const [name, art] of Object.entries(ARTEN)) {
-    const felder = art.felder.filter((x) => x.typ === 'ref' && x.auf === tabelle).map((x) => x.name);
+    const felder = art.felder.filter((x) => x.typ === 'ref' && x.auf === tabelle && x.pflicht).map((x) => x.name);
     if (!felder.length) continue;
     const ids = alle(name).filter((s) => felder.some((feld) => s[feld] === id)).map((s) => s.id);
     if (ids.length) {
       treffer.push({ tabelle: name, ids });
       ids.forEach((kind) => treffer.push(...abhaengige(name, kind)));
+    }
+  }
+  return treffer;
+}
+export function verweise(tabelle: string, id: string, ausser: Set<string> = new Set()): { tabelle: string; satzId: string; felder: string[] }[] {
+  const treffer: { tabelle: string; satzId: string; felder: string[] }[] = [];
+  for (const [name, art] of Object.entries(ARTEN)) {
+    const felder = art.felder.filter((x) => x.typ === 'ref' && x.auf === tabelle && !x.pflicht).map((x) => x.name);
+    if (!felder.length) continue;
+    for (const s of alle(name)) {
+      if (ausser.has(`${name}:${s.id}`)) continue;
+      const getroffen = felder.filter((feld) => s[feld] === id);
+      if (getroffen.length) treffer.push({ tabelle: name, satzId: s.id, felder: getroffen });
     }
   }
   return treffer;

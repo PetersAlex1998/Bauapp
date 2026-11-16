@@ -11,6 +11,7 @@
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
 import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
+import { ds } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
 export const absender = (): Satz =>
@@ -173,7 +174,7 @@ routen.bericht = (objektId) => {
 
 /* ================= Kautionen ================= */
 routen.kautionen = () => {
-  const zeilen = alle('mieter').map((m) => ({ m, soll: zahl(m.kautionSoll), ist: zahl(m.kautionIst), beendet: !!m.ende && m.ende < heute() }));
+  const zeilen = ds('mieter').map((m) => ({ m, soll: zahl(m.kautionSoll), ist: zahl(m.kautionIst), beendet: !!m.ende && m.ende < heute() }));
   const laufend = zeilen.filter((z) => !z.beendet);
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Kautionen'), h('p', {}, 'Vereinbarte und erhaltene Kautionen. Nach Auszug steht die Abrechnung an.')),
@@ -198,14 +199,14 @@ routen.kalender = () => {
   type Termin = { tag: string; text: string; art: string; farbe: string; ziel: string };
   const name = (id?: string) => finde('objekte', id)?.bezeichnung ?? '';
   const termine: Termin[] = [
-    ...alle('fristen').filter((x) => !x.erledigt).map((x) => ({ tag: x.faellig, text: `${x.art} · ${name(x.objektId)}`, art: 'Frist', farbe: 'gelb', ziel: '#/liste/fristen' })),
-    ...alle('service').filter((x) => x.rhythmus !== 'Nach Bedarf').map((x) => ({ tag: x.naechster, text: `${x.leistung} · ${name(x.objektId)}`, art: 'Dienst', farbe: 'blau', ziel: '#/tagesplan' })),
-    ...alle('aufgaben').filter((x) => !x.erledigt && x.faellig).map((x) => ({ tag: x.faellig, text: x.titel, art: 'Aufgabe', farbe: 'grau', ziel: '#/liste/aufgaben' })),
-    ...alle('vertraege').filter((x) => x.kuendigenBis).map((x) => ({ tag: x.kuendigenBis, text: `Kündbar bis: ${x.art} · ${x.partner}`, art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
-    ...alle('auftraege').filter((x) => x.ende && x.status !== 'Abgeschlossen').map((x) => ({ tag: x.ende, text: `Geplantes Ende: ${x.titel}`, art: 'Auftrag', farbe: 'blau', ziel: '#/liste/auftraege' })),
-    ...alle('projekte').filter((x) => x.ziel && x.phase !== 'Abgeschlossen').map((x) => ({ tag: x.ziel, text: `Fertigstellung: ${x.titel}`, art: 'Projekt', farbe: 'blau', ziel: '#/liste/projekte' })),
-    ...alle('versammlungen').map((x) => ({ tag: x.datum, text: `${x.art} · ${name(x.objektId)}`, art: 'Versammlung', farbe: 'gruen', ziel: '#/liste/versammlungen' })),
-    ...alle('mieter').filter((x) => x.ende).map((x) => ({ tag: x.ende, text: `Auszug: ${x.name}`, art: 'Auszug', farbe: 'rot', ziel: '#/liste/mieter' })),
+    ...ds('fristen').filter((x) => !x.erledigt).map((x) => ({ tag: x.faellig, text: `${x.art} · ${name(x.objektId)}`, art: 'Frist', farbe: 'gelb', ziel: '#/liste/fristen' })),
+    ...ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf').map((x) => ({ tag: x.naechster, text: `${x.leistung} · ${name(x.objektId)}`, art: 'Dienst', farbe: 'blau', ziel: '#/tagesplan' })),
+    ...ds('aufgaben').filter((x) => !x.erledigt && x.faellig).map((x) => ({ tag: x.faellig, text: x.titel, art: 'Aufgabe', farbe: 'grau', ziel: '#/liste/aufgaben' })),
+    ...ds('vertraege').filter((x) => x.kuendigenBis).map((x) => ({ tag: x.kuendigenBis, text: `Kündbar bis: ${x.art} · ${x.partner}`, art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
+    ...ds('auftraege').filter((x) => x.ende && x.status !== 'Abgeschlossen').map((x) => ({ tag: x.ende, text: `Geplantes Ende: ${x.titel}`, art: 'Auftrag', farbe: 'blau', ziel: '#/liste/auftraege' })),
+    ...ds('projekte').filter((x) => x.ziel && x.phase !== 'Abgeschlossen').map((x) => ({ tag: x.ziel, text: `Fertigstellung: ${x.titel}`, art: 'Projekt', farbe: 'blau', ziel: '#/liste/projekte' })),
+    ...ds('versammlungen').map((x) => ({ tag: x.datum, text: `${x.art} · ${name(x.objektId)}`, art: 'Versammlung', farbe: 'gruen', ziel: '#/liste/versammlungen' })),
+    ...ds('mieter').filter((x) => x.ende).map((x) => ({ tag: x.ende, text: `Auszug: ${x.name}`, art: 'Auszug', farbe: 'rot', ziel: '#/liste/mieter' })),
   ].filter((t) => monatVon(t.tag) === kalMonat).sort((a, b) => a.tag.localeCompare(b.tag));
   const tage = [...new Set(termine.map((t) => t.tag))];
   return h('div', { class: 'vw-stapel' },
@@ -307,7 +308,7 @@ function rechnungslauf() {
 }
 
 routen.rechnungen = () => {
-  const alleR = alle('rechnungen');
+  const alleR = ds('rechnungen');
   const offen = alleR.filter((r) => r.status === 'Offen');
   const jahr = heute().slice(0, 4);
   const summe = (liste: Satz[], feld: 'netto' | 'brutto') => liste.reduce((s, r) => s + rechnungSumme(r)[feld], 0);

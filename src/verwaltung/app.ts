@@ -6,7 +6,8 @@
  * entstehen aus dem Datenmodell (schema.ts).
  */
 import { alle, beiAenderung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
-import { ARTEN, KREISE, abhaengige, type Art, type Feld } from './schema';
+import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
+import { ansichtBeschreibung, ansichtId, ansichtWahl, ds, ich, objektIdVon, setzeAnsicht, sichtbar, sichtbareObjektIds } from './ansicht';
 import {
   aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, sollIm, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
   nebenkosten, objektVonMieter, rechnungSumme, rechnungUeberfaellig, rueckstand, soll, status360, tageBis, zahl, type Zustand,
@@ -144,11 +145,15 @@ export function formular(artName: string, satz: Partial<Satz> = {}, nachher?: (s
 function entferne(artName: string, id: string): boolean {
   const art = ARTEN[artName];
   const kinder = abhaengige(artName, id);
-  const anzahl = kinder.reduce((s, k) => s + k.ids.length, 0);
-  const frage = anzahl
-    ? `${art.einzahl} wirklich löschen?\n\nDamit werden auch ${anzahl} verknüpfte Einträge gelöscht (${[...new Set(kinder.map((k) => ARTEN[k.tabelle].titel))].join(', ')}).`
-    : `${art.einzahl} wirklich löschen?`;
+  const anzahl = kinder.reduce((sum, k) => sum + k.ids.length, 0);
+  const geloescht = new Set([`${artName}:${id}`, ...kinder.flatMap((k) => k.ids.map((i) => `${k.tabelle}:${i}`))]);
+  const gelost = [artName, ...kinder.map((k) => k.tabelle)].flatMap((t) => (t === artName ? verweise(t, id, geloescht) : []))
+    .concat(kinder.flatMap((k) => k.ids.flatMap((i) => verweise(k.tabelle, i, geloescht))));
+  let frage = `${art.einzahl} wirklich löschen?`;
+  if (anzahl) frage += `\n\nDamit werden auch ${anzahl} verknüpfte Einträge gelöscht (${[...new Set(kinder.map((k) => ARTEN[k.tabelle].titel))].join(', ')}).`;
+  if (gelost.length) frage += `\n\n${gelost.length} weitere Einträge (${[...new Set(gelost.map((v) => ARTEN[v.tabelle].titel))].join(', ')}) bleiben erhalten und verlieren nur den Verweis auf ${art.einzahl}.`;
   if (!confirm(frage)) return false;
+  gelost.forEach((v) => speichere(v.tabelle, { id: v.satzId, ...Object.fromEntries(v.felder.map((f) => [f, ''])) }));
   kinder.forEach((k) => loesche(k.tabelle, k.ids));
   loesche(artName, [id]);
   hinweis(`${art.einzahl} gelöscht`);
@@ -205,7 +210,7 @@ export function liste(artName: string, opt: { filter?: (s: Satz) => boolean; vor
   const zaehler = h('span', { class: 'vw-zahl' });
   const fuelle = () => {
     const q = (suchtext[artName] ?? '').toLowerCase();
-    let saetze = alle(artName).filter((s) => !opt.filter || opt.filter(s));
+    let saetze = alle(artName).filter((s) => (opt.filter ? opt.filter(s) : sichtbar(artName, s)));
     const gesamt = saetze.length;
     if (q) saetze = saetze.filter((s) => art.felder.some((x) => wert(x, s).toLowerCase().includes(q)));
     const sortFeld = art.felder.find((x) => x.typ === 'datum' && spalten.includes(x.name))?.name;
@@ -263,49 +268,100 @@ function cockpit(): HTMLElement {
         h('button', { class: 'vw-knopf', onclick: () => { ersetze(beispieldaten()); hinweis('Beispieldaten geladen'); } }, 'Beispieldaten laden')));
   }
   const m = monatHeute();
-  const mieter = alle('mieter').filter((x) => aktivIm(x, m));
-  const einheiten = alle('einheiten').filter((e) => e.art === 'Wohnung' || e.art === 'Gewerbe');
+  const objekte = ds('objekte');
+  const mieter = ds('mieter').filter((x) => aktivIm(x, m));
+  const einheiten = ds('einheiten').filter((e) => e.art === 'Wohnung' || e.art === 'Gewerbe');
   const leer = einheiten.filter((e) => !mieter.some((x) => x.einheitId === e.id)).length;
-  const offen = alle('mieter').reduce((s, x) => s + rueckstand(x), 0);
+  const offen = ds('mieter').reduce((sum, x) => sum + rueckstand(x), 0);
   const h0 = heute();
-  const fristen = alle('fristen').filter((x) => !x.erledigt && tageBis(x.faellig) <= 30);
-  const dienste = alle('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0);
-  const meldungen = alle('vorgaenge').filter((x) => x.status !== 'Erledigt');
-
-  type Punkt = { datum: string; text: string; art: string; farbe: string; ziel: string };
-  const wichtig: Punkt[] = [
-    ...meldungen.filter((x) => x.kategorie === 'Notfall').map((x) => ({ datum: x.gemeldet, text: x.titel, art: 'Notfall', farbe: 'rot', ziel: '#/liste/vorgaenge' })),
-    ...fristen.map((x) => ({ datum: x.faellig, text: `${x.art} · ${finde('objekte', x.objektId)?.bezeichnung ?? ''}`, art: 'Frist', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/fristen' })),
-    ...dienste.map((x) => ({ datum: x.naechster, text: `${x.leistung} · ${finde('objekte', x.objektId)?.bezeichnung ?? ''}`, art: 'Dienst', farbe: x.naechster < h0 ? 'rot' : 'blau', ziel: '#/tagesplan' })),
-    ...alle('rechnungen').filter(rechnungUeberfaellig).map((x) => ({ datum: x.faellig, text: `Rechnung ${x.nummer ?? ''} überfällig · ${finde('kunden', x.kundeId)?.name ?? ''}`, art: 'Rechnung', farbe: 'rot', ziel: `#/rechnung/${x.id}` })),
-    ...alle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/aufgaben' })),
-    ...alle('vertraege').filter((x) => x.kuendigenBis && tageBis(x.kuendigenBis) >= 0 && tageBis(x.kuendigenBis) <= 60).map((x) => ({ datum: x.kuendigenBis, text: `Kündbar bis: ${x.art} · ${x.partner}`, art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
-  ].sort((a, b) => a.datum.localeCompare(b.datum));
+  const dienste = ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0);
+  const meldungen = ds('vorgaenge').filter((x) => x.status !== 'Erledigt');
+  const wichtig = wichtigFuer();
 
   return h('div', { class: 'vw-stapel' },
-    h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Cockpit'), h('p', {}, new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))),
+    h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Cockpit'), h('p', {}, new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), ' · ', ansichtBeschreibung())),
     h('div', { class: 'vw-kennzahlen' },
-      kennzahl(String(alle('objekte').length), 'Objekte', '#/liste/objekte'),
+      kennzahl(String(objekte.length), 'Objekte', '#/liste/objekte'),
       kennzahl(`${einheiten.length - leer}/${einheiten.length}`, leer ? `vermietet · ${leer} leer` : 'Einheiten vermietet', '#/mieten'),
-      kennzahl(geld(mieter.reduce((s, x) => s + soll(x), 0)), 'Sollmiete im Monat', '#/mieten'),
+      kennzahl(geld(mieter.reduce((sum, x) => sum + soll(x), 0)), 'Sollmiete im Monat', '#/mieten'),
       kennzahl(geld(offen), 'offene Mieten', '#/mieten', offen > 0 ? 'vw-kennzahl--rot' : ''),
       kennzahl(String(meldungen.length), 'offene Meldungen', '#/liste/vorgaenge', meldungen.length ? 'vw-kennzahl--gelb' : ''),
       kennzahl(String(dienste.length), 'Dienste heute fällig', '#/tagesplan', dienste.length ? 'vw-kennzahl--blau' : ''),
-      kennzahl(geld(alle('rechnungen').filter((r) => r.status === 'Offen').reduce((s, r) => s + rechnungSumme(r).brutto, 0)), 'offene Rechnungen an Kunden', '#/rechnungen')),
+      kennzahl(geld(ds('rechnungen').filter((r) => r.status === 'Offen').reduce((sum, r) => sum + rechnungSumme(r).brutto, 0)), 'offene Rechnungen an Kunden', '#/rechnungen')),
     h('div', { class: 'vw-zwei' },
       h('section', { class: 'vw-karte' },
         h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Jetzt wichtig ', h('span', { class: 'vw-zahl' }, String(wichtig.length)))),
-        wichtig.length
-          ? h('ul', { class: 'vw-punkte' }, wichtig.slice(0, 12).map((p) => h('li', {}, h('a', { href: p.ziel }, marke(p.art, p.farbe), h('span', { class: 'vw-punkte__text' }, p.text), h('span', { class: 'vw-punkte__datum' }, datum(p.datum))))))
-          : h('p', { class: 'vw-leer' }, 'Nichts Dringendes. Alle Fristen, Dienste und Aufgaben sind im Plan.')),
+        wichtigListe(wichtig, 12)),
       h('section', { class: 'vw-karte' },
-        h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Objekte im 360°-Blick')),
-        h('ul', { class: 'vw-objekte' }, alle('objekte').map((o) => h('li', {}, h('a', { href: `#/objekt/${o.id}` }, ring(o.id),
-          h('span', {}, h('strong', {}, o.bezeichnung), h('small', {}, Object.entries(status360(o.id)).filter(([, v]) => v.zustand === 'kritisch' || v.zustand === 'achtung').map(([k, v]) => `${k}: ${v.text}`).join(' · ') || 'Alles im Plan')))))),
+        h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Objekte im 360°-Blick'), h('a', { class: 'vw-knopf vw-knopf--klein', href: '#/team' }, 'Team & Zuweisung')),
+        objekte.length
+          ? h('ul', { class: 'vw-objekte' }, objekte.map((o) => h('li', {}, h('a', { href: `#/objekt/${o.id}` }, ring(o.id),
+              h('span', {}, h('strong', {}, o.bezeichnung), h('small', {}, `${finde('mitarbeiter', o.betreuerId)?.name ?? 'Nicht zugewiesen'} · ${einheitenVon(o.id).length} Einheiten`),
+                h('small', {}, Object.entries(status360(o.id)).filter(([, v]) => v.zustand === 'kritisch' || v.zustand === 'achtung').map(([k, v]) => `${k}: ${v.text}`).join(' · ') || 'Alles im Plan'))))))
+          : h('p', { class: 'vw-leer' }, 'In dieser Ansicht gibt es keine Objekte.'),
         h('p', { class: 'vw-fein' }, 'Grün: im Plan · Gelb: etwas steht an · Rot: Handlungsbedarf · Grau: nicht gebucht'))));
 }
 
-let reiter = 'Verwalten';
+type Punkt = { datum: string; text: string; art: string; farbe: string; ziel: string };
+/** Was ansteht – für ein Objekt oder (ohne Angabe) für alle Objekte der aktuellen Ansicht. */
+export function wichtigFuer(objektId?: string): Punkt[] {
+  const quelle = (art: string) => (objektId ? alle(art).filter((x) => objektIdVon(art, x) === objektId) : ds(art));
+  const h0 = heute();
+  const mit = (t: string, id?: string) => (objektId ? t : `${t} · ${finde('objekte', id)?.bezeichnung ?? ''}`);
+  return [
+    ...quelle('vorgaenge').filter((x) => x.status !== 'Erledigt' && x.kategorie === 'Notfall').map((x) => ({ datum: x.gemeldet, text: mit(x.titel, x.objektId), art: 'Notfall', farbe: 'rot', ziel: '#/liste/vorgaenge' })),
+    ...quelle('fristen').filter((x) => !x.erledigt && tageBis(x.faellig) <= 30).map((x) => ({ datum: x.faellig, text: mit(x.art, x.objektId), art: 'Frist', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/fristen' })),
+    ...quelle('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0).map((x) => ({ datum: x.naechster, text: mit(x.leistung, x.objektId), art: 'Dienst', farbe: x.naechster < h0 ? 'rot' : 'blau', ziel: '#/tagesplan' })),
+    ...quelle('rechnungen').filter(rechnungUeberfaellig).map((x) => ({ datum: x.faellig, text: `Rechnung ${x.nummer ?? ''} überfällig · ${finde('kunden', x.kundeId)?.name ?? ''}`, art: 'Rechnung', farbe: 'rot', ziel: `#/rechnung/${x.id}` })),
+    ...quelle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/liste/aufgaben' })),
+    ...quelle('vertraege').filter((x) => x.kuendigenBis && tageBis(x.kuendigenBis) >= 0 && tageBis(x.kuendigenBis) <= 60).map((x) => ({ datum: x.kuendigenBis, text: mit(`Kündbar bis: ${x.art} · ${x.partner}`, x.objektId), art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
+  ].sort((a, b) => a.datum.localeCompare(b.datum));
+}
+export const wichtigListe = (punkte: Punkt[], max = 12) => punkte.length
+  ? h('ul', { class: 'vw-punkte' }, punkte.slice(0, max).map((p) => h('li', {}, h('a', { href: p.ziel }, marke(p.art, p.farbe), h('span', { class: 'vw-punkte__text' }, p.text), h('span', { class: 'vw-punkte__datum' }, datum(p.datum))))))
+  : h('p', { class: 'vw-leer' }, 'Nichts Dringendes. Alles ist im Plan.');
+
+let reiter = 'Übersicht';
+
+/** Auswahl eines Mitarbeiters für ein Objekt (Betreuer oder Vertretung) */
+export function personWahl(o: Satz, feld: 'betreuerId' | 'vertretungId'): HTMLElement {
+  const leute = alle('mitarbeiter').filter((m) => m.aktiv !== false || m.id === o[feld]);
+  return h('select', { 'aria-label': feld === 'betreuerId' ? 'Objektbetreuer' : 'Vertretung',
+    onchange: (e: Event) => { speichere('objekte', { id: o.id, [feld]: (e.target as HTMLSelectElement).value }); hinweis('Zuständigkeit gespeichert'); } },
+    h('option', { value: '' }, '– nicht zugewiesen –'), leute.map((m) => h('option', { value: m.id, selected: m.id === o[feld] }, m.name)));
+}
+
+/** Einheiten des Objekts mit dem jeweiligen Mieter – die Einheit ist Teil des Objekts. */
+function einheitenTabelle(o: Satz): HTMLElement {
+  const m0 = monatHeute();
+  const zeilen = einheitenVon(o.id).map((e) => {
+    const mv = alle('mieter').filter((x) => x.einheitId === e.id);
+    const aktiv = mv.find((x) => aktivIm(x, m0));
+    return { e, aktiv, offen: aktiv ? rueckstand(aktiv) : 0, bisher: mv.length };
+  });
+  const vermietbar = zeilen.filter((z) => z.e.art === 'Wohnung' || z.e.art === 'Gewerbe');
+  return h('section', { class: 'vw-karte' },
+    h('header', { class: 'vw-karte__kopf' },
+      h('h2', {}, 'Einheiten & Mieter ', h('span', { class: 'vw-zahl' }, String(zeilen.length))),
+      h('span', {}, `${vermietbar.filter((z) => z.aktiv).length} von ${vermietbar.length} vermietet`),
+      h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => formular('einheiten', { objektId: o.id }) }, '+ Einheit')),
+    h('div', { class: 'vw-tabelle' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['Einheit', 'Fläche', 'Mieter', 'Miete (Soll)', 'Rückstand', 'Stand', ''].map((t) => h('th', { scope: 'col' }, t)))),
+      h('tbody', {}, zeilen.length ? zeilen.map(({ e, aktiv, offen }) => h('tr', { tabindex: 0, onclick: () => (aktiv ? formular('mieter', aktiv) : formular('mieter', { einheitId: e.id })),
+          onkeydown: (ev: KeyboardEvent) => { if (ev.key === 'Enter') (ev.currentTarget as HTMLElement).click(); } },
+        h('td', { 'data-spalte': 'Einheit' }, h('strong', {}, e.bezeichnung), e.lage && h('small', { class: 'vw-block' }, e.lage)),
+        h('td', { 'data-spalte': 'Fläche', class: 'vw-zahlspalte' }, e.flaeche ? `${e.flaeche} m²` : '–'),
+        h('td', { 'data-spalte': 'Mieter' }, aktiv?.name ?? '–'),
+        h('td', { 'data-spalte': 'Miete (Soll)', class: 'vw-zahlspalte' }, aktiv ? geld(soll(aktiv)) : '–'),
+        h('td', { 'data-spalte': 'Rückstand', class: 'vw-zahlspalte' }, offen > 0 ? h('strong', {}, geld(offen)) : '–'),
+        h('td', { 'data-spalte': 'Stand' }, !(e.art === 'Wohnung' || e.art === 'Gewerbe') ? marke(e.art, 'grau') : aktiv ? (offen > 0 ? marke(mahnstufe(aktiv).text, mahnstufe(aktiv).stufe >= 2 ? 'rot' : 'gelb') : marke('Vermietet', 'gruen')) : marke('Leer', 'gelb')),
+        h('td', { class: 'vw-aktion' },
+          aktiv ? h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); aktionen.mieterwechsel?.(aktiv); } }, 'Auszug …')
+                : (e.art === 'Wohnung' || e.art === 'Gewerbe') && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); formular('mieter', { einheitId: e.id }); } }, 'Vermieten'),
+          ' ', h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); formular('einheiten', e); } }, 'Einheit'))))
+        : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'Legen Sie die Einheiten dieses Objekts an: Wohnungen, Gewerbe, Stellplätze.'))]))));
+}
+
 function objektSeite(id: string): HTMLElement {
   const o = finde('objekte', id);
   if (!o) return h('p', { class: 'vw-leer' }, 'Dieses Objekt gibt es nicht mehr. ', h('a', { href: '#/liste/objekte' }, 'Zur Objektliste'));
@@ -314,26 +370,29 @@ function objektSeite(id: string): HTMLElement {
   const kunde = finde('kunden', o.kundeId);
   const vg = { objektId: id };
   const eigene = (s: Satz) => s.objektId === id;
+  const L = (art: string, extra: Partial<Satz> = {}) => liste(art, { filter: eigene, vorgaben: { ...vg, ...extra }, ohneSpalte: 'objektId', kompakt: true });
   const inhalt: Record<string, () => HTMLElement[]> = {
+    'Übersicht': () => [h('div', { class: 'vw-zwei' },
+      h('section', { class: 'vw-karte' },
+        h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Jetzt wichtig')),
+        wichtigListe(wichtigFuer(id), 10)),
+      h('section', { class: 'vw-karte vw-text' },
+        h('h2', {}, 'Das Objekt'),
+        h('dl', { class: 'vw-info' },
+          h('dt', {}, 'Objektart'), h('dd', {}, o.art ?? '–'),
+          h('dt', {}, 'Kunde'), h('dd', {}, kunde ? `${kunde.name} (${kunde.kundennummer})` : '–'),
+          h('dt', {}, 'Gebuchte Leistungen'), h('dd', {}, (o.leistungen ?? []).join(', ') || '–'),
+          h('dt', {}, 'Baujahr'), h('dd', {}, o.baujahr || '–'),
+          h('dt', {}, 'Mietspiegel'), h('dd', {}, o.mietspiegel || '–'),
+          o.notiz && [h('dt', {}, 'Notiz'), h('dd', {}, o.notiz)])))],
+    'Einheiten & Mieter': () => [einheitenTabelle(o)],
     Verwalten: () => [
-      liste('einheiten', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('mieter', { filter: (s) => objektVonMieter(s) === id, kompakt: true }),
-      liste('fristen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('vertraege', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('kosten', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('zaehler', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('schluessel', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('vereinbarungen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }),
-      liste('dokumente', { filter: eigene, vorgaben: { ...vg, datum: heute() }, ohneSpalte: 'objektId', kompakt: true }),
-      ...(String(o.art).includes('WEG') ? [liste('versammlungen', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true }), liste('beschluesse', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })] : []),
+      L('fristen'), L('vertraege'), L('kosten'), L('zaehler'), L('schluessel'), L('vereinbarungen'), L('dokumente', { datum: heute() }),
+      ...(String(o.art).includes('WEG') ? [L('versammlungen'), L('beschluesse')] : []),
     ],
-    Betreuen: () => [
-      liste('service', { filter: eigene, vorgaben: { ...vg, naechster: heute() }, ohneSpalte: 'objektId', kompakt: true }),
-      liste('vorgaenge', { filter: eigene, vorgaben: { ...vg, gemeldet: heute() }, ohneSpalte: 'objektId', kompakt: true }),
-      liste('einsaetze', { filter: eigene, vorgaben: { ...vg, datum: heute() }, ohneSpalte: 'objektId', kompakt: true }),
-    ],
-    Erneuern: () => [liste('auftraege', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })],
-    Entwickeln: () => [liste('projekte', { filter: eigene, vorgaben: vg, ohneSpalte: 'objektId', kompakt: true })],
+    Betreuen: () => [L('service', { naechster: heute() }), L('vorgaenge', { gemeldet: heute() }), L('einsaetze', { datum: heute() })],
+    Erneuern: () => [L('auftraege')],
+    Entwickeln: () => [L('projekte')],
   };
   const st = status360(id);
   return h('div', { class: 'vw-stapel' },
@@ -342,6 +401,9 @@ function objektSeite(id: string): HTMLElement {
         h('p', { class: 'vw-pfad' }, h('a', { href: '#/liste/objekte' }, 'Objekte'), ' / ', o.art),
         h('h1', {}, o.bezeichnung),
         h('p', {}, [o.strasse, o.ort].filter(Boolean).join(', ') || 'Keine Adresse hinterlegt', kunde && [' · Kunde: ', h('strong', {}, kunde.name), ` (${kunde.kundennummer})`]),
+        h('div', { class: 'vw-team' },
+          h('label', {}, h('span', {}, 'Objektbetreuer'), personWahl(o, 'betreuerId')),
+          h('label', {}, h('span', {}, 'Vertretung'), personWahl(o, 'vertretungId'))),
         h('div', { class: 'vw-reihe' },
           h('button', { class: 'vw-knopf', onclick: () => formular('objekte', o) }, 'Objekt bearbeiten'),
           h('a', { class: 'vw-knopf', href: `#/nebenkosten/${id}` }, 'Nebenkostenabrechnung'),
@@ -351,23 +413,23 @@ function objektSeite(id: string): HTMLElement {
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(String(einheiten.length), 'Einheiten'),
       kennzahl(String(mieter.length), 'laufende Mietverhältnisse'),
-      kennzahl(geld(mieter.reduce((s, x) => s + soll(x), 0)), 'Sollmiete im Monat'),
-      kennzahl(geld(mieterVon(id).reduce((s, x) => s + rueckstand(x), 0)), 'offene Mieten')),
+      kennzahl(geld(mieter.reduce((sum, x) => sum + soll(x), 0)), 'Sollmiete im Monat'),
+      kennzahl(geld(mieterVon(id).reduce((sum, x) => sum + rueckstand(x), 0)), 'offene Mieten')),
     h('div', { class: 'vw-reiter', role: 'tablist' }, Object.keys(inhalt).map((name) =>
       h('button', { role: 'tab', 'aria-selected': String(reiter === name), class: reiter === name ? 'ist-aktiv' : '', onclick: () => { reiter = name; zeichne(); } },
-        h('span', { class: 'vw-punkt', style: `background:${FARBE[st[name as keyof typeof st].zustand]}` }), name))),
+        st[name as keyof typeof st] && h('span', { class: 'vw-punkt', style: `background:${FARBE[st[name as keyof typeof st].zustand]}` }), name))),
     ...inhalt[reiter]());
 }
 
 let mietMonat = monatHeute();
 function mieten(): HTMLElement {
-  const aktive = alle('mieter').filter((x) => aktivIm(x, mietMonat));
+  const aktive = ds('mieter').filter((x) => aktivIm(x, mietMonat));
   const zeilen = aktive.map((m) => ({ m, soll: sollIm(m, mietMonat), ist: gezahlt(m, mietMonat), offen: rueckstand(m), stufe: mahnstufe(m) }));
   const sumSoll = zeilen.reduce((s, z) => s + z.soll, 0);
   const sumIst = zeilen.reduce((s, z) => s + z.ist, 0);
   const fehlend = zeilen.filter((z) => z.ist < z.soll - 0.005);
   const buche = (m: Satz, betrag: number) => formular('zahlungen', { mieterId: m.id, monat: mietMonat, betrag: Math.round(betrag * 100) / 100, datum: heute() });
-  const leerstand = alle('einheiten').filter((e) => (e.art === 'Wohnung' || e.art === 'Gewerbe') && !aktive.some((m) => m.einheitId === e.id));
+  const leerstand = ds('einheiten').filter((e) => (e.art === 'Wohnung' || e.art === 'Gewerbe') && !aktive.some((m) => m.einheitId === e.id));
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Mieten'), h('p', {}, 'Sollstellung und Zahlungseingang je Monat. Rückstände werden über die gesamte Mietdauer gerechnet.')),
     h('div', { class: 'vw-reihe vw-monat' },
@@ -384,7 +446,7 @@ function mieten(): HTMLElement {
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(geld(sumSoll), 'Soll'), kennzahl(geld(sumIst), 'Eingegangen'),
       kennzahl(geld(Math.max(0, sumSoll - sumIst)), 'fehlt in diesem Monat', undefined, sumSoll - sumIst > 0.005 ? 'vw-kennzahl--gelb' : ''),
-      kennzahl(geld(alle('mieter').reduce((s, x) => s + rueckstand(x), 0)), 'Rückstand insgesamt', undefined, 'vw-kennzahl--rot')),
+      kennzahl(geld(ds('mieter').reduce((s, x) => s + rueckstand(x), 0)), 'Rückstand insgesamt', undefined, 'vw-kennzahl--rot')),
     h('section', { class: 'vw-karte' }, h('div', { class: 'vw-tabelle' }, h('table', {},
       h('thead', {}, h('tr', {}, ['Einheit', 'Mieter', 'Soll', 'Eingegangen', 'Rückstand gesamt', 'Stand', ''].map((t) => h('th', { scope: 'col' }, t)))),
       h('tbody', {}, zeilen.length ? zeilen.map((z) => h('tr', {},
@@ -405,7 +467,7 @@ function mieten(): HTMLElement {
 
 let nkJahr = new Date().getFullYear() - 1;
 function nebenkostenSeite(objektId?: string): HTMLElement {
-  const objekte = alle('objekte');
+  const objekte = ds('objekte');
   const id = objektId && finde('objekte', objektId) ? objektId : objekte[0]?.id;
   const kopf = h('header', { class: 'vw-seitenkopf vw-nichtdrucken' }, h('h1', {}, 'Nebenkostenabrechnung'),
     h('p', {}, 'Umlagefähige Belege eines Jahres werden nach Schlüssel auf die Mietverhältnisse verteilt. Leerstand trägt der Eigentümer.'));
@@ -445,14 +507,14 @@ function nebenkostenSeite(objektId?: string): HTMLElement {
 
 function tagesplan(): HTMLElement {
   const h0 = heute();
-  const dienste = alle('service').filter((x) => x.rhythmus !== 'Nach Bedarf').sort((a, b) => a.naechster.localeCompare(b.naechster));
+  const dienste = ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf').sort((a, b) => a.naechster.localeCompare(b.naechster));
   const gruppe = (titel: string, saetze: Satz[], farbe: string) => saetze.length > 0 && h('section', { class: 'vw-karte' },
     h('header', { class: 'vw-karte__kopf' }, h('h2', {}, titel, ' ', h('span', { class: 'vw-zahl' }, String(saetze.length)))),
     h('ul', { class: 'vw-dienste' }, saetze.map((s) => h('li', {},
       h('div', {}, h('strong', {}, s.leistung), h('span', {}, finde('objekte', s.objektId)?.bezeichnung ?? '', s.wer ? ` · ${s.wer}` : ''), s.notiz && h('small', {}, s.notiz)),
       marke(datum(s.naechster), farbe),
       h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => dienstErledigt(s) }, 'Erledigt')))));
-  const bedarf = alle('service').filter((x) => x.rhythmus === 'Nach Bedarf');
+  const bedarf = ds('service').filter((x) => x.rhythmus === 'Nach Bedarf');
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Tagesplan'), h('p', {}, 'Alle fälligen Dienste auf einen Blick. „Erledigt“ hält den Einsatz mit Datum und Uhrzeit fest und setzt den nächsten Termin.')),
     gruppe('Überfällig', dienste.filter((x) => x.naechster < h0), 'rot'),
@@ -496,13 +558,14 @@ function daten(): HTMLElement {
 
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
-  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden'], ['Aufgaben', '#/liste/aufgaben']] },
-  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Mietverhältnisse', '#/liste/mieter'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege'], ['Zählerstände', '#/liste/zaehler'], ['Versammlungen (WEG)', '#/liste/versammlungen'], ['Beschlüsse (WEG)', '#/liste/beschluesse'], ['Dokumente', '#/liste/dokumente'], ['Schlüssel', '#/liste/schluessel']] },
+  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Aufgaben', '#/liste/aufgaben']] },
+  { titel: 'Objekte', punkte: [['Alle Objekte', '#/liste/objekte'], ['Team & Zuweisung', '#/team'], ['Kunden', '#/liste/kunden']] },
+  { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
   { titel: 'Abrechnung', punkte: [['Eigentümerabrechnung', '#/abrechnung'], ['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
-  { titel: 'Stammdaten', punkte: [['Einheiten', '#/liste/einheiten'], ['Firmen & Handwerker', '#/liste/firmen'], ['Zahlungseingänge', '#/liste/zahlungen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
+  { titel: 'Stammdaten', punkte: [['Firmen & Handwerker', '#/liste/firmen'], ['Absender & Bank', '#/liste/absender'], ['Daten & Sicherung', '#/daten']] },
 ];
 
 let buehne: HTMLElement;
@@ -523,11 +586,35 @@ function ansicht(): HTMLElement {
   return cockpit();
 }
 
+const ansichtEls: HTMLSelectElement[] = [];
+const neueAnsichtWahl = (klasse: string) => {
+  const el = h('select', { class: klasse, 'aria-label': 'Zuständigkeit', onchange: () => { setzeAnsicht(el.value); zeichne(); } }) as HTMLSelectElement;
+  ansichtEls.push(el);
+  return el;
+};
+function ansichtOptionen() {
+  const wahl = ansichtWahl();
+  const mich = ich();
+  const opt = (wert: string, text: string) => h('option', { value: wert, selected: wert === wahl || (wahl === mich?.id && wert === 'meine') }, text);
+  ansichtEls.forEach((el) => el.replaceChildren(
+    opt('alle', 'Alle Objekte'),
+    ...(mich ? [opt('meine', 'Meine Objekte')] : []),
+    ...alle('mitarbeiter').filter((m) => m.aktiv !== false && m.id !== mich?.id).map((m) => opt(m.id, `Objekte von ${m.name}`)),
+    opt('offen', 'Nicht zugewiesen')));
+}
+
 export function zeichne() {
   if (!buehne) return;
   if (document.querySelector('dialog[open]')) return; // nicht unter einem offenen Formular neu aufbauen
   const y = window.scrollY;
-  buehne.replaceChildren(ansicht());
+  ansichtOptionen();
+  const eingeschraenkt = ansichtId() !== 'alle';
+  const alleObjekte = alle('objekte').length;
+  const band = eingeschraenkt && alleObjekte > 0 && !location.hash.startsWith('#/team') && !location.hash.startsWith('#/objekt/')
+    ? h('p', { class: 'vw-ansichtband' }, h('strong', {}, ansichtBeschreibung()), ` – ${sichtbareObjektIds()?.size ?? 0} von ${alleObjekte} Objekten. `,
+        h('button', { type: 'button', onclick: () => { setzeAnsicht('alle'); zeichne(); } }, 'Alle anzeigen'))
+    : null;
+  buehne.replaceChildren(...(band ? [band] : []), ansicht());
   window.scrollTo(0, y);
   const hier = location.hash || '#/';
   navEl.querySelectorAll('a').forEach((a) => {
@@ -560,6 +647,7 @@ export function starte(wurzel: HTMLElement, nutzer: string, abmelden: () => void
   const ergebnis = h('div', { class: 'vw-suchergebnis', hidden: true });
   const suchfeld = h('input', { type: 'search', placeholder: 'Suchen …', 'aria-label': 'Alles durchsuchen', oninput: () => suche(suchfeld, ergebnis) }) as HTMLInputElement;
   navEl = h('nav', { class: 'vw-nav', id: 'vw-nav', 'aria-label': 'Verwaltung' },
+    h('div', { class: 'vw-nav__gruppe vw-nav__ansicht' }, h('p', {}, 'Ansicht'), neueAnsichtWahl('vw-ansicht-nav')),
     NAV.map((g) => h('div', { class: 'vw-nav__gruppe' }, h('p', {}, g.titel), h('ul', {}, g.punkte.map(([text, ziel]) => h('li', {}, h('a', { href: ziel }, text)))))));
   const menue = h('button', { class: 'vw-menue', 'aria-controls': 'vw-nav', 'aria-expanded': 'false', 'aria-label': 'Navigation öffnen',
     onclick: () => { const offen = wurzel.classList.toggle('nav-offen'); menue.setAttribute('aria-expanded', String(offen)); } }, h('span'), h('span'), h('span'));
@@ -570,6 +658,7 @@ export function starte(wurzel: HTMLElement, nutzer: string, abmelden: () => void
       menue,
       h('a', { class: 'vw-logo', href: '#/' }, h('strong', {}, 'HaDie'), h('span', {}, 'Verwaltung')),
       h('div', { class: 'vw-suchfeld' }, suchfeld, ergebnis),
+      neueAnsichtWahl('vw-ansicht'),
       h('span', { class: 'vw-nutzer' }, nutzer),
       h('button', { class: 'vw-knopf', onclick: abmelden }, 'Abmelden')),
     h('div', { class: 'vw-rumpf' }, navEl, buehne));

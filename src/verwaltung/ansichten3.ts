@@ -11,6 +11,7 @@
  * Zuarbeit für den Steuerberater (keine Steuerberatung).
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
+import { ds } from './ansicht';
 import { ARTEN } from './schema';
 import { aktivIm, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rechnungSumme, rueckstand, soll, zahl } from './rechnen';
 import { datum, geld, h, hinweis, kennzahl, marke, monatText, routen, zeichne } from './app';
@@ -163,7 +164,7 @@ routen.bank = () => {
 let abrMonat = monatPlus(monatHeute(), -1);
 let abrJahr = false;
 routen.abrechnung = (objektId) => {
-  const objekte = alle('objekte');
+  const objekte = ds('objekte');
   const objekt = finde('objekte', objektId) ?? objekte[0];
   if (!objekt) return h('div', { class: 'vw-stapel' }, h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Eigentümerabrechnung')), h('p', { class: 'vw-leer' }, 'Legen Sie zuerst ein Objekt an.'));
   const kunde = finde('kunden', objekt.kundeId);

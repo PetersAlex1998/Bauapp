@@ -28,13 +28,18 @@ export function beispieldaten(): Record<string, Satz[]> {
     ({ id, objektId, datum: `${vorjahr}-06-15`, kostenart, betrag, schluessel, umlage });
 
   return {
+    mitarbeiter: [
+      { id: 'ma1', name: 'Beispiel Geschäftsführung', kuerzel: 'GF', rolle: 'Geschäftsführung', nummer: 'V-123456789', aktiv: true },
+      { id: 'ma2', name: 'Beispiel Objektbetreuerin', kuerzel: 'OB', rolle: 'Objektbetreuer/in', aktiv: true },
+      { id: 'ma3', name: 'Beispiel Hausmeister', kuerzel: 'HM', rolle: 'Hausmeister / Technik', aktiv: true },
+    ],
     kunden: [
       { id: 'k1', kundennummer: '123456789', name: 'Beispiel Eigentümer', art: 'Eigentümer', ort: '33100 Paderborn', telefon: '', email: '' },
       { id: 'k2', kundennummer: '234567891', name: 'Beispiel-WEG Musterweg 12', art: 'Eigentümergemeinschaft', ort: '33175 Bad Lippspringe' },
     ],
     objekte: [
-      { id: 'o1', bezeichnung: 'Beispielstraße 1', strasse: 'Beispielstraße 1', ort: '33100 Paderborn', art: 'Mietshaus', kundeId: 'k1', leistungen: ['Verwalten', 'Betreuen', 'Erneuern'], baujahr: 1978, mietspiegel: 'Mietspiegel (Beispiel)' },
-      { id: 'o2', bezeichnung: 'Musterweg 12', strasse: 'Musterweg 12', ort: '33175 Bad Lippspringe', art: 'Eigentümergemeinschaft (WEG)', kundeId: 'k2', leistungen: ['Verwalten', 'Betreuen', 'Entwickeln'], baujahr: 1992 },
+      { id: 'o1', bezeichnung: 'Beispielstraße 1', strasse: 'Beispielstraße 1', ort: '33100 Paderborn', art: 'Mietshaus', kundeId: 'k1', betreuerId: 'ma2', vertretungId: 'ma1', leistungen: ['Verwalten', 'Betreuen', 'Erneuern'], baujahr: 1978, mietspiegel: 'Mietspiegel (Beispiel)' },
+      { id: 'o2', bezeichnung: 'Musterweg 12', strasse: 'Musterweg 12', ort: '33175 Bad Lippspringe', art: 'Eigentümergemeinschaft (WEG)', kundeId: 'k2', betreuerId: 'ma1', vertretungId: 'ma2', leistungen: ['Verwalten', 'Betreuen', 'Entwickeln'], baujahr: 1992 },
     ],
     einheiten: [
       { id: 'e1', objektId: 'o1', bezeichnung: 'Wohnung 1', lage: 'EG links', art: 'Wohnung', flaeche: 68, zimmer: 3, vergleichsmiete: 10.2 },

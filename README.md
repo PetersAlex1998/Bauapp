@@ -63,6 +63,13 @@ alle anderen Nummern führen in den Kundenbereich.
 | `src/verwaltung/ansichten2.ts` | Kalender, Kautionen, Eigentümerbericht, Schreiben (Erinnerung, Mahnung, Übergabeprotokoll), Angebot, Mieterwechsel-Assistent. Die Schreiben sind Vorlagen und vor dem Versand zu prüfen. |
 | `src/verwaltung/beispiel.ts` | Erfundene Beispieldaten zum Ausprobieren. |
 
+**Das Objekt ist die Arbeitseinheit.** Jedem Objekt sind ein Objektbetreuer und eine Vertretung
+zugewiesen (`betreuerId`, `vertretungId`), nie einzelne Einheiten. Einheiten und Mieter liegen im
+Arbeitsraum des Objekts. Die Ansicht oben (`ansicht.ts`) begrenzt alle Seiten auf „Meine Objekte“,
+die eines Kollegen oder nicht zugewiesene – das ist eine Arbeitsansicht, **kein Zugriffsschutz**.
+Team und Zuweisung: `ansichten5.ts`. Beim Löschen werden nur Pflicht-Verweise (z. B. Einheit →
+Objekt) mitgelöscht; optionale Verweise (Firma, Betreuer, Kunde …) verlieren nur die Zuordnung.
+
 Bankabgleich (CSV-Kontoauszug, Zuordnung der Mieten) und Eigentümerabrechnung (Monat/Jahr mit
 Auszahlungsbetrag und Aufstellung für den Steuerberater) liegen in `ansichten3.ts`. Der Kontoauszug
 wird nur im Browser gelesen.

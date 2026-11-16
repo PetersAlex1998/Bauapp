@@ -18,6 +18,7 @@
  *     Vergleichswohnungen) inhaltlich trägt.
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
+import { ds } from './ansicht';
 import { ARTEN } from './schema';
 import { erhoehungspruefung, wirksamAb, zahl, zustimmungBis } from './rechnen';
 import { datum, formular, geld, h, hinweis, kennzahl, marke, routen, zeichne } from './app';
@@ -46,7 +47,7 @@ function pruefeZeile(m: Satz) {
 }
 
 routen.mieterhoehung = () => {
-  const zeilen = alle('mieter').filter((m) => m.beginn && !m.ende).map(pruefeZeile);
+  const zeilen = ds('mieter').filter((m) => m.beginn && !m.ende).map(pruefeZeile);
   const jetzt = zeilen.filter((z) => z.stand.moeglich);
   const spaeter = zeilen.filter((z) => !z.stand.moeglich && z.p.erhoehung > 0.005 && z.stand.farbe === 'gelb' && !z.p.keineEinheitsdaten);
   const jahr = (liste: typeof zeilen) => liste.reduce((s, z) => s + z.p.erhoehung * 12, 0);

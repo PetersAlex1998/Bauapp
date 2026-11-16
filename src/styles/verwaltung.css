@@ -1097,3 +1097,100 @@ a.vw-kennzahl:hover {
     break-inside: avoid;
   }
 }
+
+/* ---------- Objekt als Arbeitsraum: Team, Ansicht, Zuweisung ---------- */
+.vw .vw-ansicht {
+  height: 2.5rem;
+  max-width: 14rem;
+  padding: 0 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.vw .vw-ansicht option {
+  color: var(--tinte);
+}
+.vw-ansichtband {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  background: #dfeaf7;
+  color: #1a4f8c;
+  font-size: 0.95rem;
+}
+.vw-ansichtband button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.vw-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 0.9rem;
+}
+.vw-team label {
+  display: grid;
+  gap: 0.2rem;
+}
+.vw-team label span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinte-leise);
+}
+.vw-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+}
+.vw-info dt {
+  color: var(--tinte-leise);
+}
+.vw-info dd {
+  margin: 0;
+}
+.vw-leiste {
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+  background: var(--papier);
+}
+.vw-knopf:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 52rem) {
+  .vw-ansicht {
+    display: none;
+  }
+}
+.vw-nav__ansicht {
+  display: none;
+}
+.vw .vw-ansicht-nav {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.3);
+  border-radius: 0.6rem;
+  background: var(--weiss);
+  font: inherit;
+}
+@media (max-width: 52rem) {
+  .vw-nav__ansicht {
+    display: block;
+  }
+}
