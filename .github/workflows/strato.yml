@@ -52,7 +52,7 @@ jobs:
           FTP_HOST: 5021926159.ssh.w2.strato.hosting
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASS: ${{ secrets.FTP_PASS }}
-          FTP_VERZEICHNIS: ${{ secrets.FTP_VERZEICHNIS }}
+          FTP_VERZEICHNIS: /HaDie-Immobilien
           FTP_PROTOKOLL: sftp
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
