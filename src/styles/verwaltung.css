@@ -1,0 +1,893 @@
+/* ==========================================================================
+   VERWALTERTOOL – Gestaltung
+   Nutzt die Farben und Schriften der Website (global.css).
+   ========================================================================== */
+
+body.vw {
+  padding-bottom: 0;
+  background: var(--buehne);
+  font-size: 1rem;
+}
+.vw-app {
+  min-height: 100vh;
+}
+.vw h1,
+.vw h2,
+.vw h3 {
+  font-weight: 420;
+  letter-spacing: -0.01em;
+  hyphens: manual;
+}
+
+/* ---------- Kopfzeile ---------- */
+.vw-kopf {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 4rem;
+  padding: 0 1.25rem;
+  background: var(--dunkel);
+  color: #fff;
+}
+.vw-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.vw-logo strong {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.vw-logo span {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.vw-suchfeld {
+  position: relative;
+  flex: 1;
+  max-width: 30rem;
+  margin-left: auto;
+}
+.vw-suchfeld input {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: inherit;
+}
+.vw-suchfeld input::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+.vw-suchergebnis {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  display: grid;
+  max-height: 60vh;
+  overflow: auto;
+  background: var(--weiss);
+  color: var(--tinte);
+  border: 1px solid var(--linie);
+  border-radius: 0.75rem;
+  box-shadow: 0 24px 50px -24px rgba(18, 38, 63, 0.6);
+}
+.vw-suchergebnis[hidden] {
+  display: none;
+}
+.vw-suchergebnis button {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--linie);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vw-suchergebnis button:hover {
+  background: var(--buehne);
+}
+.vw-suchergebnis span,
+.vw-suchergebnis p {
+  color: var(--tinte-leise);
+  font-size: 0.9rem;
+}
+.vw-suchergebnis p {
+  margin: 0;
+  padding: 0.8rem 1rem;
+}
+.vw-nutzer {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+.vw-kopf .vw-knopf {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: none;
+  color: #fff;
+}
+.vw-menue {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0 0.6rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.vw-menue span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+/* ---------- Aufbau ---------- */
+.vw-rumpf {
+  display: grid;
+  grid-template-columns: 15.5rem minmax(0, 1fr);
+  align-items: start;
+}
+.vw-nav {
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  padding: 1rem 0.75rem 3rem;
+  background: var(--weiss);
+  border-right: 1px solid var(--linie);
+}
+.vw-nav__gruppe + .vw-nav__gruppe {
+  margin-top: 1.1rem;
+}
+.vw-nav p {
+  margin: 0 0 0.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--akzent-text);
+}
+.vw-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.vw-nav a {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.97rem;
+}
+.vw-nav a:hover {
+  background: var(--buehne);
+}
+.vw-nav a[aria-current] {
+  background: var(--dunkel);
+  color: #fff;
+}
+.vw-inhalt {
+  padding: clamp(1rem, 2.5vw, 2rem);
+  max-width: 82rem;
+  width: 100%;
+}
+.vw-stapel {
+  display: grid;
+  gap: 1.25rem;
+}
+.vw-zwei {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+.vw-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.vw-platz {
+  flex: 1;
+}
+
+/* ---------- Seitenkopf ---------- */
+.vw-seitenkopf h1 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  margin: 0 0 0.3rem;
+}
+.vw-seitenkopf p {
+  margin: 0;
+  color: var(--tinte-leise);
+  max-width: 50em;
+}
+.vw-seitenkopf--objekt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.5rem 3rem;
+  padding: 1.5rem;
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+}
+.vw-seitenkopf--objekt .vw-reihe {
+  margin-top: 1rem;
+}
+.vw-pfad {
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem !important;
+}
+.vw-pfad a {
+  color: var(--akzent-text);
+}
+
+/* ---------- Knöpfe, Marken ---------- */
+.vw-knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.4rem 1rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.3);
+  border-radius: 999px;
+  background: var(--weiss);
+  color: var(--tinte);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+.vw-knopf:hover {
+  border-color: var(--akzent);
+}
+.vw-knopf--voll {
+  background: var(--dunkel);
+  border-color: var(--dunkel);
+  color: #fff;
+}
+.vw-knopf--voll:hover {
+  background: var(--akzent);
+  border-color: var(--akzent);
+}
+.vw-knopf--klein {
+  min-height: 2rem;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.85rem;
+}
+.vw-knopf--gefahr {
+  color: #a3301f;
+  border-color: rgba(163, 48, 31, 0.4);
+}
+.vw-marke {
+  display: inline-block;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #e6ebf0;
+  color: #3c4a5c;
+}
+.vw-marke--rot {
+  background: #fbe3df;
+  color: #9b2c1c;
+}
+.vw-marke--gelb {
+  background: #fbefcf;
+  color: #7a5200;
+}
+.vw-marke--blau {
+  background: #dfeaf7;
+  color: #1a4f8c;
+}
+.vw-marke--gruen {
+  background: #dcf0e4;
+  color: #1c6440;
+}
+.vw-punkt {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ---------- Kennzahlen ---------- */
+.vw-kennzahlen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+}
+.vw-kennzahl {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1rem 1.15rem;
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  border-left: 4px solid var(--linie);
+  border-radius: 0.75rem;
+  color: var(--tinte-leise);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+a.vw-kennzahl:hover {
+  border-color: var(--akzent);
+}
+.vw-kennzahl__wert {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  color: var(--tinte);
+  white-space: nowrap;
+}
+.vw-kennzahl--rot {
+  border-left-color: #c8402d;
+}
+.vw-kennzahl--gelb {
+  border-left-color: #d99a1c;
+}
+.vw-kennzahl--blau {
+  border-left-color: var(--akzent);
+}
+
+/* ---------- Karten und Tabellen ---------- */
+.vw-karte {
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.vw-karte__kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-karte__kopf h2,
+.vw-karte__kopf h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  margin-right: auto;
+}
+.vw-karte--kompakt .vw-karte__kopf h3 {
+  font-size: 1.1rem;
+}
+.vw-karte__kopf > span {
+  color: var(--tinte-leise);
+  font-size: 0.9rem;
+}
+.vw-zahl {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: var(--buehne);
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+}
+.vw-suche {
+  height: 2.5rem;
+  width: min(100%, 17rem);
+  padding: 0 0.9rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.3);
+  border-radius: 999px;
+  background: var(--papier);
+  font: inherit;
+  font-size: 0.95rem;
+}
+.vw-tabelle {
+  overflow-x: auto;
+}
+.vw table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.vw th,
+.vw td {
+  padding: 0.65rem 1.25rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--linie);
+}
+.vw thead th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinte-leise);
+  white-space: nowrap;
+  background: var(--papier);
+}
+.vw tbody tr:last-child td {
+  border-bottom: 0;
+}
+.vw tbody tr[tabindex] {
+  cursor: pointer;
+}
+.vw tbody tr[tabindex]:hover {
+  background: var(--buehne);
+}
+.vw tfoot th,
+.vw tfoot td {
+  background: var(--papier);
+}
+.vw-zahlspalte {
+  text-align: right !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.vw-aktion {
+  text-align: right !important;
+  white-space: nowrap;
+}
+.vw-erledigt td {
+  color: var(--tinte-leise);
+  text-decoration: line-through;
+}
+.vw-leer {
+  padding: 1.5rem 1.25rem !important;
+  color: var(--tinte-leise);
+  margin: 0;
+}
+.vw-faellig small {
+  font-weight: 600;
+}
+.vw-faellig--rot {
+  color: #9b2c1c;
+  font-weight: 600;
+}
+.vw-faellig--gelb {
+  color: #7a5200;
+}
+.vw td a {
+  color: var(--akzent-text);
+}
+.vw-fein {
+  margin: 0;
+  padding: 0 0.25rem;
+  font-size: 0.88rem;
+  color: var(--tinte-leise);
+}
+.vw-karte > .vw-fein {
+  padding: 0.75rem 1.25rem 1rem;
+}
+.vw-warnung {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  background: #fbefcf;
+  color: #7a5200;
+}
+.vw-text {
+  padding: 1.25rem 1.4rem 1.4rem;
+}
+.vw-text h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.6rem;
+}
+.vw-text p {
+  max-width: 46em;
+}
+
+/* ---------- Listen im Cockpit ---------- */
+.vw-punkte,
+.vw-objekte,
+.vw-dienste,
+.vw-legende {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.vw-punkte a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+  text-decoration: none;
+}
+.vw-punkte li:last-child a {
+  border-bottom: 0;
+}
+.vw-punkte a:hover,
+.vw-objekte a:hover {
+  background: var(--buehne);
+}
+.vw-punkte__text {
+  flex: 1;
+  min-width: 0;
+}
+.vw-punkte__datum {
+  color: var(--tinte-leise);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+.vw-objekte a {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+  text-decoration: none;
+}
+.vw-objekte strong,
+.vw-objekte small {
+  display: block;
+}
+.vw-objekte small {
+  color: var(--tinte-leise);
+}
+.vw-dienste li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-dienste li:last-child {
+  border-bottom: 0;
+}
+.vw-dienste li > div {
+  flex: 1;
+  min-width: 12rem;
+  display: grid;
+}
+.vw-dienste span,
+.vw-dienste small {
+  color: var(--tinte-leise);
+}
+
+/* ---------- 360°-Ring ---------- */
+.vw-ring {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+}
+.vw-ring--gross {
+  width: 7.5rem;
+  height: 7.5rem;
+}
+.vw-ringblock {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.vw-legende li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  font-size: 0.93rem;
+}
+.vw-legende span:last-child {
+  color: var(--tinte-leise);
+}
+
+/* ---------- Reiter ---------- */
+.vw-reiter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.vw-reiter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 1.1rem;
+  border: 1.5px solid var(--linie);
+  border-radius: 999px;
+  background: var(--weiss);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vw-reiter button.ist-aktiv {
+  background: var(--dunkel);
+  border-color: var(--dunkel);
+  color: #fff;
+}
+.vw-monat strong {
+  min-width: 10rem;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 420;
+}
+.vw select {
+  min-height: 2.5rem;
+  padding: 0.3rem 0.8rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.3);
+  border-radius: 0.6rem;
+  background: var(--weiss);
+  font: inherit;
+}
+.vw-nachzahlung th {
+  color: #9b2c1c;
+}
+.vw-guthaben th {
+  color: #1c6440;
+}
+
+/* ---------- Willkommen ---------- */
+.vw-willkommen {
+  max-width: 42rem;
+  margin: 8vh auto 0;
+  padding: 2.5rem;
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+}
+.vw-willkommen h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+.vw-willkommen p {
+  color: var(--tinte-leise);
+  margin-bottom: 1.5rem;
+}
+
+/* ---------- Dialog / Formular ---------- */
+.vw-dialog {
+  width: min(46rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1.5rem);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--weiss);
+  color: var(--tinte);
+  box-shadow: 0 30px 80px -20px rgba(18, 38, 63, 0.6);
+}
+.vw-dialog::backdrop {
+  background: rgba(18, 38, 63, 0.5);
+}
+.vw-form {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: calc(100vh - 1.5rem);
+}
+.vw-dialog__kopf,
+.vw-dialog__fuss {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.4rem;
+}
+.vw-dialog__kopf {
+  border-bottom: 1px solid var(--linie);
+}
+.vw-dialog__kopf h2 {
+  margin: 0 auto 0 0;
+  font-size: 1.4rem;
+}
+.vw-dialog__fuss {
+  border-top: 1px solid var(--linie);
+  background: var(--papier);
+}
+.vw-x {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.vw-x:hover {
+  background: var(--buehne);
+}
+.vw-form__felder {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  padding: 1.25rem 1.4rem;
+  overflow-y: auto;
+}
+.vw-form .feld--breit {
+  grid-column: 1 / -1;
+}
+.vw-form .feld input:not([type='checkbox']),
+.vw-form .feld select,
+.vw-form .feld textarea {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+}
+.vw-haken {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+.vw-haken input {
+  width: 1.15rem !important;
+  height: 1.15rem;
+  min-height: 0 !important;
+  accent-color: var(--akzent);
+}
+.vw-mehr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+}
+
+.vw-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 100;
+  translate: -50% 0;
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  background: var(--dunkel);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 16px 40px -16px rgba(18, 38, 63, 0.7);
+}
+
+/* ---------- Tablet und Smartphone ---------- */
+@media (max-width: 62rem) {
+  .vw-zwei {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 52rem) {
+  .vw-menue {
+    display: flex;
+  }
+  .vw-nutzer {
+    display: none;
+  }
+  .vw-logo span {
+    display: none;
+  }
+  .vw-rumpf {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vw-nav {
+    position: fixed;
+    z-index: 25;
+    left: 0;
+    top: 4rem;
+    width: min(18rem, 85vw);
+    translate: -105% 0;
+    transition: translate 0.3s;
+    box-shadow: 0 0 60px rgba(18, 38, 63, 0.35);
+  }
+  .nav-offen .vw-nav {
+    translate: 0 0;
+  }
+  .vw-form__felder {
+    grid-template-columns: 1fr;
+  }
+  .vw-suche {
+    width: 100%;
+    order: 3;
+  }
+  /* Tabellen werden zu Karten: jede Zeile ein Block mit beschrifteten Werten */
+  .vw-tabelle table,
+  .vw-tabelle tbody,
+  .vw-tabelle tfoot,
+  .vw-tabelle tr,
+  .vw-tabelle td,
+  .vw-tabelle th {
+    display: block;
+  }
+  .vw-tabelle thead {
+    display: none;
+  }
+  .vw-tabelle tr {
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--linie);
+  }
+  .vw-tabelle td,
+  .vw-tabelle tfoot th {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.2rem 0;
+    border: 0;
+    text-align: right !important;
+    background: none !important;
+  }
+  .vw-tabelle td[data-spalte]::before {
+    content: attr(data-spalte);
+    color: var(--tinte-leise);
+    font-size: 0.85rem;
+    text-align: left;
+  }
+  .vw-tabelle td.vw-aktion:empty {
+    display: none;
+  }
+  .vw-tabelle td.vw-aktion {
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+  }
+  .vw-ringblock {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- Druck (Nebenkostenabrechnung) ---------- */
+@media print {
+  .vw-kopf,
+  .vw-nav,
+  .vw-nichtdrucken,
+  .vw-toast {
+    display: none !important;
+  }
+  body.vw {
+    background: #fff;
+  }
+  .vw-rumpf {
+    display: block;
+  }
+  .vw-inhalt {
+    padding: 0;
+    max-width: none;
+  }
+  .vw-karte {
+    border: 0;
+    border-radius: 0;
+    break-inside: avoid;
+  }
+  .vw-abrechnung {
+    break-before: page;
+  }
+}
+
+/* Breite Tabellen scrollen in ihrer Karte, nicht die ganze Seite. */
+.vw-stapel > *,
+.vw-zwei > * {
+  min-width: 0;
+}
+@media (max-width: 52rem) {
+  .vw-kopf {
+    gap: 0.6rem;
+    padding: 0 0.75rem;
+  }
+  .vw-suchfeld {
+    min-width: 0;
+  }
+  .vw-kopf .vw-knopf {
+    padding-inline: 0.8rem;
+  }
+}
+/* Damit unsichtbare Hilfstexte in der Tabelle mit ihr scrollen und die Seite nicht verbreitern. */
+.vw-tabelle {
+  position: relative;
+}

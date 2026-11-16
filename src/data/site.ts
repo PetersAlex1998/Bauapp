@@ -70,6 +70,16 @@ export const demoZugang = {
   passwort: '123456789',
 };
 
+/**
+ * VERWALTUNG: Nummern mit «V-» davor gehören zur Verwaltung und führen
+ * ins Verwaltertool (/verwaltung/), alle anderen in den Kundenbereich.
+ * Auch das ist vorerst eine Anmeldung ohne Server (siehe oben).
+ */
+export const verwaltungZugang = {
+  nummer: 'V-123456789',
+  passwort: '123456789',
+};
+
 export const navigation = [
   { text: 'Leistungen', href: '/leistungen/' },
   { text: 'Über uns', href: '/ueber-uns/' },

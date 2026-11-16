@@ -48,6 +48,26 @@ project → Import an existing project“, dieses Repository und den gewünschte
 Unternehmensdaten und Leistungen stehen nur an einer Stelle und erscheinen automatisch überall
 (Kopf, Fuß, Kontakt, Impressum, Suchmaschinen-Daten, 360°-Kreis).
 
+## Verwaltertool
+
+Unter `/verwaltung/` liegt das Verwaltertool für alle vier Bereiche (Verwalten, Betreuen,
+Erneuern, Entwickeln). Anmeldung über `/kundenlogin/` mit einer Nummer, die mit `V-` beginnt;
+alle anderen Nummern führen in den Kundenbereich.
+
+| Datei | Inhalt |
+| --- | --- |
+| `src/verwaltung/schema.ts` | Datenmodell: alle Datensatzarten mit Feldern. Ein neues Feld ist eine Zeile. |
+| `src/verwaltung/speicher.ts` | Datenspeicher. **Einzige** Stelle, die Daten liest und schreibt. |
+| `src/verwaltung/rechnen.ts` | Mieten, Rückstände, Nebenkostenabrechnung, 360°-Status. |
+| `src/verwaltung/app.ts` | Oberfläche: Cockpit, Listen, Formulare, Objektseite, Tagesplan. |
+| `src/verwaltung/beispiel.ts` | Erfundene Beispieldaten zum Ausprobieren. |
+
+**Stand der Ausbaustufe:** Die Daten liegen im Browser des jeweiligen Geräts (localStorage),
+die Anmeldung wird nur im Browser geprüft. Es gibt also noch keinen Server, keine gemeinsame
+Datenbasis für mehrere Geräte und keinen echten Zugriffsschutz. Für den Mehrbenutzer-Betrieb
+wird `speicher.ts` gegen eine Server-Anbindung getauscht; die übrigen Dateien bleiben gleich.
+Bis dahin regelmäßig über „Daten & Sicherung“ sichern.
+
 ## Kunden-Login (Demo)
 
 `/kundenlogin/` und `/kundenbereich/` sind eine **Vorschau ohne echte Anmeldung**. Die

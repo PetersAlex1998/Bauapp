@@ -1,0 +1,42 @@
+---
+/**
+ * VERWALTERTOOL – Einstiegsseite.
+ * Die eigentliche Anwendung liegt in src/verwaltung/ (Datenmodell,
+ * Speicher, Rechenlogik, Oberfläche). Diese Seite prüft nur die
+ * Anmeldung und startet sie.
+ */
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/instrument-sans';
+import '../styles/global.css';
+import '../styles/verwaltung.css';
+import { site } from '../data/site';
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verwaltung | {site.name}</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#12263f" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body class="vw">
+    <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+    <div id="verwaltung" class="vw-app">
+      <noscript><p style="padding:2rem">Für das Verwaltertool muss JavaScript im Browser aktiviert sein.</p></noscript>
+    </div>
+    <script>
+      import { starte } from '../verwaltung/app';
+      const SCHLUESSEL = 'hadie-verwaltung';
+      const nutzer = sessionStorage.getItem(SCHLUESSEL);
+      const wurzel = document.getElementById('verwaltung')!;
+      if (!nutzer) location.replace('/kundenlogin/');
+      else
+        starte(wurzel, nutzer, () => {
+          sessionStorage.removeItem(SCHLUESSEL);
+          location.assign('/kundenlogin/');
+        });
+    </script>
+  </body>
+</html>
