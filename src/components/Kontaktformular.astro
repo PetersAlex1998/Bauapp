@@ -1,59 +1,75 @@
 ---
 /**
  * Kontaktformular.
- * Versand an die in src/data/site.ts hinterlegte Adresse `formularEndpoint`.
- * Ohne JavaScript wird das Formular klassisch abgeschickt; mit JavaScript
- * bleibt der Besucher auf der Seite und erhält eine Rückmeldung.
+ * Sendet an die eigene Schnittstelle (`site.formularEndpoint`, Standard: /api/?a=anfrage).
+ * Die Anfrage wird in der Datenbank gespeichert (Verwaltertool → Website-Anfragen)
+ * und zusätzlich per E-Mail gemeldet. Ohne Server (z. B. Vorschau) erscheint ein Hinweis
+ * auf das Telefon.
  */
 import { site } from '../data/site';
 import { leistungen } from '../data/leistungen';
-import Platzhalter from './Platzhalter.astro';
 const bereit = site.formularEndpoint !== '';
 ---
-<form class="formular" id="anfrage" method="post" action={bereit ? site.formularEndpoint : undefined} data-bereit={String(bereit)} aria-labelledby="anfrage-titel">
+<form class="formular" id="anfrage" data-ziel={site.formularEndpoint} data-bereit={String(bereit)} data-telefon={site.telefon.anzeige} aria-labelledby="anfrage-titel" novalidate>
   <div>
     <h2 id="anfrage-titel" style="font-size:clamp(1.5rem,3vw,2rem);margin-bottom:.3em">Ihre Anfrage</h2>
     <p class="formular__hinweis">Pflichtfelder sind mit * gekennzeichnet.</p>
   </div>
 
-  {!bereit && !site.platzhalterAnzeigen && (
+  {!bereit && (
     <p class="formular__bald">
       <strong>Online-Anfragen sind in Kürze möglich.</strong> Bis dahin erreichen Sie uns am besten telefonisch unter{' '}
       <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>{site.erreichbarkeit ? ` (${site.erreichbarkeit})` : ''}.
     </p>
   )}
-  {!bereit && site.platzhalterAnzeigen && (
-    <Platzhalter>
-      <p><strong>Formularversand noch nicht eingerichtet.</strong> Es fehlt die Empfänger-Anbindung (siehe README, Abschnitt „Kontaktformular“). Bis dahin erreichen Sie uns telefonisch unter <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p>
-    </Platzhalter>
-  )}
+  <noscript>
+    <p class="formular__bald">Zum Senden des Formulars wird JavaScript benötigt. Rufen Sie uns gern an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p>
+  </noscript>
+
+  <div class="feld">
+    <label for="f-name">Name *</label>
+    <input id="f-name" name="name" type="text" autocomplete="name" maxlength="120" required />
+  </div>
+
+  <fieldset>
+    <legend>Wie dürfen wir uns melden? *</legend>
+    <div class="auswahl">
+      <label><input type="radio" name="kontaktweg" value="E-Mail" checked />Antwort per E-Mail</label>
+      <label><input type="radio" name="kontaktweg" value="Rückruf" />Bitte rufen Sie mich an</label>
+    </div>
+  </fieldset>
 
   <div class="formular__reihe">
     <div class="feld">
-      <label for="f-name">Name *</label>
-      <input id="f-name" name="name" type="text" autocomplete="name" required />
+      <label for="f-email">E-Mail <span data-pflicht="E-Mail">*</span></label>
+      <input id="f-email" name="email" type="email" autocomplete="email" maxlength="160" />
     </div>
     <div class="feld">
-      <label for="f-telefon">Telefon</label>
-      <input id="f-telefon" name="telefon" type="tel" autocomplete="tel" />
+      <label for="f-telefon">Telefon <span data-pflicht="Rückruf" hidden>*</span></label>
+      <input id="f-telefon" name="telefon" type="tel" autocomplete="tel" maxlength="40" />
     </div>
   </div>
 
-  <div class="formular__reihe">
-    <div class="feld">
-      <label for="f-email">E-Mail *</label>
-      <input id="f-email" name="email" type="email" autocomplete="email" required />
-    </div>
-    <div class="feld">
-      <label for="f-rolle">Ich bin …</label>
-      <select id="f-rolle" name="rolle">
-        <option value="">Bitte wählen</option>
-        <option>Eigentümer/in</option>
-        <option>Teil einer Eigentümergemeinschaft</option>
-        <option>Investor/in</option>
-        <option>Sonstiges</option>
-      </select>
-    </div>
+  <div class="feld" id="f-zeit-feld" hidden>
+    <label for="f-zeit">Wann passt ein Anruf am besten?</label>
+    <select id="f-zeit" name="zeit">
+      <option value="Egal">Ist mir egal</option>
+      <option>Vormittags</option>
+      <option>Mittags</option>
+      <option>Nachmittags</option>
+    </select>
+    {site.erreichbarkeit && <small>Unsere Bürozeiten: {site.erreichbarkeit}</small>}
+  </div>
+
+  <div class="feld">
+    <label for="f-rolle">Ich bin …</label>
+    <select id="f-rolle" name="rolle">
+      <option value="">Bitte wählen</option>
+      <option>Eigentümer/in</option>
+      <option>Teil einer Eigentümergemeinschaft</option>
+      <option>Investor/in</option>
+      <option>Sonstiges</option>
+    </select>
   </div>
 
   <fieldset>
@@ -68,7 +84,7 @@ const bereit = site.formularEndpoint !== '';
 
   <div class="feld">
     <label for="f-nachricht">Ihre Nachricht *</label>
-    <textarea id="f-nachricht" name="nachricht" required aria-describedby="f-nachricht-hilfe"></textarea>
+    <textarea id="f-nachricht" name="nachricht" maxlength="5000" required aria-describedby="f-nachricht-hilfe"></textarea>
     <small id="f-nachricht-hilfe">Hilfreich: Ort und Art der Immobilie, Anzahl der Einheiten.</small>
   </div>
 
@@ -91,28 +107,71 @@ const bereit = site.formularEndpoint !== '';
 <script>
   const formular = document.querySelector<HTMLFormElement>('form#anfrage');
   const status = formular?.querySelector<HTMLElement>('.formular__status');
+
   if (formular && status && formular.dataset.bereit === 'true') {
+    const feld = (name: string) => formular.elements.namedItem(name) as HTMLInputElement;
+    const weg = () => (formular.querySelector<HTMLInputElement>('input[name=kontaktweg]:checked')?.value ?? 'E-Mail');
+    const zeitFeld = formular.querySelector<HTMLElement>('#f-zeit-feld')!;
+    const umschalten = () => {
+      const w = weg();
+      formular.querySelectorAll<HTMLElement>('[data-pflicht]').forEach((s) => { s.hidden = s.dataset.pflicht !== w; });
+      zeitFeld.hidden = w !== 'Rückruf';
+      feld('email').required = w === 'E-Mail';
+      feld('telefon').required = w === 'Rückruf';
+    };
+    formular.querySelectorAll('input[name=kontaktweg]').forEach((r) => r.addEventListener('change', umschalten));
+    umschalten();
+
+    const melde = (art: 'ok' | 'fehler' | '', text: string) => { status.dataset.art = art; status.textContent = text; };
+    const anrufHinweis = ` Oder rufen Sie uns an: ${formular.dataset.telefon}.`;
+
     formular.addEventListener('submit', async (e) => {
       e.preventDefault();
       const daten = new FormData(formular);
       if (daten.get('website')) return; // Spam-Falle
+
+      // Prüfen, bevor gesendet wird – mit verständlichen Hinweisen
+      const name = String(daten.get('name') ?? '').trim();
+      const email = String(daten.get('email') ?? '').trim();
+      const telefon = String(daten.get('telefon') ?? '').trim();
+      const nachricht = String(daten.get('nachricht') ?? '').trim();
+      const fehler = (text: string, el: string) => { melde('fehler', text); feld(el).focus(); };
+      if (name.length < 2) return fehler('Bitte geben Sie Ihren Namen an.', 'name');
+      if (weg() === 'E-Mail' && !email) return fehler('Bitte geben Sie Ihre E-Mail-Adresse an – oder wählen Sie „Bitte rufen Sie mich an“.', 'email');
+      if (email && !feld('email').checkValidity()) return fehler('Bitte prüfen Sie Ihre E-Mail-Adresse.', 'email');
+      if (weg() === 'Rückruf' && !/^[0-9 +()\/-]{6,40}$/.test(telefon)) return fehler('Bitte geben Sie eine Telefonnummer für den Rückruf an.', 'telefon');
+      if (nachricht.length < 5) return fehler('Bitte schreiben Sie uns kurz, worum es geht.', 'nachricht');
+
       const knopf = formular.querySelector<HTMLButtonElement>('button[type=submit]')!;
       knopf.disabled = true;
-      status.dataset.art = '';
-      status.textContent = 'Wird gesendet …';
+      melde('', 'Wird gesendet …');
       try {
-        const antwort = await fetch(formular.action, {
+        const antwort = await fetch(formular.dataset.ziel!, {
           method: 'POST',
-          body: daten,
-          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'X-HaDie': '1', Accept: 'application/json' },
+          body: JSON.stringify({
+            name, email, telefon, nachricht,
+            kontaktweg: weg(),
+            zeit: String(daten.get('zeit') ?? ''),
+            rolle: String(daten.get('rolle') ?? ''),
+            bereiche: daten.getAll('bereich').map(String),
+            website: String(daten.get('website') ?? ''),
+          }),
         });
-        if (!antwort.ok) throw new Error(String(antwort.status));
+        const json = await antwort.json().catch(() => null);
+        if (!antwort.ok || !json?.ok) {
+          melde('fehler', (json?.fehler || 'Das hat leider nicht geklappt.') + anrufHinweis);
+          return;
+        }
+        const rueckruf = weg() === 'Rückruf';
         formular.reset();
-        status.dataset.art = 'ok';
-        status.textContent = 'Vielen Dank! Ihre Anfrage ist bei uns angekommen. Wir melden uns bei Ihnen.';
+        umschalten();
+        melde('ok', rueckruf
+          ? 'Vielen Dank! Ihre Anfrage ist angekommen. Wir rufen Sie so bald wie möglich zurück.'
+          : 'Vielen Dank! Ihre Anfrage ist bei uns angekommen. Wir melden uns so bald wie möglich.');
       } catch {
-        status.dataset.art = 'fehler';
-        status.textContent = 'Das hat leider nicht geklappt. Bitte versuchen Sie es erneut oder rufen Sie uns an.';
+        melde('fehler', 'Die Verbindung ist fehlgeschlagen.' + anrufHinweis);
       } finally {
         knopf.disabled = false;
       }

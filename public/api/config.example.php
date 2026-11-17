@@ -15,4 +15,8 @@ return [
     ],
     // Nur für die erste Einrichtung des Verwaltungs-Zugangs. Danach unwirksam.
     'einrichtungscode' => '',
+    // Kontaktformular: an diese Adresse geht die Benachrichtigung über neue Anfragen.
+    'kontakt_email' => '',
+    // Optional: Absender der Benachrichtigung (eine Adresse Ihrer Domain).
+    // 'absender_email' => 'website@ihre-domain.de',
 ];

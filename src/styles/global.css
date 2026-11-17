@@ -1063,6 +1063,9 @@ a.kreis__segment:focus-visible path.flaeche {
   display: grid;
   gap: 0.4rem;
 }
+.feld[hidden] {
+  display: none;
+}
 .feld label,
 .formular legend {
   font-weight: 600;

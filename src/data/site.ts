@@ -42,7 +42,7 @@ export const site = {
    * zustellt (z. B. eigenes PHP-Skript beim Hoster, Formspree, Web3Forms).
    * Solange leer, ist das Formular sichtbar, aber deaktiviert.
    */
-  formularEndpoint: '' as string,
+  formularEndpoint: '/api/?a=anfrage' as string,
 
   /**
    * Fotos. Datei in den Ordner `public/bilder/` legen und hier eintragen,

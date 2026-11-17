@@ -35,6 +35,7 @@ jobs:
           DB_USER: dbu1046543
           DB_PASS: ${{ secrets.DB_PASS }}
           EINRICHTUNGSCODE: ${{ secrets.EINRICHTUNGSCODE }}
+          KONTAKT_EMAIL: HaDie.info@gmail.com
         run: |
           python3 - <<'PY'
           import os, json
@@ -42,8 +43,8 @@ jobs:
           def php(s): return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
           for k in ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASS", "EINRICHTUNGSCODE"):
               if not e.get(k): raise SystemExit(f"Secret {k} fehlt.")
-          out = "<?php\nreturn [\n  'db' => ['typ' => %s, 'host' => %s, 'name' => %s, 'user' => %s, 'pass' => %s],\n  'einrichtungscode' => %s,\n];\n" % (
-              php(e.get("DB_TYP") or "mysql"), php(e["DB_HOST"]), php(e["DB_NAME"]), php(e["DB_USER"]), php(e["DB_PASS"]), php(e["EINRICHTUNGSCODE"]))
+          out = "<?php\nreturn [\n  'db' => ['typ' => %s, 'host' => %s, 'name' => %s, 'user' => %s, 'pass' => %s],\n  'einrichtungscode' => %s,\n  'kontakt_email' => %s,\n];\n" % (
+              php(e.get("DB_TYP") or "mysql"), php(e["DB_HOST"]), php(e["DB_NAME"]), php(e["DB_USER"]), php(e["DB_PASS"]), php(e["EINRICHTUNGSCODE"]), php(e.get("KONTAKT_EMAIL") or ""))
           open("dist/api/config.php", "w").write(out)
           PY
 

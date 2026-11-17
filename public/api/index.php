@@ -333,6 +333,49 @@ switch ($aktion) {
         antwort(200, ['ok' => true]);
     }
 
+    case 'anfrage': {
+        // Kontaktformular der Website: ohne Anmeldung, mit Spam- und Mengenbremse.
+        $b = body();
+        if (trim((string)($b['website'] ?? '')) !== '') antwort(200, ['ok' => true]); // Spam-Falle
+        $ip = 'anfrage:' . substr(hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 32);
+        if (versuche($ip) >= 5) fehler(429, 'Sie haben gerade mehrere Anfragen gesendet. Bitte warten Sie ein paar Minuten oder rufen Sie uns an.');
+        $t = fn(string $k, int $max) => trim(mb_substr(str_replace(["\r", "\0"], '', (string)($b[$k] ?? '')), 0, $max));
+        $name = $t('name', 120); $email = $t('email', 160); $tel = $t('telefon', 40); $nachricht = $t('nachricht', 5000);
+        $weg = ($b['kontaktweg'] ?? '') === 'Rückruf' ? 'Rückruf' : 'E-Mail';
+        $zeit = in_array($b['zeit'] ?? '', ['Vormittags', 'Mittags', 'Nachmittags', 'Egal'], true) ? $b['zeit'] : '';
+        $rolle = in_array($b['rolle'] ?? '', ['Eigentümer/in', 'Teil einer Eigentümergemeinschaft', 'Investor/in', 'Sonstiges'], true) ? $b['rolle'] : '';
+        $bereiche = array_values(array_filter(array_map(fn($x) => mb_substr(trim((string)$x), 0, 60), is_array($b['bereiche'] ?? null) ? array_slice($b['bereiche'], 0, 10) : []), fn($x) => $x !== ''));
+        if (mb_strlen($name) < 2) fehler(400, 'Bitte geben Sie Ihren Namen an.');
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) fehler(400, 'Bitte prüfen Sie Ihre E-Mail-Adresse.');
+        if ($weg === 'E-Mail' && $email === '') fehler(400, 'Bitte geben Sie Ihre E-Mail-Adresse an.');
+        if ($weg === 'Rückruf' && !preg_match('/^[0-9 +()\/-]{6,40}$/', $tel)) fehler(400, 'Bitte geben Sie eine Telefonnummer für den Rückruf an.');
+        if ($tel !== '' && !preg_match('/^[0-9 +()\/-]{6,40}$/', $tel)) fehler(400, 'Bitte prüfen Sie Ihre Telefonnummer.');
+        if (mb_strlen($nachricht) < 5) fehler(400, 'Bitte schreiben Sie uns kurz, worum es geht.');
+        abfrage('DELETE FROM hadie_versuch WHERE zeit < ?', [time() - 86400]);
+        versuchMerken($ip);
+        $id = 'web' . date('ymdHis') . bin2hex(random_bytes(3));
+        upsert('anfragen', $id, json_encode([
+            'id' => $id, 'eingang' => date('Y-m-d'), 'uhrzeit' => date('H:i'), 'name' => $name, 'email' => $email, 'telefon' => $tel,
+            'kontaktweg' => $weg, 'zeit' => $zeit, 'rolle' => $rolle, 'bereiche' => implode(', ', $bereiche), 'nachricht' => $nachricht,
+            'status' => 'Neu', 'angelegt' => date('Y-m-d'),
+        ], JSON_UNESCAPED_UNICODE));
+        // Benachrichtigung per E-Mail (wenn der Webspace E-Mails versenden kann). Die Anfrage ist schon gespeichert.
+        $an = (string)($konfig['kontakt_email'] ?? '');
+        if ($an !== '' && filter_var($an, FILTER_VALIDATE_EMAIL) && function_exists('mail')) {
+            $host = preg_replace('/^www\./', '', preg_replace('/[^a-z0-9.-]/', '', strtolower((string)($_SERVER['HTTP_HOST'] ?? 'localhost'))));
+            $von = (string)($konfig['absender_email'] ?? ('website@' . $host));
+            $kopf = ['From: HaDie-Website <' . $von . '>', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: 8bit'];
+            if ($email !== '') $kopf[] = 'Reply-To: ' . $email;
+            $text = "Neue Anfrage über die Website\n\n"
+                . "Name: $name\nE-Mail: " . ($email ?: '–') . "\nTelefon: " . ($tel ?: '–') . "\n"
+                . "Gewünscht: $weg" . ($zeit ? " ($zeit)" : '') . "\nIch bin: " . ($rolle ?: '–') . "\nThemen: " . ($bereiche ? implode(', ', $bereiche) : '–') . "\n\n"
+                . "Nachricht:\n$nachricht\n\n– Die Anfrage steht auch im Verwaltertool unter „Website-Anfragen“.\n";
+            $betreff = '=?UTF-8?B?' . base64_encode('Neue Anfrage: ' . $name . ($weg === 'Rückruf' ? ' (Rückruf)' : '')) . '?=';
+            if (!@mail($an, $betreff, $text, implode("\r\n", $kopf), '-f' . $von)) error_log('HaDie-API: Benachrichtigung nicht versendet');
+        }
+        antwort(200, ['ok' => true]);
+    }
+
     case 'konten': {
         verwaltung();
         $l = [];
