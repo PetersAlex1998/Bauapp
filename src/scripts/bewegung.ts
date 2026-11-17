@@ -1,5 +1,5 @@
 /**
- * BEWEGUNG – weiches Scrollen, Parallax, Einblendungen, Cursor.
+ * BEWEGUNG – weiches Scrollen, Parallax, Einblendungen, magnetische Knöpfe.
  * ---------------------------------------------------------------
  * GSAP + ScrollTrigger + Lenis, alles lokal gebündelt (kein CDN).
  * Läuft nur, wenn der Besucher keine reduzierte Bewegung wünscht
@@ -189,36 +189,6 @@ function start() {
 
   /* ---------- Cursor ---------- */
   if (feinerZeiger) {
-    const zeiger = document.createElement('div');
-    zeiger.className = 'zeiger';
-    zeiger.setAttribute('aria-hidden', 'true');
-    document.body.append(zeiger);
-
-    const x = gsap.quickTo(zeiger, 'x', { duration: 0.7, ease: EASE });
-    const y = gsap.quickTo(zeiger, 'y', { duration: 0.7, ease: EASE });
-    let sichtbar = false;
-    window.addEventListener('mousemove', (e) => {
-      x(e.clientX);
-      y(e.clientY);
-      if (!sichtbar) {
-        sichtbar = true;
-        gsap.set(zeiger, { x: e.clientX, y: e.clientY });
-        gsap.to(zeiger, { opacity: 1, duration: 0.6 });
-      }
-    });
-    document.addEventListener('mouseleave', () => {
-      sichtbar = false;
-      gsap.to(zeiger, { opacity: 0, duration: 0.4 });
-    });
-
-    const zustand = (ziel: Element | null) => {
-      const gross = ziel?.closest('.viertel__karte, a.kreis__segment');
-      const link = ziel?.closest('a, button, label, input, select, textarea');
-      zeiger.dataset.zustand = gross ? 'gross' : link ? 'link' : '';
-      gsap.to(zeiger, { scale: gross ? 2.4 : link ? 1.5 : 1, duration: 0.7, ease: EASE, overwrite: 'auto' });
-    };
-    document.addEventListener('mouseover', (e) => zustand(e.target as Element));
-
     // Buttons folgen dem Cursor ein kleines Stück («magnetisch»)
     document.querySelectorAll<HTMLElement>('.knopf, .telefon-gross').forEach((knopf) => {
       const kx = gsap.quickTo(knopf, 'x', { duration: 0.9, ease: EASE });
