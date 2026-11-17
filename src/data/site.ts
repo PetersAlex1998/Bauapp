@@ -84,6 +84,7 @@ export const verwaltungZugang = {
 
 export const navigation = [
   { text: 'Leistungen', href: '/leistungen/' },
+  { text: 'Ratgeber', href: '/ratgeber/' },
   { text: 'Über uns', href: '/ueber-uns/' },
   { text: 'Kontakt', href: '/kontakt/' },
 ];

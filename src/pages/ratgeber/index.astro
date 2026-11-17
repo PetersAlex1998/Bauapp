@@ -1,0 +1,31 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+import { artikel } from '../../data/ratgeber';
+---
+<Seite titel="Ratgeber für Eigentümer und Vermieter" beschreibung="Verständlich erklärt: Mietverwaltung und WEG-Verwaltung, Betriebskostenabrechnung, Mieterwechsel – Ratgeber von HaDie-Immobilien aus dem Kreis Paderborn.">
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke">Ratgeber</p>
+      <h1>Gut zu wissen.</h1>
+      <p class="lead leise">Was Eigentümer und Vermieter wissen sollten – kurz und verständlich erklärt.</p>
+    </div>
+  </section>
+  <section class="abschnitt">
+    <div class="rahmen">
+      <ul class="ratgeber-liste">
+        {artikel.map((a) => (
+          <li>
+            <a class="ratgeber-karte" href={`/ratgeber/${a.slug}/`}>
+              <h2>{a.titel}</h2>
+              <p class="leise">{a.beschreibung}</p>
+              <span class="pfeil-link" aria-hidden="true">Lesen</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="leise ratgeber-hinweis">Unsere Artikel geben einen allgemeinen Überblick und ersetzen keine Rechtsberatung im Einzelfall.</p>
+    </div>
+  </section>
+  <Kontaktband />
+</Seite>

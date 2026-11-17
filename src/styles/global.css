@@ -2369,3 +2369,66 @@ a[href^='tel:'] {
 .notfall__tel {
   font-size: 1.15em;
 }
+
+/* ==========================================================================
+   RATGEBER
+   ========================================================================== */
+.ratgeber-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+}
+.ratgeber-karte {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  background: var(--weiss);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.4s,
+    box-shadow 0.4s;
+}
+.ratgeber-karte:hover,
+.ratgeber-karte:focus-visible {
+  border-color: rgba(31, 95, 166, 0.45);
+  box-shadow: 0 18px 40px -28px rgba(18, 38, 63, 0.45);
+}
+.ratgeber-karte h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  line-height: 1.25;
+}
+.ratgeber-karte p {
+  margin: 0;
+  flex: 1;
+}
+.ratgeber-hinweis {
+  margin: 2rem 0 0;
+  font-size: 0.95rem;
+}
+.ratgeber-titel {
+  max-width: 22em;
+}
+.ratgeber-text {
+  max-width: 46rem;
+}
+.ratgeber-hinweis-kasten {
+  margin: 2.5rem 0 0;
+  padding: 1.1rem 1.3rem;
+  border-radius: 0.75rem;
+  background: var(--buehne);
+}
+.ratgeber-hinweis-kasten p {
+  margin: 0 0 0.5rem;
+}
+.ratgeber-hinweis-kasten p:last-child {
+  margin: 0;
+}

@@ -1,0 +1,68 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+import { artikel, datumText } from '../../data/ratgeber';
+import { site } from '../../data/site';
+
+export function getStaticPaths() {
+  return artikel.map((a, index) => ({ params: { slug: a.slug }, props: { index } }));
+}
+const a = artikel[Astro.props.index];
+const weitere = artikel.filter((x) => x.slug !== a.slug);
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: a.titel,
+    description: a.beschreibung,
+    dateModified: a.stand,
+    datePublished: a.stand,
+    inLanguage: 'de-DE',
+    author: { '@type': 'Organization', name: site.name },
+    publisher: { '@id': new URL('/#unternehmen', Astro.site).href },
+    mainEntityOfPage: new URL(`/ratgeber/${a.slug}/`, Astro.site).href,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Startseite', item: new URL('/', Astro.site).href },
+      { '@type': 'ListItem', position: 2, name: 'Ratgeber', item: new URL('/ratgeber/', Astro.site).href },
+      { '@type': 'ListItem', position: 3, name: a.titel },
+    ],
+  },
+];
+---
+<Seite titel={a.seoTitel} beschreibung={a.beschreibung} schema={schema}>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke"><a href="/ratgeber/" style="color:inherit">Ratgeber</a></p>
+      <h1 class="ratgeber-titel">{a.titel}</h1>
+      <p class="leise" style="margin:1rem 0 0">Stand: <time datetime={a.stand}>{datumText(a.stand)}</time></p>
+    </div>
+  </section>
+
+  <article class="abschnitt">
+    <div class="rahmen"><div class="prosa ratgeber-text">
+      <p class="lead">{a.einleitung}</p>
+      {a.abschnitte.map((s) => (
+        <>
+          <h2>{s.titel}</h2>
+          {s.absaetze?.map((t) => <p>{t}</p>)}
+          {s.liste && <ul>{s.liste.map((t) => <li>{t}</li>)}</ul>}
+        </>
+      ))}
+      <aside class="ratgeber-hinweis-kasten">
+        <p><strong>Hinweis:</strong> Dieser Artikel gibt einen allgemeinen Überblick und ersetzt keine Rechtsberatung im Einzelfall.</p>
+        {a.passendeLeistung && <p><a class="pfeil-link" href={a.passendeLeistung.href}>{a.passendeLeistung.text}</a></p>}
+      </aside>
+
+      <h2>Weitere Artikel</h2>
+      <ul class="ratgeber-weitere">
+        {weitere.map((x) => <li><a href={`/ratgeber/${x.slug}/`}>{x.titel}</a></li>)}
+      </ul>
+    </div></div>
+  </article>
+
+  <Kontaktband titel="Lieber abgeben als selbst machen?" text="Wir übernehmen das für Sie – sprechen Sie uns an." />
+</Seite>
