@@ -400,16 +400,19 @@ export const ARTEN: Record<string, Art> = {
   anfragen: {
     titel: 'Website-Anfragen', einzahl: 'Anfrage', kreis: 'basis',
     felder: [
+      f('art', 'Art', 'wahl', { optionen: ['Anfrage', 'Schadensmeldung'], vorgabe: 'Anfrage' }),
       f('name', 'Name', 'text', { pflicht: true }),
       f('status', 'Status', 'wahl', { optionen: ['Neu', 'In Bearbeitung', 'Erledigt'], vorgabe: 'Neu' }),
+      f('dringlichkeit', 'Dringlichkeit', 'wahl', { optionen: ['Dringend', 'Kann warten'] }),
+      f('adresse', 'Anschrift des Hauses'), f('lage', 'Wohnung / Lage'), f('kategorie', 'Art des Schadens'),
       f('kontaktweg', 'Gewünscht', 'wahl', { optionen: ['E-Mail', 'Rückruf'] }), f('zeit', 'Rückruf am liebsten'),
-      f('email', 'E-Mail'), f('telefon', 'Telefon'), f('rolle', 'Ist'), f('bereiche', 'Themen'),
+      f('email', 'E-Mail'), f('telefon', 'Telefon'), f('erreichbar', 'Erreichbar / Zugang'), f('rolle', 'Ist'), f('bereiche', 'Themen'),
       f('eingang', 'Eingang', 'datum'), f('uhrzeit', 'Uhrzeit'),
       f('nachricht', 'Nachricht', 'lang'), f('notiz', 'Interne Notiz', 'lang'),
     ],
-    spalten: ['eingang', 'name', 'kontaktweg', 'telefon', 'email', 'status'],
-    anzeige: (s) => `${s.name} (${s.eingang ?? ''})`,
-    leer: 'Hier landen die Anfragen aus dem Kontaktformular der Website. Zusätzlich kommt eine E-Mail.',
+    spalten: ['eingang', 'art', 'name', 'adresse', 'telefon', 'status'],
+    anzeige: (s) => `${s.art === 'Schadensmeldung' ? 'Schaden' : 'Anfrage'}: ${s.name} (${s.eingang ?? ''})`,
+    leer: 'Hier landen Anfragen aus dem Kontaktformular und Schadensmeldungen von Mietern. Zusätzlich kommt eine E-Mail.',
   },
   aufgaben: {
     titel: 'Aufgaben', einzahl: 'Aufgabe', kreis: 'basis',

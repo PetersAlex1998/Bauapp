@@ -291,7 +291,8 @@ function cockpit(): HTMLElement {
   const h0 = heute();
   const dienste = ds('service').filter((x) => x.rhythmus !== 'Nach Bedarf' && x.naechster <= h0);
   const meldungen = ds('vorgaenge').filter((x) => x.status !== 'Erledigt');
-  const anfragenNeu = alle('anfragen').filter((x) => x.status === 'Neu');
+  const anfragenNeu = alle('anfragen').filter((x) => x.status === 'Neu' && x.art !== 'Schadensmeldung');
+  const schaedenNeu = alle('anfragen').filter((x) => x.status === 'Neu' && x.art === 'Schadensmeldung');
   const wichtig = wichtigFuer();
   const meine = ds('aufgaben').filter((a) => !a.erledigt && (!ich() || a.zustaendigId === ich()!.id));
 
@@ -302,6 +303,7 @@ function cockpit(): HTMLElement {
       kennzahl(`${einheiten.length - leer}/${einheiten.length}`, leer ? `vermietet · ${leer} leer` : 'Einheiten vermietet', '#/mieten'),
       kennzahl(geld(mieter.reduce((sum, x) => sum + soll(x), 0)), 'Sollmiete im Monat', '#/mieten'),
       kennzahl(geld(offen), 'offene Mieten', '#/mieten', offen > 0 ? 'vw-kennzahl--rot' : ''),
+      schaedenNeu.length > 0 && kennzahl(String(schaedenNeu.length), schaedenNeu.length === 1 ? 'neue Schadensmeldung (Website)' : 'neue Schadensmeldungen (Website)', '#/liste/anfragen', schaedenNeu.some((x) => x.dringlichkeit === 'Dringend') ? 'vw-kennzahl--rot' : 'vw-kennzahl--gelb'),
       anfragenNeu.length > 0 && kennzahl(String(anfragenNeu.length), anfragenNeu.length === 1 ? 'neue Website-Anfrage' : 'neue Website-Anfragen', '#/liste/anfragen', 'vw-kennzahl--blau'),
       kennzahl(String(meldungen.length), 'offene Meldungen', '#/liste/vorgaenge', meldungen.length ? 'vw-kennzahl--gelb' : ''),
       kennzahl(String(meine.length), ich() ? 'meine offenen Aufgaben' : 'offene Aufgaben', '#/aufgaben', meine.some((a) => a.faellig && a.faellig < h0) ? 'vw-kennzahl--rot' : meine.length ? 'vw-kennzahl--blau' : ''),

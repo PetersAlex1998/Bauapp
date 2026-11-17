@@ -44,7 +44,7 @@ export const fragen: Frage[] = [
   },
   {
     frage: 'Was passiert, wenn in meinem Haus etwas kaputtgeht?',
-    antwort: `Mieter und Eigentümer melden sich bei uns – telefonisch${site.erreichbarkeit ? ` (${site.erreichbarkeit})` : ''} oder als Eigentümer auch über den Kundenbereich. Wir kümmern uns um die Reparatur und halten Sie auf dem Laufenden.\n\nBei akuter Gefahr – Gasgeruch, Feuer, Wasser, das nicht zu stoppen ist – zuerst den Notruf 112 oder den Störungsdienst des Versorgers anrufen.`,
+    antwort: `Mieter und Eigentümer melden sich bei uns – telefonisch${site.erreichbarkeit ? ` (${site.erreichbarkeit})` : ''}, Mieter auch über die Seite „Schaden melden“ und Eigentümer über den Kundenbereich. Wir kümmern uns um die Reparatur und halten Sie auf dem Laufenden.\n\nBei akuter Gefahr – Gasgeruch, Feuer, Wasser, das nicht zu stoppen ist – zuerst den Notruf 112 oder den Störungsdienst des Versorgers anrufen.`,
   },
   {
     frage: 'Haben Sie die nötige Erlaubnis?',

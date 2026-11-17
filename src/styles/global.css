@@ -2334,3 +2334,38 @@ a[href^='tel:'] {
   gap: 0.75rem 1.5rem;
   align-items: center;
 }
+
+/* ==========================================================================
+   SCHADEN MELDEN – Notfallkasten
+   ========================================================================== */
+.notfall {
+  max-width: 56rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: var(--radius);
+  border: 1.5px solid #c2410c;
+  border-left-width: 6px;
+  background: #fff7ed;
+  color: var(--tinte);
+}
+.notfall h2 {
+  margin: 0 0 0.9rem;
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+}
+.notfall ul {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+.notfall li {
+  margin: 0 0 0.55rem;
+  line-height: 1.5;
+}
+.notfall p {
+  margin: 0;
+}
+.notfall a {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.notfall__tel {
+  font-size: 1.15em;
+}

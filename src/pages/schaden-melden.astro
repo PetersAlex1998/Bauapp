@@ -1,0 +1,173 @@
+---
+/**
+ * SCHADEN MELDEN – für Mieter (und alle ohne Login).
+ * Erst Sicherheit (Notfälle), dann Telefon, dann das Formular.
+ * Die Meldung landet im Verwaltertool unter „Website-Anfragen“ (Art: Schadensmeldung).
+ */
+import Seite from '../layouts/Seite.astro';
+import { site } from '../data/site';
+const bereit = site.formularEndpoint !== '';
+const kategorien = ['Wasser', 'Heizung / Warmwasser', 'Strom', 'Fenster / Türen', 'Schloss / Schlüssel', 'Feuchtigkeit / Schimmel', 'Sonstiges'];
+---
+<Seite
+  titel="Schaden melden – für Mieter"
+  beschreibung={`Schaden in Ihrer Wohnung oder im Haus? So melden Sie ihn ${site.name}: telefonisch unter ${site.telefon.anzeige} oder über das Formular.`}
+>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke">Für Mieter</p>
+      <h1>Schaden melden.</h1>
+      <p class="lead leise">Etwas ist kaputt, tropft oder funktioniert nicht? Sagen Sie uns Bescheid – wir kümmern uns.</p>
+    </div>
+  </section>
+
+  <section class="abschnitt abschnitt--eng">
+    <div class="rahmen">
+      <div class="notfall" role="note" aria-labelledby="notfall-titel">
+        <h2 id="notfall-titel">Bei akuter Gefahr: zuerst handeln, dann melden</h2>
+        <ul>
+          <li><strong>Feuer oder Verletzte:</strong> sofort den Notruf <a href="tel:112">112</a> wählen.</li>
+          <li><strong>Gasgeruch:</strong> keine Schalter, Klingeln oder Handys im Haus benutzen, kein offenes Feuer. Fenster öffnen, das Haus verlassen und von draußen den Störungsdienst Ihres Gasversorgers oder die <a href="tel:112">112</a> anrufen.</li>
+          <li><strong>Wasser läuft aus:</strong> wenn möglich den Absperrhahn der Wohnung oder den Hauptwasserhahn schließen. Elektrische Geräte in nassen Bereichen nicht berühren.</li>
+          <li><strong>Stromausfall im ganzen Haus oder in der Straße:</strong> den Störungsdienst des Netzbetreibers anrufen.</li>
+        </ul>
+        <p>Danach rufen Sie uns bitte an: <a class="notfall__tel" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>{site.erreichbarkeit ? ` (${site.erreichbarkeit})` : ''}.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="abschnitt">
+    <div class="rahmen zweier zweier--formular">
+      <div class="spalte-text">
+        <h2 style="font-size:clamp(1.5rem,3vw,2rem)">Alles andere: einfach melden</h2>
+        <p class="leise">Tropfender Wasserhahn, Heizung wird nicht warm, Fenster schließt nicht, Feuchtigkeit an der Wand: Schreiben Sie uns, was los ist. Wir melden uns bei Ihnen und organisieren die Reparatur.</p>
+        <h3 style="margin-top:2rem">Das hilft uns</h3>
+        <ul class="leise">
+          <li>Wo genau ist der Schaden (Haus, Wohnung, Raum)?</li>
+          <li>Seit wann besteht er, wird es schlimmer?</li>
+          <li>Wann sind Sie zu Hause, damit ein Handwerker hinein kann?</li>
+        </ul>
+        <p class="leise">Fotos können Sie uns gern schicken, sobald wir uns bei Ihnen gemeldet haben.</p>
+        <p class="leise" style="font-size:.95rem">Sie sind Eigentümer und haben einen Zugang? Melden Sie Schäden am schnellsten im <a href="/kundenlogin/">Kundenbereich</a>.</p>
+      </div>
+
+      <form class="formular" id="schaden" data-ziel={site.formularEndpoint} data-bereit={String(bereit)} data-telefon={site.telefon.anzeige} aria-labelledby="schaden-titel" novalidate>
+        <div>
+          <h2 id="schaden-titel" style="font-size:clamp(1.5rem,3vw,2rem);margin-bottom:.3em">Schadensmeldung</h2>
+          <p class="formular__hinweis">Pflichtfelder sind mit * gekennzeichnet.</p>
+        </div>
+        {!bereit && (
+          <p class="formular__bald"><strong>Online-Meldungen sind in Kürze möglich.</strong> Bitte rufen Sie uns an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p>
+        )}
+        <noscript><p class="formular__bald">Zum Senden wird JavaScript benötigt. Bitte rufen Sie uns an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>.</p></noscript>
+
+        <div class="formular__reihe">
+          <div class="feld">
+            <label for="s-adresse">Anschrift des Hauses *</label>
+            <input id="s-adresse" name="adresse" type="text" autocomplete="street-address" maxlength="200" placeholder="Straße, Hausnummer, Ort" />
+          </div>
+          <div class="feld">
+            <label for="s-lage">Wohnung / Lage</label>
+            <input id="s-lage" name="lage" type="text" maxlength="120" placeholder="z. B. 2. OG links" />
+          </div>
+        </div>
+
+        <div class="feld">
+          <label for="s-kategorie">Was ist betroffen?</label>
+          <select id="s-kategorie" name="kategorie">
+            {kategorien.map((k) => <option>{k}</option>)}
+          </select>
+        </div>
+
+        <fieldset>
+          <legend>Wie dringend ist es?</legend>
+          <div class="auswahl">
+            <label><input type="radio" name="dringlichkeit" value="Dringend" />Dringend – es wird schlimmer</label>
+            <label><input type="radio" name="dringlichkeit" value="Kann warten" checked />Kann ein paar Tage warten</label>
+          </div>
+        </fieldset>
+
+        <div class="feld">
+          <label for="s-nachricht">Was ist passiert? *</label>
+          <textarea id="s-nachricht" name="nachricht" maxlength="5000"></textarea>
+        </div>
+
+        <div class="formular__reihe">
+          <div class="feld">
+            <label for="s-name">Ihr Name *</label>
+            <input id="s-name" name="name" type="text" autocomplete="name" maxlength="120" />
+          </div>
+          <div class="feld">
+            <label for="s-telefon">Telefon *</label>
+            <input id="s-telefon" name="telefon" type="tel" autocomplete="tel" maxlength="40" />
+          </div>
+        </div>
+        <div class="formular__reihe">
+          <div class="feld">
+            <label for="s-email">E-Mail</label>
+            <input id="s-email" name="email" type="email" autocomplete="email" maxlength="160" />
+          </div>
+          <div class="feld">
+            <label for="s-erreichbar">Wann sind Sie erreichbar / zu Hause?</label>
+            <input id="s-erreichbar" name="erreichbar" type="text" maxlength="200" placeholder="z. B. werktags ab 16 Uhr" />
+          </div>
+        </div>
+
+        <div class="honig" aria-hidden="true">
+          <label for="s-website">Bitte leer lassen</label>
+          <input id="s-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <p class="formular__hinweis">Wir verwenden Ihre Angaben, um den Schaden zu beheben, und geben sie dafür bei Bedarf an den beauftragten Handwerksbetrieb weiter. Näheres in der <a href="/datenschutz/">Datenschutzerklärung</a>.</p>
+        <div><button class="knopf knopf--voll" type="submit" disabled={!bereit}>Schaden melden</button></div>
+        <p class="formular__status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</Seite>
+
+<script>
+  const formular = document.querySelector<HTMLFormElement>('form#schaden');
+  const status = formular?.querySelector<HTMLElement>('.formular__status');
+  if (formular && status && formular.dataset.bereit === 'true') {
+    const feld = (n: string) => formular.elements.namedItem(n) as HTMLInputElement;
+    const melde = (art: string, text: string) => { status.dataset.art = art; status.textContent = text; };
+    const anruf = ` Oder rufen Sie uns an: ${formular.dataset.telefon}.`;
+    formular.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(formular);
+      if (d.get('website')) return;
+      const w = (n: string) => String(d.get(n) ?? '').trim();
+      const fehler = (text: string, el: string) => { melde('fehler', text); feld(el).focus(); };
+      if (w('adresse').length < 5) return fehler('Bitte geben Sie die Anschrift des Hauses an.', 'adresse');
+      if (w('nachricht').length < 5) return fehler('Bitte beschreiben Sie kurz, was passiert ist.', 'nachricht');
+      if (w('name').length < 2) return fehler('Bitte geben Sie Ihren Namen an.', 'name');
+      if (!/^[0-9 +()\/-]{6,40}$/.test(w('telefon'))) return fehler('Bitte geben Sie eine Telefonnummer an, damit wir Sie erreichen.', 'telefon');
+      if (w('email') && !feld('email').checkValidity()) return fehler('Bitte prüfen Sie Ihre E-Mail-Adresse.', 'email');
+      const knopf = formular.querySelector<HTMLButtonElement>('button[type=submit]')!;
+      knopf.disabled = true;
+      melde('', 'Wird gesendet …');
+      try {
+        const a = await fetch(formular.dataset.ziel!, {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'X-HaDie': '1', Accept: 'application/json' },
+          body: JSON.stringify({
+            art: 'Schaden', adresse: w('adresse'), lage: w('lage'), kategorie: w('kategorie'), dringlichkeit: w('dringlichkeit'),
+            nachricht: w('nachricht'), name: w('name'), telefon: w('telefon'), email: w('email'), erreichbar: w('erreichbar'), website: w('website'),
+          }),
+        });
+        const json = await a.json().catch(() => null);
+        if (!a.ok || !json?.ok) return melde('fehler', (json?.fehler || 'Das hat leider nicht geklappt.') + anruf);
+        const dringend = w('dringlichkeit') === 'Dringend';
+        formular.reset();
+        melde('ok', dringend
+          ? `Danke, Ihre Meldung ist angekommen. Weil es dringend ist, rufen Sie uns bitte zusätzlich an: ${formular.dataset.telefon}.`
+          : 'Danke, Ihre Meldung ist angekommen. Wir melden uns bei Ihnen.');
+      } catch {
+        melde('fehler', 'Die Verbindung ist fehlgeschlagen.' + anruf);
+      } finally {
+        knopf.disabled = false;
+      }
+    });
+  }
+</script>
