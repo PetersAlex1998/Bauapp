@@ -1,0 +1,30 @@
+---
+/**
+ * Häufige Fragen als aufklappbare Liste (funktioniert ohne JavaScript).
+ * `anzahl` begrenzt die Liste, z. B. auf der Kontaktseite.
+ */
+import { fragen } from '../data/fragen';
+interface Props { anzahl?: number; ueberschrift?: string; id?: string }
+const { anzahl, ueberschrift = 'Häufige Fragen.', id = 'fragen' } = Astro.props;
+const liste = anzahl ? fragen.slice(0, anzahl) : fragen;
+---
+<div class="fragen">
+  <div class="abschnittskopf">
+    <p class="marke">Gut zu wissen</p>
+    <h2 id={id}>{ueberschrift}</h2>
+  </div>
+  <div class="fragen__liste">
+    {liste.map((f) => (
+      <details class="fragen__eintrag">
+        <summary>
+          <h3 class="fragen__frage">{f.frage}</h3>
+          <span class="katalog__zeichen" aria-hidden="true"></span>
+        </summary>
+        <div class="fragen__antwort">
+          {f.antwort.split('\n\n').map((absatz) => <p>{absatz}</p>)}
+        </div>
+      </details>
+    ))}
+  </div>
+  <p class="fragen__mehr">Ihre Frage ist nicht dabei? {Astro.url.pathname.startsWith('/kontakt') ? <a class="pfeil-link" href="#anfrage">Schreiben Sie uns</a> : <a class="pfeil-link" href="/kontakt/">Fragen Sie uns direkt</a>}</p>
+</div>

@@ -7,11 +7,18 @@ import Platzhalter from '../components/Platzhalter.astro';
 import Icon from '../components/Icon.astro';
 import Szene from '../components/Szene.astro';
 import Anrufknopf from '../components/Anrufknopf.astro';
+import Fragen from '../components/Fragen.astro';
+import { fragen } from '../data/fragen';
 import { site } from '../data/site';
 ---
 <Seite
   titel="360° Hausverwaltung im Kreis Paderborn | HaDie-Immobilien"
   beschreibung="HaDie-Immobilien: Hausverwaltung und alles, was Ihre Immobilie sonst noch braucht – vom Mülltonnendienst über Renovierung und Sanierung bis zum Großprojekt. Seit 2015 im Kreis Paderborn."
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: fragen.map((f) => ({ '@type': 'Question', name: f.frage, acceptedAnswer: { '@type': 'Answer', text: f.antwort.replace(/\n\n/g, ' ') } })),
+  }]}
 >
   <!-- HERO -->
   <section class="hero dunkel">
@@ -175,30 +182,40 @@ import { site } from '../data/site';
     </div>
   </section>
 
-  <!-- SO BEGINNT ES -->
+  <!-- SO STARTEN WIR ZUSAMMEN -->
   <section class="abschnitt" aria-labelledby="ablauf">
     <div class="rahmen">
       <div class="abschnittskopf">
         <p class="marke">Der erste Schritt</p>
-        <h2 id="ablauf">So beginnt die Zusammenarbeit.</h2>
+        <h2 id="ablauf">So starten wir zusammen.</h2>
+        <p class="lead">Ein Wechsel klingt nach Aufwand. Den übernehmen wir – Sie behalten den Überblick.</p>
       </div>
-      <ol class="dreier">
+      <ol class="dreier vierer">
         <li>
           <span class="schritt-nr" aria-hidden="true">1</span>
           <h3>Sie melden sich</h3>
-          <p class="leise">Per Telefon oder über das Formular. Sie erzählen, worum es geht – wir hören zu.</p>
+          <p class="leise">Per Telefon, über das Formular oder als Rückruf-Wunsch. Sie erzählen, worum es geht – wir hören zu.</p>
         </li>
         <li>
           <span class="schritt-nr" aria-hidden="true">2</span>
           <h3>Wir lernen Ihre Immobilie kennen</h3>
-          <p class="leise">Wir schauen uns das Objekt und die Unterlagen an und klären, was es wirklich braucht.</p>
+          <p class="leise">Wir schauen uns das Objekt vor Ort und die vorhandenen Unterlagen an und klären, was es wirklich braucht.</p>
         </li>
         <li>
           <span class="schritt-nr" aria-hidden="true">3</span>
           <h3>Sie erhalten ein Angebot</h3>
-          <p class="leise">Passend zu Ihrer Immobilie: ein einzelner Bereich oder der volle Kreis.</p>
+          <p class="leise">Schriftlich, mit klarem Leistungsumfang: ein einzelner Bereich oder der volle Kreis. Sie entscheiden in Ruhe.</p>
+        </li>
+        <li>
+          <span class="schritt-nr" aria-hidden="true">4</span>
+          <h3>Wir übernehmen</h3>
+          <p class="leise">Unterlagen vom bisherigen Verwalter, Konten und Vollmachten, Information an Mieter und Dienstleister – damit nichts liegen bleibt. Sie erhalten Ihren Zugang zum Kundenbereich.</p>
         </li>
       </ol>
+      <div class="schritte__fuss">
+        <a class="knopf knopf--voll" href="/kontakt/">Erstes Gespräch vereinbaren</a>
+        <a class="pfeil-link" href="#fragen">Häufige Fragen</a>
+      </div>
     </div>
   </section>
 
@@ -225,6 +242,13 @@ import { site } from '../data/site';
           <p><strong>Referenzen und Stimmen von Eigentümern:</strong> Hier ist Platz für echte Referenzobjekte oder Kundenstimmen – bitte von HaDie liefern (mit Einverständnis der Genannten).</p>
         </Platzhalter>
       </div>
+    </div>
+  </section>
+
+  <!-- HÄUFIGE FRAGEN -->
+  <section class="abschnitt" aria-labelledby="fragen">
+    <div class="rahmen">
+      <Fragen />
     </div>
   </section>
 

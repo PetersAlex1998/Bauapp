@@ -2249,3 +2249,88 @@ a[href^='tel:'] {
 .formular__bald a {
   font-weight: 600;
 }
+
+/* ==========================================================================
+   HÄUFIGE FRAGEN
+   ========================================================================== */
+.fragen__liste {
+  max-width: 52rem;
+  border-top: 1px solid var(--linie);
+}
+.fragen__eintrag {
+  border-bottom: 1px solid var(--linie);
+}
+.fragen__eintrag summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.25rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.fragen__eintrag summary::-webkit-details-marker {
+  display: none;
+}
+.fragen__eintrag summary:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.fragen__frage {
+  margin: 0;
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  line-height: 1.35;
+}
+.fragen__eintrag[open] .katalog__zeichen {
+  background: var(--dunkel);
+  border-color: var(--dunkel);
+}
+.fragen__eintrag[open] .katalog__zeichen::before,
+.fragen__eintrag[open] .katalog__zeichen::after {
+  background: #fff;
+}
+.fragen__eintrag[open] .katalog__zeichen::after {
+  transform: rotate(0deg);
+}
+.fragen__antwort {
+  padding: 0 3.75rem 1.4rem 0;
+  color: var(--tinte-leise);
+}
+.fragen__antwort p {
+  margin: 0 0 0.8em;
+  max-width: 44rem;
+}
+.fragen__antwort p:last-child {
+  margin-bottom: 0;
+}
+.fragen__mehr {
+  margin: 1.75rem 0 0;
+}
+@media (max-width: 44rem) {
+  .fragen__antwort {
+    padding-right: 0;
+  }
+}
+
+/* Vier Schritte statt drei */
+.vierer {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 64rem) {
+  .vierer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 40rem) {
+  .vierer {
+    grid-template-columns: 1fr;
+  }
+}
+.schritte__fuss {
+  margin: 2.25rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+}

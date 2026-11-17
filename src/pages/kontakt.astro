@@ -1,6 +1,7 @@
 ---
 import Seite from '../layouts/Seite.astro';
 import Kontaktformular from '../components/Kontaktformular.astro';
+import Fragen from '../components/Fragen.astro';
 import Platzhalter from '../components/Platzhalter.astro';
 import { site } from '../data/site';
 const a = site.adresse;
@@ -62,6 +63,12 @@ const kartenSuche = encodeURIComponent(`${a.strasse}, ${a.plz} ${a.ort}`);
         </dl>
       </div>
       <Kontaktformular />
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="fragen">
+    <div class="rahmen">
+      <Fragen ueberschrift="Bevor Sie fragen." />
     </div>
   </section>
 </Seite>
