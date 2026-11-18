@@ -117,9 +117,10 @@ Alles dazu steht in `src/scripts/bewegung.ts`; Tempo über `DAUER` und `EASE` am
 Besucher mit der Systemeinstellung „Bewegung reduzieren“ und Browser ohne JavaScript sehen die
 Seite vollständig, nur ohne Animation.
 
-**Objektfoto:** Die gezeichnete Morgenszene auf der Startseite ist ein Platzhalter. Foto nach
-`public/bilder/` legen und in `src/data/site.ts` unter `bilder.objekt` eintragen – es ersetzt
-die Zeichnung automatisch (Querformat, mindestens 2400 px breit, als JPG oder WebP).
+**Fotos:** liegen in `src/assets/bilder/` und werden beim Bauen automatisch verkleinert und als AVIF/WebP
+ausgeliefert. Startseite (Abschnitt „Mehr als eine Hausverwaltung“): `objekt-aussen.jpg` in `src/pages/index.astro`.
+Leistungsseiten: Feld `bilder` des jeweiligen Bereichs in `src/data/leistungen.ts` (derzeit nur
+„Renovierung & Sanierung“). Hausnummer, Praxisschild und Logo sind im Außenfoto entfernt.
 
 ## Platzhalter
 

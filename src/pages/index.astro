@@ -5,7 +5,8 @@ import Leistungskarten from '../components/Leistungskarten.astro';
 import Kontaktband from '../components/Kontaktband.astro';
 import Platzhalter from '../components/Platzhalter.astro';
 import Icon from '../components/Icon.astro';
-import Szene from '../components/Szene.astro';
+import { Picture } from 'astro:assets';
+import objektFoto from '../assets/bilder/objekt-aussen.jpg';
 import Anrufknopf from '../components/Anrufknopf.astro';
 import Fragen from '../components/Fragen.astro';
 import { fragen } from '../data/fragen';
@@ -77,15 +78,12 @@ import { site } from '../data/site';
     <div class="expand__buehne" id="unterschied-buehne">
       <p class="expand__vorspann" aria-hidden="true">Ihre Immobilie. Rundum betrachtet.</p>
       <div class="expand__bild">
-        <div class="expand__inhalt"><Szene /></div>
+        <div class="expand__inhalt"><Picture src={objektFoto} formats={['avif', 'webp']} widths={[800, 1200, 1536]} sizes="(orientation: portrait) 150vh, 100vw" alt="Modernes, von HaDie betreutes Gebäude mit Klinker- und Putzfassade, gepflasterter Hoffläche und Vordach über dem Eingang" class="expand__foto" loading="lazy" decoding="async" /></div>
         <div class="expand__schleier"></div>
       </div>
       <div class="expand__text rahmen">
         <p class="marke">Der Unterschied</p>
         <h2 id="unterschied">Mehr als eine Hausverwaltung.</h2>
-        {site.platzhalterAnzeigen && !site.bilder.objekt && (
-          <p class="expand__notiz"><strong>Platzhalter:</strong> Illustration – hier folgt ein echtes Foto eines betreuten Objekts.</p>
-        )}
       </div>
     </div>
   </section>

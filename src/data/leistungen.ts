@@ -36,6 +36,8 @@ export interface Leistung {
   umfang: { titel: string; text: string }[]; // «Auf einen Blick»
   katalog: Gruppe[];
   zusammenspiel: string; // Wie der Bereich mit den anderen zusammenhängt
+  /** Fotos (Dateien in src/assets/bilder/), nur wo sie zum Bereich passen */
+  bilder?: { datei: string; alt: string; text: string }[];
   platzhalter?: string; // Offener Punkt, der auf der Seite markiert wird
 }
 
@@ -316,6 +318,12 @@ export const leistungen: Leistung[] = [
      =================================================================== */
   {
     slug: 'renovierung-sanierung',
+    bilder: [
+      { datei: 'renovierung-bad.jpg', alt: 'Helles, frisch renoviertes Bad mit Duschkabine, Badewanne, weißen Fliesen und Holzoptik-Boden', text: 'Bad mit Dusche und Wanne' },
+      { datei: 'renovierung-wohnraum.jpg', alt: 'Leerer, renovierter Wohn- und Küchenbereich mit Fliesenspiegel, neuem Boden und Tür zum Balkon', text: 'Wohn- und Küchenbereich, bereit zur Vermietung' },
+      { datei: 'renovierung-zimmer.jpg', alt: 'Renoviertes Zimmer mit neuen weißen Innentüren und hellem Boden', text: 'Neue Innentüren und Boden' },
+      { datei: 'renovierung-dachterrasse.jpg', alt: 'Dachterrasse mit dunklem Dielenbelag und Geländer aus Edelstahl und Milchglas', text: 'Dachterrasse mit neuem Belag und Glasgeländer' },
+    ],
     verb: 'Erneuern',
     titel: 'Renovierung & Sanierung',
     kurz: 'Der Bestand: Wir bringen Wohnungen und Gebäudeteile wieder in einen Zustand, der sich gut vermietet – und führen die Arbeiten selbst aus.',
