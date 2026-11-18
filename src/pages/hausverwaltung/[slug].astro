@@ -1,0 +1,95 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+import Leistungskarten from '../../components/Leistungskarten.astro';
+import { orte } from '../../data/orte';
+import { site } from '../../data/site';
+
+export function getStaticPaths() {
+  return orte.map((o, index) => ({ params: { slug: o.slug }, props: { index } }));
+}
+const o = orte[Astro.props.index];
+const weitere = orte.filter((x) => x.slug !== o.slug);
+const imOrt = o.ortsteile.length ? `${o.name} und Ortsteilen` : o.name;
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: `Hausverwaltung in ${o.name}`,
+    serviceType: 'Hausverwaltung',
+    provider: { '@id': new URL('/#unternehmen', Astro.site).href },
+    areaServed: { '@type': 'City', name: o.name, containedInPlace: { '@type': 'AdministrativeArea', name: 'Kreis Paderborn' } },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Startseite', item: new URL('/', Astro.site).href },
+      { '@type': 'ListItem', position: 2, name: 'Kreis Paderborn', item: new URL('/hausverwaltung/', Astro.site).href },
+      { '@type': 'ListItem', position: 3, name: o.name },
+    ],
+  },
+];
+---
+<Seite
+  titel={`Hausverwaltung ${o.name} – ${site.name}`}
+  beschreibung={`Hausverwaltung in ${imOrt}: Mietverwaltung, Objektservice, Renovierung und Projektbegleitung aus einer Hand. ${site.name} aus ${site.adresse.ort}.`}
+  schema={schema}
+>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke"><a href="/hausverwaltung/" style="color:inherit">Kreis Paderborn</a></p>
+      <h1>Hausverwaltung in {o.name}.</h1>
+      <p class="lead leise">{o.einleitung}</p>
+      <p style="margin:2rem 0 0;display:flex;flex-wrap:wrap;gap:.75rem 1.5rem;align-items:center">
+        <a class="knopf knopf--voll" href="/kontakt/">Unverbindlich anfragen</a>
+        <a class="pfeil-link" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="abschnitt">
+    <div class="rahmen zweier">
+      <div class="spalte-text">
+        <p class="marke">Vor Ort</p>
+        <h2>Was Ihre Immobilie in {o.name} braucht.</h2>
+        <p>{o.absatz}</p>
+        {o.ortsteile.length > 0 && (
+          <>
+            <h3 style="margin-top:2rem">Auch in den Ortsteilen</h3>
+            <ul class="ortsteile" aria-label={`Ortsteile von ${o.name}`}>
+              {o.ortsteile.map((t) => <li>{t}</li>)}
+            </ul>
+          </>
+        )}
+      </div>
+      <div class="orte-schwerpunkte">
+        <h3>Darauf achten wir in {o.name}</h3>
+        <ul>
+          {o.schwerpunkte.map((s) => <li>{s}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="abschnitt hell" aria-labelledby="leistungen">
+    <div class="rahmen">
+      <div class="abschnittskopf">
+        <p class="marke">360°</p>
+        <h2 id="leistungen">Alles aus einer Hand – auch in {o.name}.</h2>
+      </div>
+      <Leistungskarten />
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="weitere-orte">
+    <div class="rahmen">
+      <h2 id="weitere-orte" style="font-size:clamp(1.4rem,2.6vw,1.9rem)">Weitere Orte im Kreis Paderborn</h2>
+      <ul class="ortsteile ortsteile--links">
+        {weitere.map((x) => <li><a href={`/hausverwaltung/${x.slug}/`}>{x.name}</a></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <Kontaktband titel={`Ihre Immobilie in ${o.name}?`} text="Erzählen Sie uns davon – wir sagen Ihnen offen, was wir für Sie tun können." />
+</Seite>

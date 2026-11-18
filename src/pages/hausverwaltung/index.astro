@@ -1,0 +1,41 @@
+---
+import Seite from '../../layouts/Seite.astro';
+import Kontaktband from '../../components/Kontaktband.astro';
+import { orte } from '../../data/orte';
+import { site } from '../../data/site';
+const schema = [{
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'Hausverwaltung im Kreis Paderborn',
+  provider: { '@id': new URL('/#unternehmen', Astro.site).href },
+  areaServed: orte.map((o) => ({ '@type': 'City', name: o.name })),
+}];
+---
+<Seite titel="Hausverwaltung im Kreis Paderborn – alle Orte" beschreibung={`Hausverwaltung, Objektservice und Renovierung in allen zehn Städten und Gemeinden im Kreis Paderborn: ${orte.map((o) => o.name).join(', ')}.`} schema={schema}>
+  <section class="seitenkopf dunkel">
+    <div class="rahmen">
+      <p class="marke">Einsatzgebiet</p>
+      <h1>Im ganzen Kreis Paderborn für Sie da.</h1>
+      <p class="lead leise">Zehn Städte und Gemeinden, ein Ansprechpartner. Von unserem Büro in {site.adresse.ort} aus betreuen wir Immobilien im ganzen Kreis.</p>
+    </div>
+  </section>
+  <section class="abschnitt">
+    <div class="rahmen">
+      <ul class="orte-liste">
+        {orte.map((o) => (
+          <li>
+            <a class="orte-karte" href={`/hausverwaltung/${o.slug}/`}>
+              <span class="orte-karte__art">{o.art}</span>
+              <h2>{o.name}</h2>
+              {o.ortsteile.length > 0
+                ? <p class="leise">mit {o.ortsteile.slice(0, 4).join(', ')}{o.ortsteile.length > 4 ? ' u. a.' : ''}</p>
+                : <p class="leise">Hier sitzt unser Büro.</p>}
+              <span class="pfeil-link" aria-hidden="true">Hausverwaltung in {o.name}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+  <Kontaktband />
+</Seite>

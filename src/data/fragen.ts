@@ -35,7 +35,7 @@ export const fragen: Frage[] = [
   },
   {
     frage: 'In welcher Region sind Sie tätig?',
-    antwort: `Im ${site.regionText}. Unser Büro ist in ${site.adresse.ort}. Kurze Wege sind uns wichtig, denn wer ein Gebäude betreut, muss schnell vor Ort sein können.`,
+    antwort: `Im ${site.regionText}. Unser Büro ist in ${site.adresse.ort}. Wir sind in allen zehn Städten und Gemeinden für Sie da: Paderborn, Bad Lippspringe, Delbrück, Salzkotten, Büren, Hövelhof, Bad Wünnenberg, Lichtenau, Altenbeken und Borchen.`,
   },
   {
     frage: 'Wie behalte ich als Eigentümer den Überblick?',
