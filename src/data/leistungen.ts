@@ -38,6 +38,8 @@ export interface Leistung {
   zusammenspiel: string; // Wie der Bereich mit den anderen zusammenhängt
   /** Fotos (Dateien in src/assets/bilder/), nur wo sie zum Bereich passen */
   bilder?: { datei: string; alt: string; text: string }[];
+  /** Abschnitt „Ihr Kundenbereich“ mit Screenshots zeigen */
+  kundenbereich?: boolean;
   platzhalter?: string; // Offener Punkt, der auf der Seite markiert wird
 }
 
@@ -47,6 +49,7 @@ export const leistungen: Leistung[] = [
      =================================================================== */
   {
     slug: 'hausverwaltung',
+    kundenbereich: true,
     verb: 'Verwalten',
     titel: 'Klassische Hausverwaltung',
     kurz: 'Das Fundament: Ihr Mietobjekt kaufmännisch, technisch und organisatorisch in Ordnung – auch für Eigentümergemeinschaften.',

@@ -1326,3 +1326,175 @@ a.vw-kennzahl:hover {
 .login__modus a {
   font-weight: 600;
 }
+
+/* ==========================================================================
+   DIAGRAMME (Kundenbereich)
+   ========================================================================== */
+.vw {
+  --d-reihe1: #1f5fa6;
+  --d-reihe2: #eb6834;
+  --d-raster: #e6e9ee;
+  --d-basis: #b9c1cc;
+  --d-achse: #5b6675;
+  --d-flaeche: #ffffff;
+}
+.vw-diagramm {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.vw-diagramm__flaeche {
+  position: relative;
+}
+.vw-diagramm__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.vw-diagramm__svg rect[tabindex]:focus {
+  outline: none;
+}
+.vw-diagramm__svg rect[tabindex]:focus-visible {
+  outline: 2px solid var(--d-reihe1);
+  outline-offset: -2px;
+}
+.vw-d-raster { stroke: var(--d-raster); stroke-width: 1; }
+.vw-d-basis { stroke: var(--d-basis); stroke-width: 1; }
+.vw-d-achse { fill: var(--d-achse); font-size: 12px; font-variant-numeric: tabular-nums; }
+.vw-d-reihe1 { fill: var(--d-reihe1); }
+.vw-d-linie2 { fill: none; stroke: var(--d-reihe2); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.vw-d-punkt2 { fill: var(--d-reihe2); stroke: var(--d-flaeche); stroke-width: 2; }
+.vw-d-fuehrung { stroke: var(--d-basis); stroke-width: 1; }
+.vw-diagramm__legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--d-achse);
+}
+.vw-diagramm__legende span,
+.vw-diagramm__tip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.vw-d-chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--d-reihe1);
+}
+.vw-d-chip--2 { background: var(--d-reihe2); }
+.vw-d-chip--linie { height: 3px; width: 14px; border-radius: 2px; }
+.vw-diagramm__tip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.5rem;
+  background: #12263f;
+  color: #fff;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px -12px rgba(18, 38, 63, 0.6);
+  z-index: 2;
+}
+.vw-diagramm__tip[hidden] { display: none; }
+.vw-diagramm__tabelle summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--d-achse);
+}
+.vw-diagramm__tabelle[open] summary { margin-bottom: 0.5rem; }
+.vw-balkenliste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+.vw-balkenliste li {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+}
+.vw-balkenliste__spur {
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+  background: var(--d-raster);
+  overflow: hidden;
+}
+.vw-balkenliste__balken {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--d-reihe1);
+}
+.vw-balkenliste__wert {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+.vw-balkenliste__wert small { color: var(--d-achse); }
+@media (max-width: 36rem) {
+  .vw-balkenliste li { grid-template-columns: 1fr auto; }
+  .vw-balkenliste__spur { grid-column: 1 / -1; grid-row: 2; }
+}
+.vw-kunde-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+@media (min-width: 64rem) {
+  .vw-zwei--diagramme { grid-template-columns: 3fr 2fr; }
+}
+
+/* ==========================================================================
+   KUNDENBEREICH: Zeilen und Innenabstände in Karten
+   ========================================================================== */
+.vw-punkte__zeile,
+.vw-objekte__zeile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-punkte li:last-child .vw-punkte__zeile,
+.vw-objekte li:last-child .vw-objekte__zeile {
+  border-bottom: 0;
+}
+.vw-objekte__zeile > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.vw-objekte__zeile small {
+  color: var(--tinte-leise);
+}
+.vw-objekte__zeile small a {
+  color: inherit;
+}
+.vw-karte > .vw-diagramm {
+  padding: 1rem 1.25rem 1.25rem;
+}
+@media (max-width: 36rem) {
+  .vw-punkte__zeile {
+    flex-wrap: wrap;
+  }
+}
+.vw-objekte .vw-objekte__zeile small a {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

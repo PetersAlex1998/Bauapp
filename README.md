@@ -99,6 +99,12 @@ Tool unter *Stammdaten → Zugänge* an). Der Server liefert nur die eigenen Obj
 Arbeiten und Dokumente – keine Mieterdaten und keine internen Notizen. Ohne Server zeigt der Kundenbereich
 nur einen Demo-Hinweis (`demoZugang` in `src/data/site.ts` gilt nur dort).
 
+**Dashboard:** Kennzahlen (Mieteingang des Monats gegen Soll, vermietete Einheiten, offene Rechnungen, offene
+Meldungen), Diagramm der Mieteingänge der letzten 12 Monate mit Soll-Linie und Kosten nach Art im laufenden Jahr,
+filterbar nach Objekt. Die Mietzahlen berechnet der Server als Summen je Objekt und Monat (`auswertung()` in
+`public/api/index.php`) – Mieternamen und Einzelzahlungen verlassen den Server nicht. Diagramme: `src/verwaltung/diagramme.ts`.
+Die Screenshots auf der Seite „Klassische Hausverwaltung“ (`src/assets/bilder/kundenbereich-*.png`) zeigen erfundene Beispieldaten.
+
 ## «Direkt anrufen»
 
 Der Knopf (`src/components/Anrufknopf.astro`) wählt auf Smartphones sofort und öffnet am

@@ -2587,3 +2587,91 @@ a[href^='tel:'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   KUNDENBEREICH VORSTELLEN (Leistungsseite Hausverwaltung)
+   ========================================================================== */
+.kundenbereich-zeigen__kopf {
+  align-items: start;
+}
+.haken-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.haken-liste li {
+  position: relative;
+  padding-left: 2rem;
+  line-height: 1.5;
+}
+.haken-liste li::before {
+  content: '';
+  position: absolute;
+  left: 0.15rem;
+  top: 0.3rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--akzent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 0.8rem no-repeat;
+}
+.kundenbereich-zeigen__bilder {
+  position: relative;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding-right: clamp(0rem, 13vw, 12.5rem);
+}
+.geraet {
+  margin: 0;
+  overflow: hidden;
+  background: var(--weiss);
+  box-shadow: 0 30px 60px -30px rgba(18, 38, 63, 0.45), 0 0 0 1px var(--linie);
+}
+.geraet img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.geraet--pc {
+  border-radius: 0.9rem;
+}
+.geraet__leiste {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--buehne);
+  border-bottom: 1px solid var(--linie);
+}
+.geraet__leiste span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: rgba(18, 38, 63, 0.18);
+}
+.geraet--handy {
+  position: absolute;
+  right: 0;
+  bottom: -2rem;
+  width: clamp(8rem, 18vw, 13rem);
+  border-radius: 1.6rem;
+  border: 0.45rem solid #12263f;
+}
+.geraet--zweit {
+  margin-top: clamp(3.5rem, 7vw, 5rem);
+  max-width: 62rem;
+}
+.kundenbereich-zeigen__hinweis {
+  margin: 1.5rem 0 0;
+  font-size: 0.92rem;
+}
+@media (max-width: 40rem) {
+  .kundenbereich-zeigen__bilder {
+    padding-right: 0;
+  }
+  .geraet--handy {
+    position: relative;
+    bottom: 0;
+    width: 65%;
+    margin: 1.5rem auto 0;
+  }
+}

@@ -11,11 +11,13 @@ import { alle, finde, heute, ladeVomServer } from './speicher';
 import { api } from './cloud';
 import { positionen, rechnungSumme, zahl } from './rechnen';
 import { datum, geld, h, kennzahl, marke } from './app';
+import { balkenListe, mieteingangDiagramm, type MonatsWert } from './diagramme';
 
 let wurzelEl: HTMLElement;
 let nummer = '';
 let beenden: () => void;
 let rechnungId = '';
+let objektFilter = ''; // '' = alle Objekte
 
 const firma = () => alle('absender')[0];
 const tel = (s?: string) => (s ?? '').replace(/[^\d+]/g, '');
@@ -98,15 +100,40 @@ function ansicht(): HTMLElement {
   const team = alle('mitarbeiter');
   const objName = (id: string) => finde('objekte', id)?.bezeichnung ?? '';
 
+  // Kennzahlen (vom Server nur als Summen je Objekt geliefert – ohne Mieterdaten)
+  const auswertung = (alle('auswertung') as unknown as Record<string, { einheiten: number; vermietet: number; monate: MonatsWert[] }>) || {};
+  const gewaehlt = objekte.filter((o) => !objektFilter || o.id === objektFilter);
+  const teile = gewaehlt.map((o) => auswertung[o.id]).filter(Boolean);
+  const monate: MonatsWert[] = (teile[0]?.monate ?? []).map((m, i) => ({ monat: m.monat, ist: teile.reduce((a, t) => a + (t.monate[i]?.ist ?? 0), 0), soll: teile.reduce((a, t) => a + (t.monate[i]?.soll ?? 0), 0) }));
+  const dieser = monate[monate.length - 1];
+  const einheitenSumme = teile.reduce((a, t) => a + t.einheiten, 0);
+  const vermietetSumme = teile.reduce((a, t) => a + t.vermietet, 0);
+  const jahr = heute().slice(0, 4);
+  const kostenNachArt = new Map<string, number>();
+  alle('kosten').filter((k) => String(k.datum ?? '').startsWith(jahr) && (!objektFilter || k.objektId === objektFilter) && gewaehlt.some((o) => o.id === k.objektId))
+    .forEach((k) => kostenNachArt.set(k.kostenart || 'Sonstiges', (kostenNachArt.get(k.kostenart || 'Sonstiges') ?? 0) + zahl(k.betrag)));
+  let kostenListe = [...kostenNachArt].map(([name, wert]) => ({ name, wert })).sort((a, b) => b.wert - a.wert);
+  if (kostenListe.length > 6) kostenListe = [...kostenListe.slice(0, 5), { name: 'Übrige', wert: kostenListe.slice(5).reduce((a, e) => a + e.wert, 0) }];
+  const monatName = dieser ? new Date(`${dieser.monat}-01T00:00:00Z`).toLocaleDateString('de-DE', { month: 'long', timeZone: 'UTC' }) : '';
+
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-reihe', style: 'justify-content:space-between;align-items:end' },
       h('div', { class: 'vw-seitenkopf' }, h('h1', {}, `Guten Tag${kunde ? `, ${kunde.name}` : ''}.`), h('p', {}, `Kundennummer ${nummer} · Hier sehen Sie, was rund um Ihre Immobilien geschieht.`)),
       h('div', { class: 'vw-reihe' }, h('button', { class: 'vw-knopf vw-knopf--voll', onclick: meldungFormular, disabled: !objekte.length }, 'Meldung erstellen'), h('button', { class: 'vw-knopf', onclick: beenden }, 'Abmelden'))),
+    objekte.length > 1 && h('div', { class: 'vw-kunde-filter' },
+      h('label', { for: 'k-objekt' }, h('strong', {}, 'Ansicht:')),
+      h('select', { id: 'k-objekt', onchange: (e: Event) => { objektFilter = (e.target as HTMLSelectElement).value; zeichne(); } },
+        h('option', { value: '' }, `Alle Objekte (${objekte.length})`), objekte.map((o) => h('option', { value: o.id, selected: o.id === objektFilter }, o.bezeichnung)))),
     h('div', { class: 'vw-kennzahlen' },
-      kennzahl(String(objekte.length), 'Objekte'),
+      dieser ? kennzahl(geld(dieser.ist), `Mieteingang ${monatName} · Soll ${geld(dieser.soll)}`, undefined, dieser.soll > dieser.ist + 0.5 ? 'vw-kennzahl--gelb' : '') : kennzahl(String(gewaehlt.length), 'Objekte'),
+      einheitenSumme ? kennzahl(`${vermietetSumme} / ${einheitenSumme}`, `Einheiten vermietet (${Math.round((vermietetSumme / einheitenSumme) * 100)} %)`, undefined, vermietetSumme < einheitenSumme ? 'vw-kennzahl--gelb' : '') : kennzahl('–', 'Einheiten'),
       kennzahl(geld(offenSumme), 'offene Rechnungen', undefined, offenSumme > 0 ? 'vw-kennzahl--gelb' : ''),
-      kennzahl(String(meldungen.filter((m) => m.status !== 'Erledigt').length), 'offene Meldungen'),
-      kennzahl(String(arbeiten.length), 'laufende Arbeiten & Projekte')),
+      kennzahl(String(meldungen.filter((m) => m.status !== 'Erledigt' && (!objektFilter || m.objektId === objektFilter)).length), 'offene Meldungen')),
+    monate.length > 0 && h('div', { class: 'vw-zwei vw-zwei--diagramme' },
+      h('section', { class: 'vw-karte' }, h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Mieteingänge – letzte 12 Monate')),
+        mieteingangDiagramm(monate)),
+      h('section', { class: 'vw-karte' }, h('header', { class: 'vw-karte__kopf' }, h('h2', {}, `Kosten ${jahr} nach Art`)),
+        kostenListe.length ? balkenListe(kostenListe, `Kosten ${jahr} nach Kostenart`) : h('p', { class: 'vw-leer' }, `Für ${jahr} sind noch keine Kosten erfasst.`))),
     h('div', { class: 'vw-zwei' },
       h('section', { class: 'vw-karte' }, h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Ihre Objekte')),
         objekte.length ? h('ul', { class: 'vw-objekte' }, objekte.map((o) => h('li', {}, h('div', { class: 'vw-objekte__zeile' },

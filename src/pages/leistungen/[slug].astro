@@ -9,7 +9,7 @@ import { site } from '../../data/site';
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
-const fotos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/bilder/*.jpg', { eager: true });
+const fotos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/bilder/*.{jpg,png}', { eager: true });
 const foto = (datei: string) => fotos[`/src/assets/bilder/${datei}`]?.default;
 
 export function getStaticPaths() {
@@ -94,6 +94,42 @@ const schema = [
       </div>
     </section>
   ) : null}
+
+  {l.kundenbereich && (
+    <section class="abschnitt kundenbereich-zeigen" aria-labelledby="kundenbereich">
+      <div class="rahmen">
+        <div class="zweier kundenbereich-zeigen__kopf">
+          <div class="spalte-text">
+            <p class="marke">Ihr Kundenbereich</p>
+            <h2 id="kundenbereich">Ihre Immobilie. Jederzeit im Blick.</h2>
+            <p class="lead">Mit Ihrer Kundennummer melden Sie sich auf unserer Website an – am Computer oder am Handy. Dort sehen Sie, was rund um Ihre Immobilie passiert, ohne nachfragen zu müssen.</p>
+          </div>
+          <ul class="haken-liste">
+            <li><strong>Mieteingänge der letzten 12 Monate</strong> – im Vergleich zum Soll aus den Mietverträgen</li>
+            <li><strong>Vermietungsstand</strong> – wie viele Einheiten vermietet sind</li>
+            <li><strong>Kosten nach Art</strong> – wofür im laufenden Jahr Geld ausgegeben wurde</li>
+            <li><strong>Meldungen und Schäden</strong> – direkt melden und den Stand verfolgen</li>
+            <li><strong>Rechnungen, Arbeiten und Dokumente</strong> – ansehen, drucken, nachlesen</li>
+            <li><strong>Mehrere Objekte</strong> – gemeinsam oder einzeln betrachten</li>
+          </ul>
+        </div>
+        <div class="kundenbereich-zeigen__bilder">
+          <figure class="geraet geraet--pc">
+            <div class="geraet__leiste" aria-hidden="true"><span></span><span></span><span></span></div>
+            <Picture src={foto('kundenbereich-pc.png')!} formats={['avif', 'webp']} widths={[800, 1200, 1600, 2464]} sizes="(max-width: 52rem) 100vw, 70vw" alt="Kundenbereich am Computer: Begrüßung, vier Kennzahlen (Mieteingang des Monats, vermietete Einheiten, offene Rechnungen, offene Meldungen), Balkendiagramm der Mieteingänge der letzten 12 Monate mit Soll-Linie und Kosten nach Art" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="geraet geraet--handy">
+            <Picture src={foto('kundenbereich-handy.png')!} formats={['avif', 'webp']} widths={[390, 780]} sizes="(max-width: 52rem) 60vw, 22vw" alt="Kundenbereich am Handy mit Kennzahlen und Diagramm der Mieteingänge" loading="lazy" decoding="async" />
+          </figure>
+        </div>
+        <figure class="geraet geraet--pc geraet--zweit">
+          <div class="geraet__leiste" aria-hidden="true"><span></span><span></span><span></span></div>
+          <Picture src={foto('kundenbereich-listen.png')!} formats={['avif', 'webp']} widths={[800, 1200, 1600, 2464]} sizes="(max-width: 52rem) 100vw, 70vw" alt="Kundenbereich: Liste der Meldungen und Schäden mit Status sowie Rechnungen mit Betrag, Fälligkeit und Stand" loading="lazy" decoding="async" />
+        </figure>
+        <p class="leise kundenbereich-zeigen__hinweis">Ansichten mit erfundenen Beispieldaten. Mieterdaten und interne Notizen sind für Eigentümer nicht sichtbar; die Daten liegen auf unserem Server in Deutschland.</p>
+      </div>
+    </section>
+  )}
 
   <section class="abschnitt hell" aria-labelledby="katalog">
     <div class="rahmen">

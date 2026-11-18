@@ -263,6 +263,61 @@ function datenFuer(array $k): array
         unset($d['notiz']);
         $aus[$z['t']][] = $d;
     }
+    $aus['auswertung'] = auswertung($zeilen, $objs);
+    return $aus;
+}
+
+/**
+ * Kennzahlen für den Kundenbereich – nur Summen je Objekt und Monat, keine Mieternamen:
+ * Einheiten, vermietete Einheiten, Soll- und Ist-Mieteingang der letzten 12 Monate.
+ */
+function auswertung(array $zeilen, array $objs): array
+{
+    $einheit = []; $mieter = []; $aend = []; $zahl = [];
+    foreach ($zeilen as $z) {
+        $d = $z['d'];
+        if ($z['t'] === 'einheiten' && isset($objs[(string)($d['objektId'] ?? '')])) $einheit[$z['id']] = (string)$d['objektId'];
+    }
+    foreach ($zeilen as $z) {
+        $d = $z['d'];
+        if ($z['t'] === 'mieter' && isset($einheit[(string)($d['einheitId'] ?? '')])) $mieter[$z['id']] = $d + ['_objekt' => $einheit[$d['einheitId']]];
+    }
+    foreach ($zeilen as $z) {
+        $d = $z['d'];
+        if ($z['t'] === 'mietaenderungen' && isset($mieter[(string)($d['mieterId'] ?? '')])) $aend[$d['mieterId']][] = $d;
+        if ($z['t'] === 'zahlungen' && isset($mieter[(string)($d['mieterId'] ?? '')])) {
+            $m = (string)($d['monat'] ?? '');
+            $zahl[$mieter[$d['mieterId']]['_objekt']][$m] = ($zahl[$mieter[$d['mieterId']]['_objekt']][$m] ?? 0) + (float)($d['betrag'] ?? 0);
+        }
+    }
+    $kalt = function (array $m, string $tag) use ($aend): float {
+        $v = $aend[$m['id'] ?? ''] ?? [];
+        usort($v, fn($a, $b) => strcmp((string)($a['ab'] ?? ''), (string)($b['ab'] ?? '')));
+        $bis = array_values(array_filter($v, fn($x) => (string)($x['ab'] ?? '') <= $tag));
+        if ($bis) return (float)$bis[count($bis) - 1]['kaltmiete'];
+        if ($v && isset($v[0]['alt']) && $v[0]['alt'] !== '') return (float)$v[0]['alt'];
+        return (float)($m['kaltmiete'] ?? 0);
+    };
+    $monate = [];
+    for ($i = 11; $i >= 0; $i--) $monate[] = date('Y-m', strtotime(date('Y-m-01') . " -$i months"));
+    $heute = date('Y-m-d');
+    $aus = [];
+    foreach (array_keys($objs) as $o) {
+        $eh = array_keys(array_filter($einheit, fn($x) => $x === $o));
+        $aktiv = 0;
+        foreach ($mieter as $m) if ($m['_objekt'] === $o && (string)($m['beginn'] ?? '9999') <= $heute && (empty($m['ende']) || (string)$m['ende'] >= $heute)) $aktiv++;
+        $verlauf = [];
+        foreach ($monate as $mo) {
+            $start = "$mo-01"; $ende = date('Y-m-t', strtotime($start));
+            $soll = 0.0;
+            foreach ($mieter as $m) {
+                if ($m['_objekt'] !== $o || (string)($m['beginn'] ?? '9999') > $ende || (!empty($m['ende']) && (string)$m['ende'] < $start)) continue;
+                $soll += $kalt($m, $start) + (float)($m['nebenkosten'] ?? 0);
+            }
+            $verlauf[] = ['monat' => $mo, 'soll' => round($soll, 2), 'ist' => round($zahl[$o][$mo] ?? 0, 2)];
+        }
+        $aus[$o] = ['einheiten' => count($eh), 'vermietet' => min($aktiv, count($eh)), 'monate' => $verlauf];
+    }
     return $aus;
 }
 
