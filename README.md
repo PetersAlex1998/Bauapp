@@ -15,6 +15,8 @@ Den Inhalt von `dist/` auf den Webspace laden (oder das Repository mit Netlify, 
 
 ## Vorschau online stellen
 
+> **Hinweis:** Die Netlify-Adresse leitet inzwischen dauerhaft auf `https://www.hadie-immobilien.de` um (Block `[[redirects]]` in `netlify.toml`). Für eine Netlify-Vorschau den Block entfernen.
+
 Am schnellsten über Netlify (kostenlos für diesen Zweck): dort mit GitHub anmelden, „Add new
 project → Import an existing project“, dieses Repository und den gewünschten Branch wählen,
 „Deploy“. Die Einstellungen stehen bereits in `netlify.toml`. Jeder Push aktualisiert die Vorschau.

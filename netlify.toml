@@ -36,3 +36,15 @@
   for = "/_astro/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# ---------------------------------------------------------------
+# UMLEITUNG: Die echte Website läuft bei STRATO.
+# Jeder Aufruf der Netlify-Adresse geht dauerhaft (301) auf dieselbe
+# Seite unter www.hadie-immobilien.de. Zum Wiederherstellen der
+# Netlify-Vorschau diesen Block löschen.
+# ---------------------------------------------------------------
+[[redirects]]
+  from = "/*"
+  to = "https://www.hadie-immobilien.de/:splat"
+  status = 301
+  force = true
