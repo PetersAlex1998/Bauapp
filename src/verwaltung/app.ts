@@ -398,6 +398,16 @@ function einheitenTabelle(o: Satz): HTMLElement {
         : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'Legen Sie die Einheiten dieses Objekts an: Wohnungen, Gewerbe, Stellplätze.'))]))));
 }
 
+/** Mietkonto des Objekts: Admins pflegen es hier, Mitarbeiter sehen es nur. */
+function mietkontoBlock(o: Satz, L: (art: string, extra?: Partial<Satz>) => HTMLElement): HTMLElement {
+  if (modus() !== 'server' || istAdmin()) return L('mietkonten');
+  const konten = alle('mietkonten').filter((k) => k.objektId === o.id);
+  return h('section', { class: 'vw-karte' }, h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Mietkonto')),
+    konten.length ? h('dl', { class: 'vw-info vw-info--innen' }, konten.map((k) => [h('dt', {}, k.bezeichnung), h('dd', {}, [k.inhaber, k.iban, k.bank].filter(Boolean).join(' · '))]))
+      : h('p', { class: 'vw-leer' }, 'Noch kein Mietkonto hinterlegt. Ein Admin-Zugang kann es hier eintragen.'),
+    h('p', { class: 'vw-fein vw-innen' }, 'Ändern kann nur ein Admin-Zugang.'));
+}
+
 function objektSeite(id: string): HTMLElement {
   const o = finde('objekte', id);
   if (!o) return h('p', { class: 'vw-leer' }, 'Dieses Objekt gibt es nicht mehr. ', h('a', { href: '#/liste/objekte' }, 'Zur Objektliste'));
@@ -424,6 +434,7 @@ function objektSeite(id: string): HTMLElement {
       liste('aufgaben', { filter: (s) => s.objektId === id && !s.erledigt, vorgaben: { objektId: id }, ohneSpalte: 'objektId', titel: 'Offene Aufgaben', kompakt: true })],
     'Einheiten & Mieter': () => [einheitenTabelle(o)],
     Verwalten: () => [
+      mietkontoBlock(o, L),
       L('fristen'), L('vertraege'), L('kosten'), L('zaehler'), L('schluessel'), L('vereinbarungen'), L('dokumente', { datum: heute() }),
       ...(String(o.art).includes('WEG') ? [L('versammlungen'), L('beschluesse')] : []),
     ],

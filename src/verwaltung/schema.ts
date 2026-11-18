@@ -407,15 +407,27 @@ export const ARTEN: Record<string, Art> = {
     titel: 'Bankverbindungen', einzahl: 'Bankverbindung', kreis: 'basis',
     felder: [
       f('bezeichnung', 'Bezeichnung', 'text', { pflicht: true, hilfe: 'z. B. „Geschäftskonto“ oder „Mietkonto Musterstraße 12“.' }),
-      f('zweck', 'Verwendung', 'wahl', { optionen: ['Geschäftskonto', 'Mieten / Treuhand', 'Kautionen', 'Rücklage', 'Sonstiges'], vorgabe: 'Geschäftskonto' }),
+      f('zweck', 'Verwendung', 'wahl', { optionen: ['Geschäftskonto', 'Kautionen', 'Rücklage', 'Sonstiges'], vorgabe: 'Geschäftskonto', hilfe: 'Mietkonten pflegen Sie im jeweiligen Objekt (Reiter „Verwalten“).' }),
       f('inhaber', 'Kontoinhaber', 'text', { pflicht: true }), f('iban', 'IBAN', 'text', { pflicht: true }), f('bic', 'BIC'), f('bank', 'Bank'),
-      f('objektId', 'Gehört zu Objekt', 'ref', { auf: 'objekte', hilfe: 'Nur bei Konten für ein bestimmtes Objekt (z. B. Mietkonto).' }),
       f('aufRechnungen', 'Auf Rechnungen und Schreiben angeben', 'ja', { vorgabe: false }),
       f('notiz', 'Notiz'),
     ],
     spalten: ['bezeichnung', 'zweck', 'iban', 'bank', 'aufRechnungen'],
     anzeige: (s) => `${s.bezeichnung} (${s.iban ?? ''})`,
-    leer: 'Hinterlegen Sie Ihre Konten: Geschäftskonto für Rechnungen, Mietkonten, Kautionskonten.',
+    leer: 'Hinterlegen Sie Ihre Unternehmenskonten: Geschäftskonto für Rechnungen, Kautionskonto, Rücklagenkonto.',
+  },
+  mietkonten: {
+    titel: 'Mietkonto', einzahl: 'Mietkonto', kreis: 'verwalten',
+    felder: [
+      f('objektId', 'Objekt', 'ref', { auf: 'objekte', pflicht: true }),
+      f('bezeichnung', 'Bezeichnung', 'text', { pflicht: true, vorgabe: 'Mietkonto' }),
+      f('inhaber', 'Kontoinhaber', 'text', { pflicht: true, hilfe: 'z. B. der Eigentümer oder „HaDie-Immobilien Treuhand für …“.' }),
+      f('iban', 'IBAN', 'text', { pflicht: true }), f('bic', 'BIC'), f('bank', 'Bank'),
+      f('notiz', 'Notiz'),
+    ],
+    spalten: ['objektId', 'bezeichnung', 'inhaber', 'iban', 'bank'],
+    anzeige: (s) => `${s.bezeichnung} (${s.iban ?? ''})`,
+    leer: 'Das Konto, auf das die Mieter dieses Objekts zahlen. Es erscheint in Zahlungserinnerungen und Mahnungen.',
   },
 
   /* ---------------- Übergreifend ---------------- */

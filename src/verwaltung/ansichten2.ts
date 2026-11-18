@@ -24,10 +24,9 @@ export function rechnungskonten(): Satz[] {
   const a = absender();
   return a.iban ? [{ id: 'alt', bezeichnung: 'Bankverbindung', inhaber: a.inhaber, iban: a.iban, bank: a.bank } as Satz] : [];
 }
-/** Konto, auf das Mieter zahlen: Mietkonto des Objekts, sonst ein allgemeines Mietkonto, sonst das Rechnungskonto. */
+/** Konto, auf das Mieter zahlen: ausschließlich das im Objekt gepflegte Mietkonto (nie das Geschäftskonto). */
 export function mietkonto(objektId?: string): Satz | undefined {
-  const mieten = alle('bankkonten').filter((k) => k.zweck === 'Mieten / Treuhand' && k.iban);
-  return mieten.find((k) => k.objektId === objektId) ?? mieten.find((k) => !k.objektId) ?? rechnungskonten()[0];
+  return alle('mietkonten').find((k) => k.objektId === objektId && k.iban);
 }
 export const kontoText = (k: Satz) => [k.inhaber && `Kontoinhaber ${k.inhaber}`, `IBAN ${k.iban}`, k.bic && `BIC ${k.bic}`, k.bank].filter(Boolean).join(' · ');
 

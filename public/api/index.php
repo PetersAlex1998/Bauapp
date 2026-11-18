@@ -24,7 +24,7 @@ header('Referrer-Policy: no-referrer');
 const VERSION = '1.0';
 const SITZUNG = 43200;           // 12 Stunden
 const MAX_BODY = 8 * 1024 * 1024; // 8 MB
-const ADMIN_TABELLEN = ['absender', 'bankkonten']; // nur Admin-Zugänge dürfen schreiben
+const ADMIN_TABELLEN = ['absender', 'bankkonten', 'mietkonten']; // nur Admin-Zugänge dürfen schreiben
 const KUNDEN_TABELLEN = ['einheiten', 'vorgaenge', 'auftraege', 'projekte', 'einsaetze', 'dokumente', 'versammlungen', 'beschluesse', 'kosten', 'fristen', 'service'];
 
 function antwort(int $code, array $daten): never
