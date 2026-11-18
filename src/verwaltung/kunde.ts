@@ -12,6 +12,7 @@ import { api } from './cloud';
 import { positionen, rechnungSumme, zahl } from './rechnen';
 import { datum, geld, h, kennzahl, marke } from './app';
 import { balkenListe, mieteingangDiagramm, type MonatsWert } from './diagramme';
+import { bogen, briefInfo } from './ansichten2';
 
 let wurzelEl: HTMLElement;
 let nummer = '';
@@ -64,15 +65,11 @@ function rechnungAnsicht(id: string): HTMLElement {
   const konto = alle('bankkonten')[0] ?? (a?.iban ? { iban: a.iban, inhaber: a.inhaber } : undefined);
   return h('div', { class: 'vw-stapel' },
     h('div', { class: 'vw-reihe vw-nichtdrucken' },
-      h('button', { class: 'vw-knopf', onclick: () => { rechnungId = ''; zeichne(); } }, '← Zurück'), h('span', { class: 'vw-platz' }),
-      h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF')),
-    h('article', { class: 'vw-brief' },
-      a?.logo && h('img', { class: 'vw-brief__logo', src: a.logo, alt: a.name ?? 'Logo' }),
-      h('p', { class: 'vw-brief__absender' }, [a?.name, a?.strasse, a?.ort].filter(Boolean).join(' · ')),
-      h('address', { class: 'vw-brief__an' }, [kunde?.name, kunde?.strasse, kunde?.ort].filter(Boolean).map((z) => h('span', {}, z))),
-      h('p', { class: 'vw-brief__datum' }, datum(r.datum)),
-      h('h2', {}, `Rechnung ${r.nummer ?? ''}`),
-      h('p', {}, [`Rechnungsdatum: ${datum(r.datum)}`, r.zeitraum && `Leistungszeitraum: ${r.zeitraum}`, kunde?.kundennummer && `Kundennummer: ${kunde.kundennummer}`].filter(Boolean).map((t, i) => [i > 0 && h('br'), t])),
+      h('button', { class: 'vw-knopf', onclick: () => { rechnungId = ''; zeichne(); wurzelEl.scrollIntoView({ block: 'start' }); } }, '← Zurück'), h('span', { class: 'vw-platz' }),
+      h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / PDF')),
+    bogen([kunde?.name, kunde?.strasse, kunde?.ort], `Rechnung ${r.nummer ?? ''}`,
+      briefInfo(['Rechnungs-Nr.', r.nummer], ['Kunden-Nr.', kunde?.kundennummer], ['Rechnungsdatum', datum(r.datum)]),
+      r.zeitraum && h('p', {}, `Leistungszeitraum: ${r.zeitraum}`),
       h('table', { class: 'vw-brief__tabelle' },
         h('thead', {}, h('tr', {}, h('th', {}, 'Pos.'), h('th', {}, 'Leistung'), h('th', { class: 'vw-zahlspalte' }, 'Menge'), h('th', { class: 'vw-zahlspalte' }, 'Einzelpreis'), h('th', { class: 'vw-zahlspalte' }, 'Gesamt'))),
         h('tbody', {}, positionen(r).map((p, i) => h('tr', {}, h('td', {}, String(i + 1)), h('td', {}, p.text), h('td', { class: 'vw-zahlspalte' }, String(p.menge).replace('.', ',')), h('td', { class: 'vw-zahlspalte' }, geld(p.einzel)), h('td', { class: 'vw-zahlspalte' }, geld(p.summe))))),
@@ -83,7 +80,7 @@ function rechnungAnsicht(id: string): HTMLElement {
         ? h('p', {}, `Der Rechnungsbetrag wurde am ${datum(r.bezahltAm)} beglichen. Vielen Dank.`)
         : h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${konto?.iban ? ` auf das Konto ${konto.iban}${konto.inhaber ? ` (${konto.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`),
       r.notiz && h('p', {}, r.notiz),
-      h('footer', { class: 'vw-brief__fuss' }, [a?.name, a?.strasse, a?.ort].filter(Boolean).join(' · '))));
+      h('p', {}, 'Mit freundlichen Grüßen'), h('p', {}, a?.gruss || a?.name || '')));
 }
 
 function liste(titel: string, zeilen: Node[], leer: string) {
@@ -153,7 +150,7 @@ function ansicht(): HTMLElement {
           h('td', { 'data-spalte': 'Nummer' }, h('strong', {}, r.nummer ?? '')), h('td', { 'data-spalte': 'Datum' }, datum(r.datum)),
           h('td', { 'data-spalte': 'Betrag', class: 'vw-zahlspalte' }, geld(rechnungSumme(r).brutto)), h('td', { 'data-spalte': 'Zahlbar bis' }, datum(r.faellig)),
           h('td', { 'data-spalte': 'Stand' }, marke(r.status, r.status === 'Offen' && r.faellig && r.faellig < heute() ? 'rot' : undefined)),
-          h('td', { class: 'vw-aktion' }, h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => { rechnungId = r.id; zeichne(); } }, 'Ansehen'))))))) : h('p', { class: 'vw-leer' }, 'Noch keine Rechnungen.')),
+          h('td', { class: 'vw-aktion' }, h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => { rechnungId = r.id; zeichne(); wurzelEl.scrollIntoView({ block: 'start' }); } }, 'Ansehen'))))))) : h('p', { class: 'vw-leer' }, 'Noch keine Rechnungen.')),
     liste('Laufende Arbeiten und Projekte', arbeiten.map((x) => h('li', {}, h('div', { class: 'vw-punkte__zeile' }, marke(x.status ?? x.phase), h('span', { class: 'vw-punkte__text' }, h('strong', {}, x.titel), h('small', { class: 'vw-block' }, [objName(x.objektId), x.ende ? `bis ${datum(x.ende)}` : x.ziel ? `Fertigstellung ${datum(x.ziel)}` : ''].filter(Boolean).join(' · ')))))), 'Aktuell laufen keine Arbeiten.'),
     liste('Dokumente', alle('dokumente').map((x) => h('li', {}, h('div', { class: 'vw-punkte__zeile' }, marke(x.art ?? 'Dokument', 'grau'), h('span', { class: 'vw-punkte__text' }, h('strong', {}, x.titel), h('small', { class: 'vw-block' }, `${objName(x.objektId)} · ${datum(x.datum)}`))))), 'Keine Dokumente hinterlegt. Auf Anfrage senden wir Ihnen gern Unterlagen zu.'));
 }

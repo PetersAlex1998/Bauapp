@@ -15,7 +15,7 @@ import { ds } from './ansicht';
 import { ARTEN } from './schema';
 import { aktivIm, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rechnungSumme, rueckstand, soll, zahl } from './rechnen';
 import { datum, geld, h, hinweis, kennzahl, marke, monatText, routen, zeichne } from './app';
-import { bogen, gruss, werkzeug } from './ansichten2';
+import { bogen, briefInfo, gruss, werkzeug } from './ansichten2';
 
 /* ================= CSV lesen ================= */
 function csv(text: string, trenner: string): string[][] {
@@ -209,6 +209,7 @@ routen.abrechnung = (objektId) => {
       kennzahl(geld(auszahlung), auszahlung >= 0 ? 'Auszahlung an Eigentümer' : 'Nachschuss des Eigentümers', undefined, auszahlung >= 0 ? 'vw-kennzahl--blau' : 'vw-kennzahl--rot')),
     h('p', { class: 'vw-fein vw-nichtdrucken' }, 'Als Vergütung zählen gestellte Rechnungen an den Kunden für dieses Objekt. Erfassen Sie diese Rechnungen nicht zusätzlich als Beleg, sonst werden sie doppelt abgezogen.'),
     bogen([kunde?.name ?? 'Kunde nicht hinterlegt', kunde?.strasse, kunde?.ort], `Eigentümerabrechnung ${titel} – ${objekt.bezeichnung}`,
+      briefInfo(['Kunden-Nr.', kunde?.kundennummer], ['Objekt', objekt.bezeichnung]),
       h('table', { class: 'vw-brief__tabelle' }, h('tbody', {},
         block('Einnahmen'),
         zeile('Kaltmieten', kalt), zeile('Nebenkosten-Vorauszahlungen der Mieter', nk), zeile('Summe Einnahmen', einnahmen, true),

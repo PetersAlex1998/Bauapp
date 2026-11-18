@@ -221,3 +221,14 @@ Sicherungen nicht mehr öffnen. Danach einmal veröffentlichen (Push), damit der
 
 Die Sicherung enthält auch die Zugänge (nur Passwort-Prüfwerte, keine Klartext-Passwörter). Diese werden beim
 Einspielen nicht verändert; fehlende Zugänge legen Sie im Tool neu an.
+
+## Briefe nach DIN 5008 (Fensterumschlag, E-Brief)
+
+Alle Schreiben, Rechnungen, Berichte und Abrechnungen laufen über einen Briefbogen (`bogen()` in
+`src/verwaltung/ansichten2.ts`, Maße in `src/styles/verwaltung.css`, Abschnitt „BRIEFBOGEN“) nach **DIN 5008, Form B**:
+Briefkopf 45 mm mit Logo · Anschriftfeld 20 mm von links / 45 mm von oben, 85 × 45 mm (Rücksendeangabe in der
+Zusatz- und Vermerkzone, max. 6 Anschriftzeilen) · Informationsblock ab 125 mm (Ansprechpartner, Telefon, E-Mail,
+Datum, je Brief z. B. Rechnungs- und Kundennummer) · Text ab ca. 98,5 mm, Ränder 25 mm links / 20 mm rechts ·
+Falzmarken 105 und 210 mm, Lochmarke 148,5 mm · Geschäftsangaben in der Fußzeile, ab Seite 2 „Seite x von y“.
+Drucken bzw. „Als PDF sichern“ mit Skalierung 100 % und ohne Kopf-/Fußzeilen des Browsers. Das PDF passt in
+Fensterumschläge DL/C5/C4 und kann bei E-Brief-Diensten (z. B. E-POST) hochgeladen werden.

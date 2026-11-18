@@ -12,6 +12,7 @@ import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
 import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
 import { ds, standardZustaendig } from './ansicht';
+import { ich } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 
 export const absender = (): Satz =>
@@ -34,24 +35,54 @@ export const werkzeug = (zurueck: string, ...mehr: Node[]) =>
   h('div', { class: 'vw-reihe vw-nichtdrucken' },
     h('a', { class: 'vw-knopf', href: zurueck }, '← Zurück'), ...mehr, h('span', { class: 'vw-platz' }),
     !alle('absender').length && h('a', { class: 'vw-knopf', href: '#/unternehmen' }, 'Unternehmensdaten hinterlegen'),
-    h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF'));
+    h('button', { class: 'vw-knopf vw-knopf--voll', title: 'Briefbogen nach DIN 5008 (A4). Im Druckdialog: Skalierung 100 %, „Kopf- und Fußzeilen“ aus. Für E-Brief „Als PDF sichern“.', onclick: () => window.print() }, 'Drucken / PDF (DIN A4)'),
+    h('p', { class: 'vw-fein', style: 'flex-basis:100%;margin:0' }, 'DIN 5008 Form B – passt in Fensterumschläge (DL, C5, C4) und für E-Brief/E-POST. Im Druckdialog: Skalierung 100 %, „Kopf- und Fußzeilen“ ausschalten, für den E-Brief „Als PDF sichern“.'));
 
-/** Briefbogen mit Absender, Empfänger, Datum und Betreff */
-export function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (Node | string | false | null | undefined)[]): HTMLElement {
+/** Zusätzliche Zeilen für den Informationsblock (z. B. Rechnungs- oder Kundennummer) */
+export class BriefInfo { constructor(public zeilen: [string, string | undefined][]) {} }
+export const briefInfo = (...zeilen: [string, string | undefined][]) => new BriefInfo(zeilen);
+
+/**
+ * Briefbogen nach DIN 5008, Form B (A4, Fensterumschlag DL/C5/C4, E-Brief/E-POST):
+ * Briefkopf 45 mm · Anschriftfeld 20 mm links / 45 mm oben, 85 × 45 mm (Zusatz- und Vermerkzone
+ * mit Rücksendeangabe + Anschriftzone, max. 6 Zeilen) · Informationsblock ab 125 mm links / 50 mm oben ·
+ * Text ab ca. 98,5 mm, Ränder links 25 mm, rechts 20 mm · Falzmarken 105 / 210 mm, Lochmarke 148,5 mm ·
+ * Geschäftsangaben in der Fußzeile. Maße stehen in verwaltung.css (.din).
+ */
+export function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (Node | string | false | null | undefined | BriefInfo)[]): HTMLElement {
   const a = absender();
-  return h('article', { class: 'vw-brief' },
-    a.logo && h('img', { class: 'vw-brief__logo', src: a.logo, alt: a.name ?? 'Logo' }),
-    h('p', { class: 'vw-brief__absender' }, [a.name, a.strasse, a.ort].filter(Boolean).join(' · ')),
-    h('address', { class: 'vw-brief__an' }, empfaenger.filter(Boolean).map((z) => h('span', {}, z!))),
-    h('p', { class: 'vw-brief__datum' }, `${(a.ort ?? '').replace(/^\d+\s*/, '')}, ${datum(heute())}`),
-    h('h2', {}, betreff),
-    ...inhalt,
-    h('footer', { class: 'vw-brief__fuss' },
-      [a.name, a.strasse, a.ort].filter(Boolean).join(' · '), h('br'),
-      [a.telefon && `Telefon ${a.telefon}`, a.email, a.website].filter(Boolean).join(' · '),
-      rechnungskonten().map((k) => [h('br'), kontoText(k)]),
-      (a.inhaber || a.steuernummer || a.ustid) && [h('br'), [a.rechtsform && a.inhaber ? `${a.rechtsform}, Inhaber/in ${a.inhaber}` : a.inhaber && `Inhaber/in ${a.inhaber}`, a.steuernummer && `Steuernummer ${a.steuernummer}`, a.ustid && `USt-IdNr. ${a.ustid}`].filter(Boolean).join(' · ')],
-      a.fusszeile && [h('br'), a.fusszeile]));
+  const extra = inhalt.filter((x): x is BriefInfo => x instanceof BriefInfo).flatMap((x) => x.zeilen).filter(([, w]) => w);
+  const text = inhalt.filter((x) => !(x instanceof BriefInfo)) as (Node | string | false | null | undefined)[];
+  const person = ich();
+  const ansprech = person?.name || a.gruss || a.inhaber || a.name;
+  const zeilen: [string, string | undefined][] = [
+    ...extra,
+    ['Ansprechpartner', ansprech],
+    ['Telefon', person?.telefon || a.telefon],
+    ['E-Mail', person?.email || a.email],
+    ...(extra.some(([l]) => /datum/i.test(l)) ? [] : [['Datum', datum(heute())] as [string, string]]),
+  ];
+  const konten = rechnungskonten();
+  const anschrift = empfaenger.filter(Boolean).slice(0, 6) as string[];
+  return h('article', { class: 'vw-brief din' },
+    h('div', { class: 'din__marke din__marke--falz1', 'aria-hidden': 'true' }),
+    h('div', { class: 'din__marke din__marke--loch', 'aria-hidden': 'true' }),
+    h('div', { class: 'din__marke din__marke--falz2', 'aria-hidden': 'true' }),
+    h('header', { class: 'din__kopf' },
+      a.logo ? h('img', { class: 'din__logo', src: a.logo, alt: a.name ?? 'Logo' }) : h('p', { class: 'din__firma' }, a.name)),
+    h('div', { class: 'din__anschriftfeld' },
+      h('p', { class: 'din__ruecksendung' }, [a.name, a.strasse, a.ort].filter(Boolean).join(' · ')),
+      h('address', { class: 'din__anschrift' }, anschrift.map((z) => h('span', {}, z)))),
+    h('dl', { class: 'din__info' }, zeilen.filter(([, w]) => w).map(([l, w]) => [h('dt', {}, l), h('dd', {}, w!)])),
+    // Tabelle nur fürs Drucken: der leere Tabellenfuß reserviert auf jeder Seite Platz für die Fußzeile
+    h('table', { class: 'din__seiten', role: 'presentation' },
+      h('tbody', {}, h('tr', {}, h('td', {}, h('div', { class: 'din__text' }, h('h2', { class: 'din__betreff' }, betreff), ...text)))),
+      h('tfoot', {}, h('tr', {}, h('td', { class: 'din__platz' })))),
+    h('footer', { class: 'din__fuss' },
+      h('div', {}, h('strong', {}, a.name), a.rechtsform && a.inhaber ? h('span', {}, `${a.rechtsform}, Inh. ${a.inhaber}`) : a.inhaber && h('span', {}, `Inh. ${a.inhaber}`), h('span', {}, a.strasse), h('span', {}, a.ort)),
+      h('div', {}, a.telefon && h('span', {}, `Telefon ${a.telefon}`), a.email && h('span', {}, a.email), a.website && h('span', {}, a.website)),
+      h('div', {}, konten.slice(0, 2).map((k) => [k.bank && h('span', {}, k.bank), h('span', {}, `IBAN ${k.iban}`), k.bic && h('span', {}, `BIC ${k.bic}`)])),
+      h('div', {}, a.steuernummer && h('span', {}, `Steuernr. ${a.steuernummer}`), a.ustid && h('span', {}, `USt-IdNr. ${a.ustid}`), a.fusszeile && h('span', {}, a.fusszeile))));
 }
 export const gruss = () => [h('p', {}, 'Mit freundlichen Grüßen'), h('p', { class: 'vw-brief__unterschrift' }, absender().gruss || absender().name)];
 const vorlage = () => h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Vorlage: Bitte prüfen Sie Inhalt, Beträge und Fristen vor dem Versand.');
@@ -91,6 +122,7 @@ routen.brief = (art, mieterId) => {
   return h('div', { class: 'vw-stapel' }, werkzeug('#/mieten'), vorlage(),
     offen <= 0 && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Bei diesem Mietverhältnis ist aktuell nichts offen.'),
     bogen(an, mahnung ? 'Mahnung – Mietrückstand' : 'Zahlungserinnerung',
+      briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung]),
       h('p', {}, `${bezug}`),
       h('p', {}, 'Sehr geehrte Damen und Herren,'),
       mahnung
@@ -169,6 +201,7 @@ routen.bericht = (objektId) => {
       h('button', { class: 'vw-knopf', 'aria-label': 'Vor', onclick: () => { berichtMonat = monatPlus(berichtMonat, berichtJahr ? 12 : 1); zeichne(); } }, '→'),
       h('button', { class: 'vw-knopf', onclick: () => { berichtJahr = !berichtJahr; zeichne(); } }, berichtJahr ? 'Monatsbericht' : 'Jahresbericht')),
     bogen([kunde?.name ?? 'Kunde nicht hinterlegt', kunde?.strasse, kunde?.ort], `Eigentümerbericht ${titel} – ${objekt.bezeichnung}`,
+      briefInfo(['Kunden-Nr.', kunde?.kundennummer]),
       h('h3', {}, 'Einnahmen und Ausgaben'),
       tabelle(['Position', 'Betrag'], [
         ['Mieteingänge', geld(sumEin)],
@@ -365,7 +398,8 @@ routen.rechnung = (id) => {
     fehlt.length > 0 && h('p', { class: 'vw-warnung vw-nichtdrucken' }, `Für eine vollständige Rechnung fehlt noch: ${fehlt.join(', ')}.`),
     r.status === 'Entwurf' && h('p', { class: 'vw-fein vw-nichtdrucken' }, 'Entwurf: Die Rechnungsnummer wird vergeben, sobald Sie die Rechnung stellen.'),
     bogen([kunde?.name ?? 'Kunde nicht hinterlegt', kunde?.strasse, kunde?.ort], r.status === 'Storniert' ? `Rechnung ${r.nummer ?? ''} (storniert)` : `Rechnung ${r.nummer || '– Entwurf –'}`,
-      h('p', {}, [`Rechnungsdatum: ${datum(r.datum)}`, r.zeitraum && `Leistungszeitraum: ${r.zeitraum}`, kunde?.kundennummer && `Kundennummer: ${kunde.kundennummer}`, objekt && `Objekt: ${objekt.bezeichnung}`].filter(Boolean).map((t, i) => [i > 0 && h('br'), t])),
+      briefInfo(['Rechnungs-Nr.', r.nummer || 'Entwurf'], ['Kunden-Nr.', kunde?.kundennummer], ['Objekt', objekt?.bezeichnung], ['Rechnungsdatum', datum(r.datum)]),
+      r.zeitraum && h('p', {}, `Leistungszeitraum: ${r.zeitraum}`),
       h('table', { class: 'vw-brief__tabelle' },
         h('thead', {}, h('tr', {}, h('th', {}, 'Pos.'), h('th', {}, 'Leistung'), h('th', { class: 'vw-zahlspalte' }, 'Menge'), h('th', { class: 'vw-zahlspalte' }, 'Einzelpreis'), h('th', { class: 'vw-zahlspalte' }, 'Gesamt'))),
         h('tbody', {}, pos.map((p, i) => h('tr', {}, h('td', {}, String(i + 1)), h('td', {}, p.text), h('td', { class: 'vw-zahlspalte' }, String(p.menge).replace('.', ',')), h('td', { class: 'vw-zahlspalte' }, geld(p.einzel)), h('td', { class: 'vw-zahlspalte' }, geld(p.summe))))),

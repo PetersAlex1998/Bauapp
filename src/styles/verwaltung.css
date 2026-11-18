@@ -1029,9 +1029,6 @@ a.vw-kennzahl:hover {
   .vw-stapel {
     display: block;
   }
-  @page {
-    margin: 2cm;
-  }
 }
 @media (max-width: 40rem) {
   .vw-brief {
@@ -1543,4 +1540,302 @@ a.vw-kennzahl:hover {
 .vw-admin-hinweis {
   font-size: 0.8rem;
   color: var(--tinte-leise);
+}
+
+/* ==========================================================================
+   BRIEFBOGEN NACH DIN 5008, FORM B
+   Am Bildschirm als A4-Blatt; beim Drucken / „Als PDF sichern“ exakt in mm.
+   --x0 = Abstand des Textbereichs vom linken Blattrand (Bildschirm 0, Druck 25 mm
+   wegen @page-Rand), damit alle Felder an derselben Stelle auf dem Blatt landen.
+   ========================================================================== */
+.vw-brief.din {
+  --x0: 0mm;
+  --xr: 20mm;
+  position: relative;
+  box-sizing: border-box;
+  width: 210mm;
+  max-width: none;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 98.5mm 20mm 32mm 25mm;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  font-family: 'Instrument Sans Variable', Arial, Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  box-shadow: 0 0 0 1px var(--linie), 0 24px 50px -30px rgba(18, 38, 63, 0.45);
+}
+.din__kopf {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 45mm;
+}
+/* Logo rechts bündig mit dem Text (20 mm vom rechten Blattrand) */
+.din__logo {
+  position: absolute;
+  top: 12mm;
+  right: var(--xr);
+  max-width: 72mm;
+  max-height: 22mm;
+  width: auto;
+  height: auto;
+}
+.din__firma {
+  position: absolute;
+  top: 16mm;
+  right: var(--xr);
+  white-space: nowrap;
+  margin: 0;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 18pt;
+  color: #12263f;
+}
+.din__anschriftfeld {
+  position: absolute;
+  top: 45mm;
+  left: calc(20mm - var(--x0));
+  width: 85mm;
+  height: 45mm;
+  overflow: hidden;
+}
+/* Zusatz- und Vermerkzone (17,7 mm) mit Rücksendeangabe ganz unten */
+.din__ruecksendung {
+  box-sizing: border-box;
+  height: 17.7mm;
+  margin: 0;
+  padding: 0 5mm 1mm;
+  display: flex;
+  align-items: flex-end;
+  font-size: 7pt;
+  line-height: 1.2;
+  color: #444;
+  text-decoration: underline;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* Anschriftzone (27,3 mm, max. 6 Zeilen) – 5 mm Innenabstand wie im Fenster */
+.din__anschrift {
+  box-sizing: border-box;
+  height: 27.3mm;
+  padding: 0 5mm;
+  font-style: normal;
+  font-size: 10pt;
+  line-height: 4.4mm;
+  display: flex;
+  flex-direction: column;
+}
+.din__info {
+  position: absolute;
+  top: 50mm;
+  left: calc(125mm - var(--x0));
+  width: 75mm;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 27mm 1fr;
+  gap: 0.6mm 3mm;
+  font-size: 8pt;
+  line-height: 1.35;
+}
+.din__info dt {
+  color: #555;
+}
+.din__info dd {
+  margin: 0;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+.din__text > :first-child {
+  margin-top: 0;
+}
+.vw-brief.din .din__betreff {
+  margin: 0 0 8mm;
+  font-family: inherit;
+  font-size: 10.5pt;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #111;
+}
+.vw-brief.din p {
+  margin: 0 0 4.5mm;
+}
+.vw-brief.din h3 {
+  font-family: inherit;
+  font-size: 10.5pt;
+  font-weight: 700;
+  margin: 6mm 0 2mm;
+}
+.din__marke {
+  position: absolute;
+  left: calc(4mm - var(--x0));
+  width: 5mm;
+  border-top: 0.25mm solid #9aa3ad;
+}
+.din__marke--falz1 { top: 105mm; }
+.din__marke--loch { top: 148.5mm; width: 7mm; }
+.din__marke--falz2 { top: 210mm; }
+.din__fuss {
+  position: absolute;
+  top: 271mm;
+  left: calc(25mm - var(--x0));
+  width: 165mm;
+  padding-top: 2.5mm;
+  border-top: 0.2mm solid #c9d0d8;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr 1fr;
+  gap: 3mm;
+  font-size: 6.8pt;
+  line-height: 1.4;
+  color: #555;
+}
+.din__fuss div {
+  display: flex;
+  flex-direction: column;
+}
+.din__fuss strong {
+  color: #12263f;
+  font-weight: 600;
+}
+/* Tabellen im Brief (Rechnung, Abrechnung) schmal und sauber */
+.vw-brief.din .vw-brief__tabelle {
+  font-size: 9.5pt;
+}
+@media screen and (max-width: 60rem) {
+  /* Am Handy: Blatt verkleinert anzeigen, damit es ganz zu sehen ist */
+  .vw-brief.din {
+    zoom: 0.45;
+  }
+}
+@media print {
+  /* Rechter Seitenrand 10 mm, damit der Informationsblock (bis 200 mm) im Druckbereich liegt;
+     der Text selbst endet über das Innenmaß weiterhin 20 mm vor dem Rand. */
+  .vw-brief.din {
+    width: 210mm;
+    min-height: 0;
+    padding: 98.5mm 20mm 0 25mm;
+    margin: 0;
+    box-shadow: none;
+    zoom: 1;
+  }
+  .vw-brief.din .vw-brief__tabelle tr,
+  .vw-brief.din .vw-brief__abschnitt {
+    break-inside: avoid;
+  }
+}
+.vw-brief.din .din__ruecksendung,
+.vw-brief.din .din__firma {
+  margin: 0;
+}
+/* Layout-Tabelle: am Bildschirm unsichtbar */
+.din__seiten,
+.din__seiten > tbody,
+.din__seiten > tbody > tr,
+.din__seiten > tbody > tr > td {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: auto;
+}
+.din__seiten > tfoot {
+  display: none;
+}
+@media print {
+  /* Seite randlos links/rechts: die 25/20 mm kommen vom Briefbogen selbst (gelten auf jeder Seite) */
+  @page {
+    size: A4;
+    margin: 20mm 0 8mm 0;
+    @bottom-right {
+      content: 'Seite ' counter(page) ' von ' counter(pages);
+      margin-right: 20mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7pt;
+      color: #555;
+      vertical-align: top;
+    }
+  }
+  @page :first {
+    margin-top: 0;
+    @bottom-right {
+      content: none;
+    }
+  }
+  .din__seiten {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .din__seiten > tbody { display: table-row-group; }
+  .din__seiten > tbody > tr,
+  .din__seiten > tfoot > tr { display: table-row; }
+  .din__seiten > tbody > tr > td,
+  .din__seiten > tfoot > tr > td { display: table-cell; padding: 0; }
+  .din__seiten > tfoot { display: table-footer-group; }
+  .din__platz { height: 26mm; }
+  /* Geschäftsangaben unten auf jeder Seite */
+  .vw-brief.din .din__fuss {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 25mm;
+    width: 165mm;
+  }
+}
+@media print {
+  .vw-app,
+  body.vw {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}
+.vw .din__seiten td,
+.vw .din__seiten tr {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.vw .vw-brief.din .vw-brief__tabelle th,
+.vw .vw-brief.din .vw-brief__tabelle td {
+  font-size: 9.5pt;
+  padding: 1.6mm 2mm;
+}
+.vw .vw-brief.din .vw-brief__tabelle th:first-child,
+.vw .vw-brief.din .vw-brief__tabelle td:first-child {
+  padding-left: 0;
+}
+.vw .vw-brief.din .vw-brief__tabelle th:last-child,
+.vw .vw-brief.din .vw-brief__tabelle td:last-child {
+  padding-right: 0;
+}
+
+.vw .vw-brief.din .din__text p,
+.vw .vw-brief.din .din__text li {
+  font-size: 10.5pt;
+}
+/* Kundenbereich: beim Drucken nur den Brief, ohne Kopf, Fuß und Hinweise der Website */
+@media print {
+  body:has(.vw-brief.din) .kopf,
+  body:has(.vw-brief.din) header.kopf,
+  body:has(.vw-brief.din) .fuss,
+  body:has(.vw-brief.din) .schnellkontakt,
+  body:has(.vw-brief.din) .seitenkopf,
+  body:has(.vw-brief.din) .skip,
+  body:has(.vw-brief.din) .anruf {
+    display: none !important;
+  }
+  body:has(.vw-brief.din) {
+    background: #fff !important;
+    padding: 0 !important;
+  }
+  body:has(.vw-brief.din) .abschnitt,
+  body:has(.vw-brief.din) .rahmen,
+  body:has(.vw-brief.din) main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    background: #fff !important;
+  }
 }
