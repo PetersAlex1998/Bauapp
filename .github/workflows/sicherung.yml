@@ -31,7 +31,8 @@ jobs:
           d = json.load(open('roh.json'))
           assert d.get('format') == 'hadie-verwaltung', 'Unerwartetes Format'
           n = sum(len(v) for v in (d.get('daten') or {}).values())
-          print(f"Gesichert: {n} Datensätze in {len(d.get('daten') or {})} Bereichen, {len(d.get('konten') or [])} Zugänge")
+          assert n >= 0
+          print("Sicherung gelesen und geprüft.")  # bewusst ohne Zahlen: die Protokolle dieses Repositorys sind öffentlich
           PY
           name="hadie-sicherung-$(date -u +%Y-%m-%d)"
           echo "NAME=$name" >> "$GITHUB_ENV"

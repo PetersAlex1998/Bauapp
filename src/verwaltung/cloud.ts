@@ -38,6 +38,8 @@ export async function serverStatus(): Promise<{ art: ServerStatus; eingerichtet:
 /** Meldet die Sitzung ab (Server) und räumt den Browser auf. */
 export async function abmelden() {
   if (sessionStorage.getItem('hadie-modus') === 'server') await api('abmelden', {});
-  ['hadie-verwaltung', 'hadie-kunde', 'hadie-modus'].forEach((k) => sessionStorage.removeItem(k));
+  ['hadie-verwaltung', 'hadie-kunde', 'hadie-modus', 'hadie-admin'].forEach((k) => sessionStorage.removeItem(k));
 }
+/** Admin-Zugang (Inhaber)? Nur Anzeige – entscheiden tut der Server. */
+export const istAdmin = () => sessionStorage.getItem('hadie-admin') === '1';
 export const modus = (): 'server' | 'demo' => (sessionStorage.getItem('hadie-modus') === 'server' ? 'server' : 'demo');

@@ -173,6 +173,8 @@ Die Seite ist statisch (Astro). Zusätzlich liegt in `public/api/` eine kleine P
 
 **Danach läuft alles automatisch:** Jeder Push auf `main` baut die Seite, erzeugt `api/config.php` aus den Secrets, lädt per SFTP/FTPS hoch und prüft Seite und Datenbank (Workflow `.github/workflows/strato.yml`).
 
+**Rollen:** Der Zugang aus der Einrichtung ist **Admin** (Inhaber). Nur Admins legen Zugänge der Verwaltung an, setzen deren Passwörter zurück, löschen sie und spielen Sicherungen ein. Mitarbeiter arbeiten normal und verwalten Kunden-Zugänge. Anmelde-Sperren gelten je Nummer und Gerät, damit Fremde niemanden aussperren können.
+
 **Erster Start:** `https://ihre-domain.de/einrichtung/` öffnen → Einrichtungscode, Verwaltungs-Nummer (`V-…`) und Passwort wählen. Weitere Mitarbeiter und Kunden legen Sie im Tool unter *Stammdaten → Zugänge* an. Danach den Secret `EINRICHTUNGSCODE` löschen oder ändern.
 
 Ohne `/api` (z. B. Netlify-Vorschau) läuft das Tool im Demo-Modus; Daten bleiben dann nur im Browser.

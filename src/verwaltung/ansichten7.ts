@@ -7,10 +7,10 @@
  * Es zeigt ein neues Passwort genau einmal beim Anlegen oder Zurücksetzen.
  */
 import { alle, finde, speichere } from './speicher';
-import { api, modus } from './cloud';
+import { api, istAdmin, modus } from './cloud';
 import { formular, h, hinweis, marke, routen, zeichne } from './app';
 
-type Konto = { nummer: string; rolle: 'verwaltung' | 'kunde'; kundeId: string | null; angelegt: number; letzterLogin: number | null };
+type Konto = { nummer: string; rolle: 'verwaltung' | 'kunde'; kundeId: string | null; angelegt: number; letzterLogin: number | null; admin?: boolean };
 let konten: Konto[] | null = null;
 let ladeFehler = '';
 let ladeLaeuft = false;
@@ -56,7 +56,9 @@ function zeigeZugang(nummer: string, passwort: string, titel = 'Zugang bereit') 
 }
 
 function neuesKonto() {
-  const art = h('select', { id: 'k-art' }, h('option', { value: 'mitarbeiter' }, 'Mitarbeiter (Verwaltung)'), h('option', { value: 'kunde' }, 'Kunde')) as HTMLSelectElement;
+  const art = h('select', { id: 'k-art' }, istAdmin() && h('option', { value: 'mitarbeiter' }, 'Mitarbeiter (Verwaltung)'), h('option', { value: 'kunde' }, 'Kunde')) as HTMLSelectElement;
+  const adminWahl = h('input', { id: 'k-admin', type: 'checkbox' }) as HTMLInputElement;
+  const adminFeld = h('div', { class: 'feld feld--breit' }, h('label', { style: 'display:flex;gap:.5rem;align-items:center' }, adminWahl, 'Admin-Zugang: darf Zugänge der Verwaltung verwalten und Sicherungen einspielen'), h('small', {}, 'Nur für den Inhaber oder eine Vertretung. Normale Mitarbeiter brauchen das nicht.'));
   const person = h('select', { id: 'k-person' }) as HTMLSelectElement;
   const nummer = h('input', { id: 'k-nummer', type: 'text', autocapitalize: 'characters' }) as HTMLInputElement;
   const passwort = h('input', { id: 'k-pw', type: 'text', autocomplete: 'off', value: zufallspasswort() }) as HTMLInputElement;
@@ -67,6 +69,7 @@ function neuesKonto() {
     person.replaceChildren(h('option', { value: '' }, `– ${kunden ? 'Kunde' : 'Mitarbeiter'} wählen –`), ...liste.map((x) => h('option', { value: x.id }, x.name + (!kunden && x.nummer ? ` (${x.nummer})` : ''))));
     nummer.value = kunden ? '' : zufallsnummer();
     nummer.readOnly = kunden;
+    adminFeld.hidden = kunden;
   };
   art.addEventListener('change', fuellePersonen);
   person.addEventListener('change', () => { if (art.value === 'kunde') nummer.value = finde('kunden', person.value)?.kundennummer ?? ''; });
@@ -74,13 +77,13 @@ function neuesKonto() {
   const d = fenster('Zugang einrichten', [
     feld('Für wen?', art, false), feld('Person', person, false),
     feld('Nummer', nummer, false, 'Kunden melden sich mit ihrer Kundennummer an, Mitarbeiter mit einer Nummer mit „V-“.'),
-    feld('Start-Passwort', passwort, false, 'Mindestens 10 Zeichen. Ein Vorschlag ist eingetragen.'), fehler,
+    feld('Start-Passwort', passwort, false, 'Mindestens 10 Zeichen. Ein Vorschlag ist eingetragen.'), adminFeld, fehler,
   ], [h('button', { type: 'button', class: 'vw-knopf', onclick: () => d.close() }, 'Abbrechen'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: async (e: Event) => {
     const kunden = art.value === 'kunde';
     if (!person.value) { fehler.textContent = 'Bitte wählen Sie eine Person.'; return; }
     if (!nummer.value.trim()) { fehler.textContent = kunden ? 'Der Kunde hat noch keine Kundennummer. Bitte speichern Sie den Kunden einmal neu.' : 'Bitte tragen Sie eine Nummer ein.'; return; }
     (e.target as HTMLButtonElement).disabled = true;
-    const a = await api('konto-setzen', { nummer: nummer.value, passwort: passwort.value, rolle: kunden ? 'kunde' : 'verwaltung', kundeId: kunden ? person.value : '' });
+    const a = await api('konto-setzen', { nummer: nummer.value, passwort: passwort.value, rolle: kunden ? 'kunde' : 'verwaltung', kundeId: kunden ? person.value : '', ...(kunden ? {} : { admin: adminWahl.checked }) });
     (e.target as HTMLButtonElement).disabled = false;
     if (!a.json?.ok) { fehler.textContent = a.json?.fehler || 'Der Zugang konnte nicht angelegt werden.'; return; }
     const n = nummer.value.replace(/\s+/g, '').toUpperCase();
@@ -138,15 +141,15 @@ routen.konten = () => {
       h('tbody', {}, konten === null ? [h('tr', {}, h('td', { colspan: 5, class: 'vw-leer' }, 'Wird geladen …'))]
         : liste.length ? liste.map((k) => h('tr', {},
           h('td', { 'data-spalte': 'Nummer' }, h('strong', {}, k.nummer)),
-          h('td', { 'data-spalte': 'Art' }, marke(k.rolle === 'verwaltung' ? 'Verwaltung' : 'Kunde', k.rolle === 'verwaltung' ? 'blau' : 'grau')),
+          h('td', { 'data-spalte': 'Art' }, marke(k.rolle === 'verwaltung' ? (k.admin ? 'Verwaltung · Admin' : 'Verwaltung') : 'Kunde', k.rolle === 'verwaltung' ? 'blau' : 'grau')),
           h('td', { 'data-spalte': 'Person' }, person(k)),
           h('td', { 'data-spalte': 'Letzte Anmeldung' }, zeit(k.letzterLogin)),
-          h('td', { class: 'vw-aktion' },
+          h('td', { class: 'vw-aktion' }, (k.rolle === 'kunde' || istAdmin()) && [
             h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => zuruecksetzen(k) }, 'Passwort zurücksetzen'), ' ',
             h('button', { class: 'vw-knopf vw-knopf--klein vw-knopf--gefahr', onclick: async () => {
               if (!confirm(`Zugang ${k.nummer} (${person(k)}) wirklich löschen? Die Person kann sich dann nicht mehr anmelden.`)) return;
               const a = await api('konto-loeschen', { nummer: k.nummer });
               if (a.json?.ok) { hinweis('Zugang gelöscht'); konten = null; zeichne(); } else alert(a.json?.fehler || 'Der Zugang konnte nicht gelöscht werden.');
-            } }, 'Löschen'))))
+            } }, 'Löschen')])))
         : [h('tr', {}, h('td', { colspan: 5, class: 'vw-leer' }, 'Noch keine Zugänge.'))])))));
 };

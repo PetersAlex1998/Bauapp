@@ -65,6 +65,7 @@ function db(): PDO
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     if ($typ === 'sqlite') $pdo->exec('PRAGMA foreign_keys = ON');
     tabellenAnlegen($pdo, $typ);
+    adminSpalte($pdo);
     return $pdo;
 }
 function tabellenAnlegen(PDO $pdo, string $typ): void
@@ -73,13 +74,21 @@ function tabellenAnlegen(PDO $pdo, string $typ): void
     $my = $typ !== 'sqlite';
     $ende = $my ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : '';
     $bin = $my ? ' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin' : '';
-    $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_konto (nummer VARCHAR(40) NOT NULL PRIMARY KEY, passwort VARCHAR(255) NOT NULL, rolle VARCHAR(12) NOT NULL, kunde_id VARCHAR(64) NULL, angelegt INT NOT NULL, letzter_login INT NULL)' . $ende);
+    $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_konto (nummer VARCHAR(40) NOT NULL PRIMARY KEY, passwort VARCHAR(255) NOT NULL, rolle VARCHAR(12) NOT NULL, kunde_id VARCHAR(64) NULL, angelegt INT NOT NULL, letzter_login INT NULL, admin INT NOT NULL DEFAULT 0)' . $ende);
     $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_sitzung (token_hash CHAR(64) NOT NULL PRIMARY KEY, nummer VARCHAR(40) NOT NULL, gueltig_bis INT NOT NULL)' . $ende);
     $pdo->exec($my
         ? 'CREATE TABLE IF NOT EXISTS hadie_versuch (id BIGINT AUTO_INCREMENT PRIMARY KEY, schluessel VARCHAR(80) NOT NULL, zeit INT NOT NULL, KEY hadie_versuch_idx (schluessel, zeit))' . $ende
         : 'CREATE TABLE IF NOT EXISTS hadie_versuch (id INTEGER PRIMARY KEY AUTOINCREMENT, schluessel TEXT NOT NULL, zeit INTEGER NOT NULL)');
     if (!$my) $pdo->exec('CREATE INDEX IF NOT EXISTS hadie_versuch_idx ON hadie_versuch (schluessel, zeit)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_daten (tabelle VARCHAR(20)' . $bin . ' NOT NULL, id VARCHAR(64)' . $bin . ' NOT NULL, data ' . ($my ? 'MEDIUMTEXT' : 'TEXT') . ' NOT NULL, aktualisiert INT NOT NULL, PRIMARY KEY (tabelle, id))' . $ende);
+}
+/** Nachrüstung: Spalte „admin“. Der älteste Verwaltungs-Zugang (aus der Einrichtung) wird Admin. */
+function adminSpalte(PDO $pdo): void
+{
+    try { $pdo->query('SELECT admin FROM hadie_konto LIMIT 1'); return; } catch (Throwable $e) { /* fehlt noch */ }
+    $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN admin INT NOT NULL DEFAULT 0');
+    $erster = $pdo->query("SELECT nummer FROM hadie_konto WHERE rolle = 'verwaltung' ORDER BY angelegt, nummer LIMIT 1")->fetch();
+    if ($erster) $pdo->prepare('UPDATE hadie_konto SET admin = 1 WHERE nummer = ?')->execute([$erster['nummer']]);
 }
 function abfrage(string $sql, array $p = []): PDOStatement { $s = db()->prepare($sql); $s->execute($p); return $s; }
 function typ(): string { global $konfig; return $konfig['db']['typ'] ?? 'mysql'; }
@@ -124,6 +133,13 @@ function verwaltung(): array
 {
     $k = konto();
     if ($k['rolle'] !== 'verwaltung') fehler(403, 'Dafür fehlt die Berechtigung.');
+    return $k;
+}
+/** Nur der Admin (Inhaber) darf Verwaltungs-Zugänge verwalten und den gesamten Datenbestand ersetzen. */
+function admin(): array
+{
+    $k = verwaltung();
+    if ((int)($k['admin'] ?? 0) !== 1) fehler(403, 'Das darf nur ein Admin-Zugang (Inhaber).');
     return $k;
 }
 
@@ -214,7 +230,7 @@ switch ($aktion) {
         $n = norm((string)($b['nummer'] ?? ''));
         if (!preg_match('/^V-[A-Z0-9]{3,25}$/', $n)) antwort(200, ['ok' => false, 'grund' => 'nummer']);
         if (mb_strlen((string)($b['passwort'] ?? '')) < 10) antwort(200, ['ok' => false, 'grund' => 'passwort']);
-        abfrage('INSERT INTO hadie_konto (nummer, passwort, rolle, angelegt) VALUES (?, ?, ?, ?)', [$n, password_hash((string)$b['passwort'], PASSWORD_DEFAULT), 'verwaltung', time()]);
+        abfrage('INSERT INTO hadie_konto (nummer, passwort, rolle, angelegt, admin) VALUES (?, ?, ?, ?, 1)', [$n, password_hash((string)$b['passwort'], PASSWORD_DEFAULT), 'verwaltung', time()]);
         antwort(200, ['ok' => true]);
     }
 
@@ -223,13 +239,16 @@ switch ($aktion) {
         $n = substr(norm((string)($b['nummer'] ?? '')), 0, 40);
         abfrage('DELETE FROM hadie_versuch WHERE zeit < ?', [time() - 86400]);
         abfrage('DELETE FROM hadie_sitzung WHERE gueltig_bis < ?', [time()]);
-        if (versuche($n) >= 8 || versuche(ipSchluessel()) >= 40) antwort(200, ['ok' => false, 'grund' => 'gesperrt']);
+        // Gesperrt wird die Kombination Nummer + Gerät (IP): Ein Fremder kann so niemanden aussperren.
+        // Zusätzlich Obergrenzen je IP und – gegen verteiltes Ausprobieren – je Nummer.
+        $kombi = substr($n, 0, 40) . '|' . substr(ipSchluessel(), 3, 32);
+        if (versuche($kombi) >= 8 || versuche(ipSchluessel()) >= 40 || versuche($n) >= 100) antwort(200, ['ok' => false, 'grund' => 'gesperrt']);
         $k = abfrage('SELECT * FROM hadie_konto WHERE nummer = ?', [$n])->fetch();
         // Immer gleich viel Rechenarbeit, damit nicht erkennbar ist, ob die Nummer existiert
         $hash = $k['passwort'] ?? '$2y$10$usesomesillystringforsaltn0tarealhashvalueXXXXXXXXXXXXXXXX';
         $richtig = password_verify((string)($b['passwort'] ?? ''), $hash) && $k;
-        if (!$richtig) { versuchMerken($n); versuchMerken(ipSchluessel()); usleep(400000); antwort(200, ['ok' => false, 'grund' => 'ungueltig']); }
-        abfrage('DELETE FROM hadie_versuch WHERE schluessel = ?', [$n]);
+        if (!$richtig) { versuchMerken($kombi); versuchMerken($n); versuchMerken(ipSchluessel()); usleep(400000); antwort(200, ['ok' => false, 'grund' => 'ungueltig']); }
+        abfrage('DELETE FROM hadie_versuch WHERE schluessel = ?', [$kombi]);
         $t = bin2hex(random_bytes(32));
         abfrage('INSERT INTO hadie_sitzung (token_hash, nummer, gueltig_bis) VALUES (?, ?, ?)', [hash('sha256', $t), $k['nummer'], time() + SITZUNG]);
         abfrage('UPDATE hadie_konto SET letzter_login = ? WHERE nummer = ?', [time(), $k['nummer']]);
@@ -248,7 +267,7 @@ switch ($aktion) {
 
     case 'ich': {
         $k = konto();
-        antwort(200, ['ok' => true, 'rolle' => $k['rolle'], 'nummer' => $k['nummer'], 'kundeId' => $k['kunde_id']]);
+        antwort(200, ['ok' => true, 'rolle' => $k['rolle'], 'nummer' => $k['nummer'], 'kundeId' => $k['kunde_id'], 'admin' => (int)($k['admin'] ?? 0) === 1]);
     }
 
     case 'lesen': {
@@ -288,7 +307,7 @@ switch ($aktion) {
     }
 
     case 'ersetzen': {
-        verwaltung();
+        admin();
         $b = body();
         if (!is_array($b['alles'] ?? null)) fehler(400, 'Ungültige Daten.');
         $pdo = db();
@@ -414,13 +433,14 @@ switch ($aktion) {
     case 'konten': {
         verwaltung();
         $l = [];
-        foreach (db()->query('SELECT nummer, rolle, kunde_id, angelegt, letzter_login FROM hadie_konto ORDER BY rolle, nummer')->fetchAll() as $k)
-            $l[] = ['nummer' => $k['nummer'], 'rolle' => $k['rolle'], 'kundeId' => $k['kunde_id'], 'angelegt' => (int)$k['angelegt'], 'letzterLogin' => $k['letzter_login'] ? (int)$k['letzter_login'] : null];
+        foreach (db()->query('SELECT nummer, rolle, kunde_id, angelegt, letzter_login, admin FROM hadie_konto ORDER BY rolle, nummer')->fetchAll() as $k)
+            $l[] = ['nummer' => $k['nummer'], 'rolle' => $k['rolle'], 'kundeId' => $k['kunde_id'], 'angelegt' => (int)$k['angelegt'], 'letzterLogin' => $k['letzter_login'] ? (int)$k['letzter_login'] : null, 'admin' => (int)$k['admin'] === 1];
         antwort(200, ['ok' => true, 'konten' => $l]);
     }
 
     case 'konto-setzen': {
-        verwaltung();
+        $ich = verwaltung();
+        $istAdmin = (int)($ich['admin'] ?? 0) === 1;
         $b = body();
         $n = norm((string)($b['nummer'] ?? ''));
         $pw = (string)($b['passwort'] ?? '');
@@ -433,13 +453,19 @@ switch ($aktion) {
             if (str_starts_with($n, 'V-')) fehler(400, 'Kundennummern beginnen nicht mit V-.');
             if (!abfrage("SELECT 1 AS x FROM hadie_daten WHERE tabelle = 'kunden' AND id = ?", [$kid])->fetch()) fehler(400, 'Der Kunde ist nicht angelegt.');
         } else fehler(400, 'Ungültige Rolle.');
-        $alt = abfrage('SELECT rolle FROM hadie_konto WHERE nummer = ?', [$n])->fetch();
+        // Mitarbeiter dürfen Kunden-Zugänge verwalten; Verwaltungs-Zugänge nur ein Admin.
+        if ($rolle === 'verwaltung' && !$istAdmin) fehler(403, 'Zugänge der Verwaltung kann nur ein Admin-Zugang (Inhaber) anlegen oder zurücksetzen.');
+        $alt = abfrage('SELECT rolle, admin FROM hadie_konto WHERE nummer = ?', [$n])->fetch();
         $hash = password_hash($pw, PASSWORD_DEFAULT);
+        $adminNeu = $rolle === 'verwaltung' && !empty($b['admin']) ? 1 : 0;
         if ($alt) {
             if ($alt['rolle'] !== $rolle) fehler(400, 'Zu dieser Nummer gibt es bereits ein Konto mit anderer Rolle.');
-            abfrage('UPDATE hadie_konto SET passwort = ?, kunde_id = ? WHERE nummer = ?', [$hash, $kid, $n]);
+            if (array_key_exists('admin', $b) && $rolle === 'verwaltung') {
+                if (!$adminNeu && (int)$alt['admin'] === 1 && (int)abfrage("SELECT COUNT(*) AS n FROM hadie_konto WHERE admin = 1")->fetch()['n'] <= 1) fehler(400, 'Es muss mindestens ein Admin-Zugang bleiben.');
+                abfrage('UPDATE hadie_konto SET passwort = ?, kunde_id = ?, admin = ? WHERE nummer = ?', [$hash, $kid, $adminNeu, $n]);
+            } else abfrage('UPDATE hadie_konto SET passwort = ?, kunde_id = ? WHERE nummer = ?', [$hash, $kid, $n]);
         } else {
-            abfrage('INSERT INTO hadie_konto (nummer, passwort, rolle, kunde_id, angelegt) VALUES (?, ?, ?, ?, ?)', [$n, $hash, $rolle, $kid, time()]);
+            abfrage('INSERT INTO hadie_konto (nummer, passwort, rolle, kunde_id, angelegt, admin) VALUES (?, ?, ?, ?, ?, ?)', [$n, $hash, $rolle, $kid, time(), $adminNeu]);
         }
         abfrage('DELETE FROM hadie_sitzung WHERE nummer = ?', [$n]);
         antwort(200, ['ok' => true]);
@@ -450,6 +476,8 @@ switch ($aktion) {
         $b = body();
         $n = norm((string)($b['nummer'] ?? ''));
         if ($n === $k['nummer']) fehler(400, 'Das eigene Konto lässt sich nicht löschen.');
+        $ziel = abfrage('SELECT rolle FROM hadie_konto WHERE nummer = ?', [$n])->fetch();
+        if ($ziel && $ziel['rolle'] === 'verwaltung' && (int)($k['admin'] ?? 0) !== 1) fehler(403, 'Zugänge der Verwaltung kann nur ein Admin-Zugang (Inhaber) löschen.');
         abfrage('DELETE FROM hadie_sitzung WHERE nummer = ?', [$n]);
         abfrage('DELETE FROM hadie_konto WHERE nummer = ?', [$n]);
         antwort(200, ['ok' => true]);

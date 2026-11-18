@@ -5,7 +5,7 @@
  * Funktion, die fertige Elemente zurückgibt. Listen und Formulare
  * entstehen aus dem Datenmodell (schema.ts).
  */
-import { modus } from './cloud';
+import { istAdmin, modus } from './cloud';
 import { alle, beiAenderung, beiSicherung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
 import { ansichtBeschreibung, ansichtId, ansichtWahl, arbeitUebergeben, ds, ich, objektIdVon, offeneArbeit, setzeAnsicht, sichtbar, sichtbareObjektIds, standardZustaendig, unverteiltZuweisen } from './ansicht';
@@ -586,7 +586,7 @@ function daten(): HTMLElement {
           const a = h('a', { href: URL.createObjectURL(new Blob([exportiere()], { type: 'application/json' })), download: `hadie-verwaltung-${heute()}.json` });
           document.body.append(a); a.click(); a.remove(); hinweis('Sicherung heruntergeladen');
         } }, 'Sicherung herunterladen'),
-        h('label', { class: 'vw-knopf', for: 'vw-import' }, 'Sicherung einspielen'), datei)),
+        (modus() !== 'server' || istAdmin()) && [h('label', { class: 'vw-knopf', for: 'vw-import' }, 'Sicherung einspielen'), datei])),
     modus() !== 'server' && h('section', { class: 'vw-karte vw-text' },
       h('h2', {}, 'Ausprobieren'),
       h('p', {}, 'Beispieldaten zeigen das Tool mit zwei erfundenen Objekten. Sie ersetzen die vorhandenen Daten.'),
