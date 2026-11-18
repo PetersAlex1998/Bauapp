@@ -61,11 +61,13 @@ function rechnungAnsicht(id: string): HTMLElement {
   const kunde = alle('kunden')[0];
   if (!r) return h('p', { class: 'vw-leer' }, 'Diese Rechnung gibt es nicht.');
   const s = rechnungSumme(r);
+  const konto = alle('bankkonten')[0] ?? (a?.iban ? { iban: a.iban, inhaber: a.inhaber } : undefined);
   return h('div', { class: 'vw-stapel' },
     h('div', { class: 'vw-reihe vw-nichtdrucken' },
       h('button', { class: 'vw-knopf', onclick: () => { rechnungId = ''; zeichne(); } }, '← Zurück'), h('span', { class: 'vw-platz' }),
       h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF')),
     h('article', { class: 'vw-brief' },
+      a?.logo && h('img', { class: 'vw-brief__logo', src: a.logo, alt: a.name ?? 'Logo' }),
       h('p', { class: 'vw-brief__absender' }, [a?.name, a?.strasse, a?.ort].filter(Boolean).join(' · ')),
       h('address', { class: 'vw-brief__an' }, [kunde?.name, kunde?.strasse, kunde?.ort].filter(Boolean).map((z) => h('span', {}, z))),
       h('p', { class: 'vw-brief__datum' }, datum(r.datum)),
@@ -79,7 +81,7 @@ function rechnungAnsicht(id: string): HTMLElement {
           h('tr', {}, h('th', { colspan: 4 }, 'Rechnungsbetrag'), h('th', { class: 'vw-zahlspalte' }, geld(s.brutto))))),
       r.status === 'Bezahlt'
         ? h('p', {}, `Der Rechnungsbetrag wurde am ${datum(r.bezahltAm)} beglichen. Vielen Dank.`)
-        : h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${a?.iban ? ` auf das Konto ${a.iban}${a.inhaber ? ` (${a.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`),
+        : h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${konto?.iban ? ` auf das Konto ${konto.iban}${konto.inhaber ? ` (${konto.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`),
       r.notiz && h('p', {}, r.notiz),
       h('footer', { class: 'vw-brief__fuss' }, [a?.name, a?.strasse, a?.ort].filter(Boolean).join(' · '))));
 }

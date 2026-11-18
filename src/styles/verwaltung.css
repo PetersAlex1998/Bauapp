@@ -1498,3 +1498,49 @@ a.vw-kennzahl:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ==========================================================================
+   ADMINISTRATION
+   ========================================================================== */
+.vw-info--innen {
+  padding: 1rem 1.25rem 1.25rem;
+  margin: 0;
+}
+.vw-innen {
+  padding: 1rem 1.25rem;
+  margin: 0;
+}
+.vw-logo {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.vw-logo img {
+  max-width: 100%;
+  max-height: 7rem;
+  width: auto;
+  justify-self: start;
+  padding: 0.75rem;
+  border: 1px dashed var(--linie);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.vw-briefvorschau .vw-brief {
+  margin: 0 auto;
+  box-shadow: 0 16px 40px -28px rgba(18, 38, 63, 0.5);
+}
+.vw-brief {
+  position: relative;
+}
+.vw-brief__logo {
+  float: right;
+  max-width: 13rem;
+  max-height: 4.5rem;
+  width: auto;
+  height: auto;
+  margin: 0 0 1rem 1.5rem;
+}
+.vw-admin-hinweis {
+  font-size: 0.8rem;
+  color: var(--tinte-leise);
+}

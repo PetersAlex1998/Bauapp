@@ -120,6 +120,56 @@ function eigenesPasswort() {
     } }, 'Passwort ändern')]);
 }
 
+/* ---------- Mitarbeiter mit Zugang in einem Schritt ---------- */
+const benutzerVorschlag = (name: string) => {
+  const teile = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'SS').toUpperCase().replace(/[^A-Z ]/g, '').trim().split(/\s+/).filter(Boolean);
+  if (!teile.length) return 'V-';
+  const kern = teile.length > 1 ? teile[0][0] + teile[teile.length - 1] : teile[0];
+  return 'V-' + kern.slice(0, 20);
+};
+function mitarbeiterAnlegen() {
+  const name = h('input', { type: 'text', required: true, autocomplete: 'off' }) as HTMLInputElement;
+  const rolle = h('select', {}, ['Objektbetreuer/in', 'Geschäftsführung', 'Buchhaltung', 'Hausmeister / Technik', 'Auszubildende/r', 'Sonstiges'].map((r) => h('option', {}, r))) as HTMLSelectElement;
+  const kuerzel = h('input', { type: 'text', maxlength: 4 }) as HTMLInputElement;
+  const telefon = h('input', { type: 'tel' }) as HTMLInputElement;
+  const email = h('input', { type: 'email' }) as HTMLInputElement;
+  const benutzer = h('input', { type: 'text', autocapitalize: 'characters', value: 'V-', autocomplete: 'off' }) as HTMLInputElement;
+  const passwort = h('input', { type: 'text', autocomplete: 'off', value: zufallspasswort() }) as HTMLInputElement;
+  const admin = h('input', { type: 'checkbox' }) as HTMLInputElement;
+  const fehler = h('p', { class: 'formular__status', role: 'alert', 'data-art': 'fehler', style: 'grid-column:1/-1' });
+  let vonHand = false;
+  benutzer.addEventListener('input', () => { vonHand = true; });
+  name.addEventListener('input', () => {
+    if (!vonHand) benutzer.value = benutzerVorschlag(name.value);
+    if (!kuerzel.dataset.hand) kuerzel.value = name.value.split(/\s+/).filter(Boolean).map((t) => t[0]).join('').toUpperCase().slice(0, 3);
+  });
+  kuerzel.addEventListener('input', () => { kuerzel.dataset.hand = '1'; });
+  const d = fenster('Mitarbeiter anlegen', [
+    feld('Name *', name, false), feld('Funktion', rolle, false),
+    feld('Kürzel', kuerzel, false), feld('Telefon', telefon, false), feld('E-Mail', email, true),
+    h('p', { class: 'feld--breit vw-fein', style: 'margin:.5rem 0 0' }, h('strong', {}, 'Zugang zum Tool')),
+    feld('Benutzername *', benutzer, false, 'Beginnt mit „V-“, z. B. V-SPETERS. Damit meldet sich die Person an.'),
+    feld('Start-Passwort *', passwort, false, 'Mindestens 10 Zeichen. Ein sicherer Vorschlag ist eingetragen.'),
+    h('div', { class: 'feld feld--breit' }, h('label', { style: 'display:flex;gap:.5rem;align-items:center' }, admin, 'Admin-Zugang (sieht die Administration, legt Mitarbeiter an, ordnet Objekte zu)')),
+    fehler,
+  ], [h('button', { type: 'button', class: 'vw-knopf', onclick: () => d.close() }, 'Abbrechen'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: async (e: Event) => {
+    const n = benutzer.value.replace(/\s+/g, '').toUpperCase();
+    if (name.value.trim().length < 2) { fehler.textContent = 'Bitte den Namen eintragen.'; name.focus(); return; }
+    if (!/^V-[A-Z0-9-]{2,27}$/.test(n)) { fehler.textContent = 'Der Benutzername beginnt mit „V-“ und enthält danach nur Buchstaben, Ziffern oder Bindestriche.'; benutzer.focus(); return; }
+    if (passwort.value.length < 10) { fehler.textContent = 'Das Passwort braucht mindestens 10 Zeichen.'; passwort.focus(); return; }
+    if (alle('mitarbeiter').some((m) => String(m.nummer ?? '').toUpperCase() === n)) { fehler.textContent = 'Diesen Benutzernamen hat schon ein Mitarbeiter.'; return; }
+    (e.target as HTMLButtonElement).disabled = true;
+    const a = await api('konto-setzen', { nummer: n, passwort: passwort.value, rolle: 'verwaltung', admin: admin.checked });
+    (e.target as HTMLButtonElement).disabled = false;
+    if (!a.json?.ok) { fehler.textContent = a.json?.fehler || 'Der Zugang konnte nicht angelegt werden.'; return; }
+    speichere('mitarbeiter', { name: name.value.trim(), rolle: rolle.value, kuerzel: kuerzel.value.trim(), telefon: telefon.value.trim(), email: email.value.trim(), nummer: n, aktiv: true });
+    konten = null;
+    d.close();
+    zeigeZugang(n, passwort.value, 'Mitarbeiter angelegt');
+  } }, 'Anlegen')]);
+  name.focus();
+}
+
 /* ---------- Zwei-Faktor-Anmeldung ---------- */
 async function zweiFaktorEinrichten() {
   const start = await api('zwei-faktor-start', {});
@@ -177,8 +227,10 @@ function zweiFaktorAus() {
 }
 
 routen.konten = () => {
-  const kopf = h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Zugänge'),
-    h('p', {}, 'Wer sich anmelden darf: Mitarbeiter der Verwaltung und Kunden. Ein Kunde sieht nach der Anmeldung nur seine eigenen Objekte, Rechnungen und Meldungen.'));
+  const kopf = h('header', { class: 'vw-seitenkopf' }, h('h1', {}, istAdmin() ? 'Mitarbeiter & Zugänge' : 'Mein Zugang & Kunden-Zugänge'),
+    h('p', {}, istAdmin()
+      ? 'Legen Sie Mitarbeiter mit Benutzername und Passwort an und verwalten Sie alle Zugänge. Ein Kunde sieht nach der Anmeldung nur seine eigenen Objekte, Rechnungen und Meldungen.'
+      : 'Ihr eigenes Passwort und die Zwei-Faktor-Anmeldung – sowie die Zugänge Ihrer Kunden.'));
   if (modus() !== 'server') {
     return h('div', { class: 'vw-stapel' }, kopf, h('section', { class: 'vw-karte vw-text' }, h('h2', {}, 'Nur mit Server'),
       h('p', {}, 'Dies ist der Demo-Modus: Es gibt keinen Server und damit keine echten Zugänge. Auf Ihrem Webspace mit Datenbank richten Sie hier Zugänge ein.')));
@@ -191,7 +243,8 @@ routen.konten = () => {
     ladeFehler && h('p', { class: 'vw-warnung' }, ladeFehler),
     !hatZweiFaktor() && h('p', { class: 'vw-warnung' }, h('strong', {}, 'Ihr Zugang ist nur mit Passwort geschützt. '), 'Richten Sie die Zwei-Faktor-Anmeldung ein – dann braucht eine Anmeldung zusätzlich einen Code von Ihrem Handy.'),
     h('div', { class: 'vw-reihe' },
-      h('button', { class: 'vw-knopf vw-knopf--voll', onclick: neuesKonto }, '+ Zugang einrichten'),
+      istAdmin() && h('button', { class: 'vw-knopf vw-knopf--voll', onclick: mitarbeiterAnlegen }, '+ Mitarbeiter anlegen'),
+      h('button', { class: istAdmin() ? 'vw-knopf' : 'vw-knopf vw-knopf--voll', onclick: neuesKonto }, istAdmin() ? 'Zugang für Bestehende' : '+ Kunden-Zugang einrichten'),
       h('button', { class: 'vw-knopf', onclick: eigenesPasswort }, 'Mein Passwort ändern'),
       hatZweiFaktor()
         ? h('button', { class: 'vw-knopf', onclick: zweiFaktorAus }, 'Zwei-Faktor abschalten')

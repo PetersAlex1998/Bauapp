@@ -56,7 +56,7 @@ export function objektIdVon(art: string, s: Satz): string | undefined {
       const m = finde('mieter', s.mieterId);
       return m ? objektVonMieter(m) : undefined;
     }
-    case 'kunden': case 'firmen': case 'absender': case 'mitarbeiter': return undefined;
+    case 'kunden': case 'firmen': case 'absender': case 'bankkonten': case 'mitarbeiter': return undefined;
     default: return s.objektId || undefined; // einheiten, kosten, fristen, service, vorgaenge, rechnungen …
   }
 }

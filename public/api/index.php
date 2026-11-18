@@ -24,6 +24,7 @@ header('Referrer-Policy: no-referrer');
 const VERSION = '1.0';
 const SITZUNG = 43200;           // 12 Stunden
 const MAX_BODY = 8 * 1024 * 1024; // 8 MB
+const ADMIN_TABELLEN = ['absender', 'bankkonten']; // nur Admin-Zugänge dürfen schreiben
 const KUNDEN_TABELLEN = ['einheiten', 'vorgaenge', 'auftraege', 'projekte', 'einsaetze', 'dokumente', 'versammlungen', 'beschluesse', 'kosten', 'fristen', 'service'];
 
 function antwort(int $code, array $daten): never
@@ -254,6 +255,7 @@ function datenFuer(array $k): array
             case in_array($z['t'], KUNDEN_TABELLEN, true): $ok = isset($objs[(string)($d['objektId'] ?? '')]); break;
             case $z['t'] === 'rechnungen': $ok = ($d['kundeId'] ?? null) === $kunde && in_array($d['status'] ?? '', ['Offen', 'Bezahlt'], true); break;
             case $z['t'] === 'absender': $ok = true; break;
+            case $z['t'] === 'bankkonten': $ok = !empty($d['aufRechnungen']); if ($ok) $d = array_intersect_key($d, array_flip(['id', 'bezeichnung', 'inhaber', 'iban', 'bic', 'bank', 'aufRechnungen'])); break;
             case $z['t'] === 'mitarbeiter':
                 $ok = isset($team[$z['id']]);
                 if ($ok) $d = array_intersect_key($d, array_flip(['id', 'name', 'rolle', 'telefon', 'email']));
@@ -395,7 +397,8 @@ switch ($aktion) {
     }
 
     case 'schreiben': {
-        verwaltung();
+        $ich = verwaltung();
+        $istAdmin = (int)($ich['admin'] ?? 0) === 1;
         $b = body();
         if (!is_array($b['zeilen'] ?? null)) fehler(400, 'Ungültige Daten.');
         $pdo = db();
@@ -405,7 +408,13 @@ switch ($aktion) {
             // Änderungen werden mit dem vorhandenen Datensatz zusammengeführt: so überschreiben sich
             // zwei Personen, die verschiedene Felder desselben Eintrags ändern, nicht gegenseitig.
             $alt = abfrage('SELECT data FROM hadie_daten WHERE tabelle = ? AND id = ?', [$z['t'], $z['id']])->fetch();
-            $neu = $alt ? array_replace(json_decode($alt['data'], true) ?: [], $z['d']) : $z['d'];
+            $altD = $alt ? (json_decode($alt['data'], true) ?: []) : [];
+            if (!$istAdmin) {
+                if (in_array($z['t'], ADMIN_TABELLEN, true)) { $pdo->rollBack(); fehler(403, 'Unternehmensdaten und Bankverbindungen kann nur ein Admin-Zugang ändern.'); }
+                if ($z['t'] === 'objekte' && $alt) foreach (['betreuerId', 'vertretungId'] as $f)
+                    if (array_key_exists($f, $z['d']) && (string)$z['d'][$f] !== (string)($altD[$f] ?? '')) { $pdo->rollBack(); fehler(403, 'Die Zuweisung von Objekten kann nur ein Admin-Zugang ändern.'); }
+            }
+            $neu = $alt ? array_replace($altD, $z['d']) : $z['d'];
             $neu['id'] = $z['id'];
             upsert($z['t'], $z['id'], json_encode($neu, JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION));
         }
@@ -414,11 +423,12 @@ switch ($aktion) {
     }
 
     case 'loeschen': {
-        verwaltung();
+        $ich = verwaltung();
         $b = body();
         if (!is_array($b['zeilen'] ?? null)) fehler(400, 'Ungültige Daten.');
         foreach ($b['zeilen'] as $z) {
             gueltigerSatz($z['t'] ?? null, $z['id'] ?? null);
+            if ((int)($ich['admin'] ?? 0) !== 1 && in_array($z['t'], ADMIN_TABELLEN, true)) fehler(403, 'Unternehmensdaten und Bankverbindungen kann nur ein Admin-Zugang löschen.');
             abfrage('DELETE FROM hadie_daten WHERE tabelle = ? AND id = ?', [$z['t'], $z['id']]);
         }
         antwort(200, ['ok' => true]);

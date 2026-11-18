@@ -105,9 +105,11 @@ export function formular(artName: string, satz: Partial<Satz> = {}, nachher?: (s
       step: feld.typ === 'geld' ? '0.01' : feld.typ === 'zahl' ? 'any' : undefined,
       inputmode: feld.typ === 'geld' || feld.typ === 'zahl' ? 'decimal' : undefined,
     });
+    const gesperrt = !!feld.nurAdmin && modus() === 'server' && !istAdmin();
+    if (gesperrt) eingabe.setAttribute('disabled', '');
     return h('div', { class: `feld ${feld.typ === 'lang' || feld.typ === 'mehr' ? 'feld--breit' : ''}` },
       feld.typ !== 'ja' && h('label', { for: id }, feld.label, feld.pflicht && ' *'),
-      eingabe, feld.hilfe && h('small', {}, feld.hilfe));
+      eingabe, gesperrt ? h('small', {}, 'Ändern kann nur ein Admin-Zugang (Administration → Objekt-Zuweisung).') : feld.hilfe && h('small', {}, feld.hilfe));
   });
 
   const form = h('form', { method: 'dialog', class: 'vw-form', novalidate: false },
@@ -126,6 +128,7 @@ export function formular(artName: string, satz: Partial<Satz> = {}, nachher?: (s
     const daten = new FormData(form);
     const neuSatz: Partial<Satz> = { id: satz.id };
     for (const feld of art.felder) {
+      if (feld.nurAdmin && modus() === 'server' && !istAdmin()) continue; // gesperrte Felder nicht mitsenden
       if (feld.typ === 'ja') neuSatz[feld.name] = daten.get(feld.name) === 'on';
       else if (feld.typ === 'mehr') neuSatz[feld.name] = daten.getAll(feld.name);
       else if (feld.typ === 'zahl' || feld.typ === 'geld') { const v = String(daten.get(feld.name) ?? '').replace(',', '.'); neuSatz[feld.name] = v === '' ? '' : Number(v); }
@@ -599,14 +602,21 @@ function daten(): HTMLElement {
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
   { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Aufgaben', '#/aufgaben'], ['Website-Anfragen', '#/liste/anfragen']] },
-  { titel: 'Objekte', punkte: [['Alle Objekte', '#/liste/objekte'], ['Team & Zuweisung', '#/team'], ['Kunden', '#/liste/kunden']] },
+  { titel: 'Objekte', punkte: [['Alle Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden']] },
   { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },
   { titel: KREISE.erneuern, punkte: [['Renovierung & Sanierung', '#/liste/auftraege']] },
   { titel: KREISE.entwickeln, punkte: [['Großprojekte', '#/liste/projekte']] },
   { titel: 'Abrechnung', punkte: [['Eigentümerabrechnung', '#/abrechnung'], ['Rechnungen', '#/rechnungen'], ['Preisvereinbarungen', '#/liste/vereinbarungen']] },
-  { titel: 'Stammdaten', punkte: [['Firmen & Handwerker', '#/liste/firmen'], ['Absender & Bank', '#/liste/absender'], ['Zugänge', '#/konten'], ['Daten & Sicherung', '#/daten']] },
+  { titel: 'Stammdaten', punkte: [['Firmen & Handwerker', '#/liste/firmen']] },
 ];
+/** Navigation je nach Rolle: Admins sehen die Administration, Mitarbeiter „Mein Zugang“. */
+function navGruppen() {
+  const admin = modus() !== 'server' || istAdmin();
+  return admin
+    ? [...NAV, { titel: 'Administration', punkte: [['Unternehmen', '#/unternehmen'], ['Mitarbeiter & Zugänge', '#/konten'], ['Objekt-Zuweisung', '#/team'], ['Daten & Sicherung', '#/daten']] as [string, string][] }]
+    : NAV.map((g) => (g.titel === 'Stammdaten' ? { ...g, punkte: [...g.punkte, ['Mein Zugang & Kunden-Zugänge', '#/konten'] as [string, string]] } : g));
+}
 
 let buehne: HTMLElement;
 let navEl: HTMLElement;
@@ -622,7 +632,7 @@ function ansicht(): HTMLElement {
   if (bereich === 'mieten') return mieten();
   if (bereich === 'nebenkosten') return nebenkostenSeite(id);
   if (bereich === 'tagesplan') return tagesplan();
-  if (bereich === 'daten') return daten();
+  if (bereich === 'daten') return modus() !== 'server' || istAdmin() ? daten() : h('section', { class: 'vw-karte vw-text' }, h('h2', {}, 'Nur für Admin-Zugänge'), h('p', {}, 'Datensicherung und Wiederherstellung kann nur ein Admin-Zugang öffnen.'));
   return cockpit();
 }
 
@@ -693,7 +703,7 @@ export function starte(wurzel: HTMLElement, nutzer: string, abmelden: () => void
   const suchfeld = h('input', { type: 'search', placeholder: 'Suchen …', 'aria-label': 'Alles durchsuchen', oninput: () => suche(suchfeld, ergebnis) }) as HTMLInputElement;
   navEl = h('nav', { class: 'vw-nav', id: 'vw-nav', 'aria-label': 'Verwaltung' },
     h('div', { class: 'vw-nav__gruppe vw-nav__ansicht' }, h('p', {}, 'Ansicht'), neueAnsichtWahl('vw-ansicht-nav')),
-    NAV.map((g) => h('div', { class: 'vw-nav__gruppe' }, h('p', {}, g.titel), h('ul', {}, g.punkte.map(([text, ziel]) => h('li', {}, h('a', { href: ziel }, text)))))));
+    navGruppen().map((g) => h('div', { class: 'vw-nav__gruppe' }, h('p', {}, g.titel), h('ul', {}, g.punkte.map(([text, ziel]) => h('li', {}, h('a', { href: ziel }, text)))))));
   const menue = h('button', { class: 'vw-menue', 'aria-controls': 'vw-nav', 'aria-expanded': 'false', 'aria-label': 'Navigation öffnen',
     onclick: () => { const offen = wurzel.classList.toggle('nav-offen'); menue.setAttribute('aria-expanded', String(offen)); } }, h('span'), h('span'), h('span'));
   navEl.addEventListener('click', (e) => { if ((e.target as Element).closest('a')) { wurzel.classList.remove('nav-offen'); menue.setAttribute('aria-expanded', 'false'); } });

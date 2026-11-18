@@ -17,6 +17,8 @@ export type Feld = {
   pflicht?: boolean;
   hilfe?: string;
   vorgabe?: any;
+  /** Nur ein Admin-Zugang darf das Feld ändern (der Server prüft das ebenfalls) */
+  nurAdmin?: boolean;
 };
 export type Art = {
   titel: string;
@@ -82,8 +84,8 @@ export const ARTEN: Record<string, Art> = {
       f('strasse', 'Straße und Hausnummer'), f('ort', 'PLZ und Ort'),
       f('art', 'Objektart', 'wahl', { optionen: ['Mietshaus', 'Eigentümergemeinschaft (WEG)', 'Einzelwohnung', 'Gewerbeobjekt', 'Gemischt genutzt'], vorgabe: 'Mietshaus' }),
       f('kundeId', 'Kunde (Eigentümer)', 'ref', { auf: 'kunden' }),
-      f('betreuerId', 'Objektbetreuer (verantwortlich)', 'ref', { auf: 'mitarbeiter', hilfe: 'Ein Mitarbeiter betreut das ganze Objekt – nicht einzelne Einheiten.' }),
-      f('vertretungId', 'Vertretung', 'ref', { auf: 'mitarbeiter' }),
+      f('betreuerId', 'Objektbetreuer (verantwortlich)', 'ref', { auf: 'mitarbeiter', hilfe: 'Ein Mitarbeiter betreut das ganze Objekt – nicht einzelne Einheiten.', nurAdmin: true }),
+      f('vertretungId', 'Vertretung', 'ref', { auf: 'mitarbeiter', nurAdmin: true }),
       f('leistungen', 'Gebuchte Leistungen (360°)', 'mehr', { optionen: Object.values(KREISE), vorgabe: ['Verwalten'] }),
       f('baujahr', 'Baujahr', 'zahl'),
       f('mietspiegel', 'Mietspiegel / Quelle der Vergleichsmiete', 'text', { hilfe: 'z. B. „Mietspiegel Paderborn 2024“. Erscheint im Erhöhungsschreiben.' }),
@@ -382,18 +384,38 @@ export const ARTEN: Record<string, Art> = {
     leer: 'Ihre Rechnungen an Kunden. Am schnellsten entstehen sie über den Rechnungslauf.',
   },
   absender: {
-    titel: 'Absender & Bank', einzahl: 'Absender', kreis: 'basis',
+    titel: 'Unternehmen', einzahl: 'Unternehmensdaten', kreis: 'basis',
     felder: [
-      f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }), f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Kirsperbaumweg 23' }),
-      f('ort', 'PLZ und Ort', 'text', { vorgabe: '33175 Bad Lippspringe' }), f('telefon', 'Telefon', 'text', { vorgabe: '0160 9500 6184' }), f('email', 'E-Mail'),
-      f('inhaber', 'Kontoinhaber'), f('iban', 'IBAN'), f('bank', 'Bank'), f('gruss', 'Unterschrift (Name)'),
+      f('name', 'Firmenname', 'text', { pflicht: true, vorgabe: 'HaDie-Immobilien' }),
+      f('rechtsform', 'Rechtsform', 'text', { vorgabe: 'Einzelunternehmen' }),
+      f('inhaber', 'Inhaber/in bzw. Geschäftsführung', 'text', { vorgabe: 'Sandra Peters' }),
+      f('strasse', 'Straße und Hausnummer', 'text', { vorgabe: 'Kirsperbaumweg 23' }),
+      f('ort', 'PLZ und Ort', 'text', { vorgabe: '33175 Bad Lippspringe' }),
+      f('telefon', 'Telefon', 'text', { vorgabe: '0160 9500 6184' }), f('email', 'E-Mail', 'text', { vorgabe: 'HaDie.info@gmail.com' }),
+      f('website', 'Website', 'text', { vorgabe: 'www.hadie-immobilien.de' }),
       f('steuernummer', 'Steuernummer', 'text', { hilfe: 'Auf Rechnungen ist die Steuernummer oder die USt-IdNr. Pflicht.' }), f('ustid', 'USt-IdNr.'),
       f('kleinunternehmer', 'Kleinunternehmer nach § 19 UStG (keine Umsatzsteuer)', 'ja'),
       f('zahlungsziel', 'Zahlungsziel in Tagen', 'zahl', { vorgabe: 14 }),
+      f('gruss', 'Unterschrift unter Schreiben (Name)', 'text', { hilfe: 'Leer = Firmenname.' }),
+      f('fusszeile', 'Zusatz in der Fußzeile', 'text', { hilfe: 'z. B. „Erlaubnis nach § 34c GewO“. Erscheint klein unter jedem Schreiben.' }),
     ],
-    spalten: ['name', 'ort', 'telefon', 'iban'],
+    spalten: ['name', 'ort', 'telefon', 'email'],
     anzeige: (s) => s.name,
-    leer: 'Diese Angaben erscheinen als Absender auf Schreiben, Angeboten und Berichten. Legen Sie genau einen Eintrag an.',
+    leer: 'Diese Angaben erscheinen auf Schreiben, Rechnungen und Berichten.',
+  },
+  bankkonten: {
+    titel: 'Bankverbindungen', einzahl: 'Bankverbindung', kreis: 'basis',
+    felder: [
+      f('bezeichnung', 'Bezeichnung', 'text', { pflicht: true, hilfe: 'z. B. „Geschäftskonto“ oder „Mietkonto Musterstraße 12“.' }),
+      f('zweck', 'Verwendung', 'wahl', { optionen: ['Geschäftskonto', 'Mieten / Treuhand', 'Kautionen', 'Rücklage', 'Sonstiges'], vorgabe: 'Geschäftskonto' }),
+      f('inhaber', 'Kontoinhaber', 'text', { pflicht: true }), f('iban', 'IBAN', 'text', { pflicht: true }), f('bic', 'BIC'), f('bank', 'Bank'),
+      f('objektId', 'Gehört zu Objekt', 'ref', { auf: 'objekte', hilfe: 'Nur bei Konten für ein bestimmtes Objekt (z. B. Mietkonto).' }),
+      f('aufRechnungen', 'Auf Rechnungen und Schreiben angeben', 'ja', { vorgabe: false }),
+      f('notiz', 'Notiz'),
+    ],
+    spalten: ['bezeichnung', 'zweck', 'iban', 'bank', 'aufRechnungen'],
+    anzeige: (s) => `${s.bezeichnung} (${s.iban ?? ''})`,
+    leer: 'Hinterlegen Sie Ihre Konten: Geschäftskonto für Rechnungen, Mietkonten, Kautionskonten.',
   },
 
   /* ---------------- Übergreifend ---------------- */

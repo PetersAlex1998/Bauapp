@@ -182,6 +182,8 @@ Die Seite ist statisch (Astro). Zusätzlich liegt in `public/api/` eine kleine P
 
 **Rollen:** Der Zugang aus der Einrichtung ist **Admin** (Inhaber). Nur Admins legen Zugänge der Verwaltung an, setzen deren Passwörter zurück, löschen sie und spielen Sicherungen ein. Mitarbeiter arbeiten normal und verwalten Kunden-Zugänge. Anmelde-Sperren gelten je Nummer und Gerät, damit Fremde niemanden aussperren können.
 
+**Administration (nur Admin-Zugänge):** *Unternehmen* (Stammdaten, Logo für Briefkopf, Bankverbindungen mit Kennzeichen „Auf Rechnungen angeben“ und Mietkonten je Objekt), *Mitarbeiter & Zugänge* (Mitarbeiter mit Benutzername `V-…` und Passwort in einem Schritt), *Objekt-Zuweisung*, *Daten & Sicherung*. Der Server lässt Änderungen an Unternehmensdaten, Bankverbindungen und der Objekt-Zuweisung nur von Admins zu (`ADMIN_TABELLEN`, Feld-Flag `nurAdmin`). Seiten: `src/verwaltung/ansichten8.ts`.
+
 **Zwei-Faktor-Anmeldung:** Jeder Verwaltungs-Zugang kann unter *Stammdaten → Zugänge → Zwei-Faktor einrichten* eine Authenticator-App koppeln (TOTP nach RFC 6238, läuft vollständig auf dem eigenen Server). Danach braucht die Anmeldung zusätzlich den 6-stelligen Code; 10 einmalige Ersatzcodes helfen, wenn das Handy fehlt. Ein Admin kann die Zwei-Faktor-Anmeldung eines anderen Zugangs zurücksetzen.
 
 **Erster Start:** `https://ihre-domain.de/einrichtung/` öffnen → Einrichtungscode, Verwaltungs-Nummer (`V-…`) und Passwort wählen. Weitere Mitarbeiter und Kunden legen Sie im Tool unter *Stammdaten → Zugänge* an. Danach den Secret `EINRICHTUNGSCODE` löschen oder ändern.

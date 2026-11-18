@@ -17,16 +17,31 @@ import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, mo
 export const absender = (): Satz =>
   alle('absender')[0] ?? ({ id: '', name: 'HaDie-Immobilien', strasse: 'Kirsperbaumweg 23', ort: '33175 Bad Lippspringe', telefon: '0160 9500 6184' } as Satz);
 
+/** Konten für Rechnungen und Schreiben (Administration → Unternehmen). Ältere Einträge mit IBAN direkt im Absender gelten weiter. */
+export function rechnungskonten(): Satz[] {
+  const k = alle('bankkonten').filter((x) => x.aufRechnungen && x.iban);
+  if (k.length) return k;
+  const a = absender();
+  return a.iban ? [{ id: 'alt', bezeichnung: 'Bankverbindung', inhaber: a.inhaber, iban: a.iban, bank: a.bank } as Satz] : [];
+}
+/** Konto, auf das Mieter zahlen: Mietkonto des Objekts, sonst ein allgemeines Mietkonto, sonst das Rechnungskonto. */
+export function mietkonto(objektId?: string): Satz | undefined {
+  const mieten = alle('bankkonten').filter((k) => k.zweck === 'Mieten / Treuhand' && k.iban);
+  return mieten.find((k) => k.objektId === objektId) ?? mieten.find((k) => !k.objektId) ?? rechnungskonten()[0];
+}
+export const kontoText = (k: Satz) => [k.inhaber && `Kontoinhaber ${k.inhaber}`, `IBAN ${k.iban}`, k.bic && `BIC ${k.bic}`, k.bank].filter(Boolean).join(' · ');
+
 export const werkzeug = (zurueck: string, ...mehr: Node[]) =>
   h('div', { class: 'vw-reihe vw-nichtdrucken' },
     h('a', { class: 'vw-knopf', href: zurueck }, '← Zurück'), ...mehr, h('span', { class: 'vw-platz' }),
-    !alle('absender').length && h('a', { class: 'vw-knopf', href: '#/liste/absender' }, 'Absender & Bank hinterlegen'),
+    !alle('absender').length && h('a', { class: 'vw-knopf', href: '#/unternehmen' }, 'Unternehmensdaten hinterlegen'),
     h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF'));
 
 /** Briefbogen mit Absender, Empfänger, Datum und Betreff */
 export function bogen(empfaenger: (string | undefined)[], betreff: string, ...inhalt: (Node | string | false | null | undefined)[]): HTMLElement {
   const a = absender();
   return h('article', { class: 'vw-brief' },
+    a.logo && h('img', { class: 'vw-brief__logo', src: a.logo, alt: a.name ?? 'Logo' }),
     h('p', { class: 'vw-brief__absender' }, [a.name, a.strasse, a.ort].filter(Boolean).join(' · ')),
     h('address', { class: 'vw-brief__an' }, empfaenger.filter(Boolean).map((z) => h('span', {}, z!))),
     h('p', { class: 'vw-brief__datum' }, `${(a.ort ?? '').replace(/^\d+\s*/, '')}, ${datum(heute())}`),
@@ -34,9 +49,10 @@ export function bogen(empfaenger: (string | undefined)[], betreff: string, ...in
     ...inhalt,
     h('footer', { class: 'vw-brief__fuss' },
       [a.name, a.strasse, a.ort].filter(Boolean).join(' · '), h('br'),
-      [a.telefon && `Telefon ${a.telefon}`, a.email].filter(Boolean).join(' · '),
-      a.iban && [h('br'), [a.inhaber && `Kontoinhaber ${a.inhaber}`, `IBAN ${a.iban}`, a.bank].filter(Boolean).join(' · ')],
-      (a.steuernummer || a.ustid) && [h('br'), [a.steuernummer && `Steuernummer ${a.steuernummer}`, a.ustid && `USt-IdNr. ${a.ustid}`].filter(Boolean).join(' · ')]));
+      [a.telefon && `Telefon ${a.telefon}`, a.email, a.website].filter(Boolean).join(' · '),
+      rechnungskonten().map((k) => [h('br'), kontoText(k)]),
+      (a.inhaber || a.steuernummer || a.ustid) && [h('br'), [a.rechtsform && a.inhaber ? `${a.rechtsform}, Inhaber/in ${a.inhaber}` : a.inhaber && `Inhaber/in ${a.inhaber}`, a.steuernummer && `Steuernummer ${a.steuernummer}`, a.ustid && `USt-IdNr. ${a.ustid}`].filter(Boolean).join(' · ')],
+      a.fusszeile && [h('br'), a.fusszeile]));
 }
 export const gruss = () => [h('p', {}, 'Mit freundlichen Grüßen'), h('p', { class: 'vw-brief__unterschrift' }, absender().gruss || absender().name)];
 const vorlage = () => h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Vorlage: Bitte prüfen Sie Inhalt, Beträge und Fristen vor dem Versand.');
@@ -50,8 +66,8 @@ routen.brief = (art, mieterId) => {
   const an = [m.name, objekt.strasse || objekt.bezeichnung, objekt.ort];
   const offen = rueckstand(m);
   const frist = datum(datumPlus(heute(), 10));
-  const a = absender();
-  const konto = a.iban ? `auf das Konto ${a.iban}${a.inhaber ? ` (${a.inhaber})` : ''}` : 'auf das Ihnen bekannte Konto';
+  const mk = mietkonto(objekt.id);
+  const konto = mk ? `auf das Konto ${mk.iban}${mk.inhaber ? ` (${mk.inhaber})` : ''}` : 'auf das Ihnen bekannte Konto';
   const bezug = `Mietverhältnis ${objekt.bezeichnung}, ${einheit.bezeichnung}`;
 
   if (art === 'uebergabe') {
@@ -339,7 +355,8 @@ routen.rechnung = (id) => {
   const objekt = finde('objekte', r.objektId);
   const pos = positionen(r);
   const s = rechnungSumme(r);
-  const fehlt = [!a.steuernummer && !a.ustid && 'Steuernummer oder USt-IdNr.', !a.iban && 'Bankverbindung', !kunde?.strasse && 'Anschrift des Kunden', !r.zeitraum && 'Leistungszeitraum'].filter(Boolean);
+  const konto = rechnungskonten()[0];
+  const fehlt = [!a.steuernummer && !a.ustid && 'Steuernummer oder USt-IdNr.', !konto && 'Bankverbindung (Administration → Unternehmen)', !kunde?.strasse && 'Anschrift des Kunden', !r.zeitraum && 'Leistungszeitraum'].filter(Boolean);
   return h('div', { class: 'vw-stapel' },
     werkzeug('#/rechnungen',
       marke(r.status),
@@ -359,7 +376,7 @@ routen.rechnung = (id) => {
           h('tr', {}, h('th', { colspan: 4 }, 'Rechnungsbetrag'), h('th', { class: 'vw-zahlspalte' }, geld(s.brutto))))),
       s.satz === 0 && a.kleinunternehmer && h('p', {}, 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.'),
       r.status !== 'Bezahlt'
-        ? h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${a.iban ? ` auf das Konto ${a.iban}${a.inhaber ? ` (${a.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`)
+        ? h('p', {}, `Bitte überweisen Sie den Rechnungsbetrag${r.faellig ? ` bis zum ${datum(r.faellig)}` : ''}${konto ? ` auf das Konto ${konto.iban}${konto.inhaber ? ` (${konto.inhaber})` : ''}` : ''}${r.nummer ? ` unter Angabe der Rechnungsnummer ${r.nummer}` : ''}.`)
         : h('p', {}, `Der Rechnungsbetrag wurde am ${datum(r.bezahltAm)} beglichen. Vielen Dank.`),
       r.notiz && h('p', {}, r.notiz),
       ...gruss()));
