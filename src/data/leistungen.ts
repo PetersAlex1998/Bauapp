@@ -40,6 +40,8 @@ export interface Leistung {
   bilder?: { datei: string; alt: string; text: string }[];
   /** Abschnitt „Ihr Kundenbereich“ mit Screenshots zeigen */
   kundenbereich?: boolean;
+  /** Grafiken „Ablauf in Phasen“ und „Beispiel-Projektbericht“ zeigen */
+  projektgrafik?: boolean;
   platzhalter?: string; // Offener Punkt, der auf der Seite markiert wird
 }
 
@@ -502,6 +504,7 @@ export const leistungen: Leistung[] = [
      =================================================================== */
   {
     slug: 'projektbegleitung',
+    projektgrafik: true,
     verb: 'Entwickeln',
     titel: 'Begleitung großer Projekte',
     kurz: 'Das Ganze: Vorhaben, die das gesamte Gebäude betreffen – wir steuern die Fachfirmen, Sie behalten einen Ansprechpartner.',

@@ -2675,3 +2675,295 @@ a[href^='tel:'] {
     margin: 1.5rem auto 0;
   }
 }
+
+/* ==========================================================================
+   PROJEKTGRAFIK (Begleitung großer Projekte)
+   ========================================================================== */
+.phasen {
+  list-style: none;
+  margin: clamp(2rem, 5vw, 3rem) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  position: relative;
+}
+.phasen::before {
+  content: '';
+  position: absolute;
+  left: 1.4rem;
+  right: 1.4rem;
+  top: 1.4rem;
+  height: 2px;
+  background: linear-gradient(to right, var(--akzent), rgba(31, 95, 166, 0.25));
+}
+.phasen__schritt {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+.phasen__nr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  background: var(--akzent);
+  color: #fff;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  box-shadow: 0 0 0 6px var(--weiss);
+}
+.phasen__schritt h3 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.1rem, 1.6vw, 1.25rem);
+}
+.phasen__schritt p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.phasen__erhalten-titel {
+  margin: 0.9rem 0 0.4rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--akzent);
+}
+.phasen__erhalten {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.phasen__erhalten li {
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--papier);
+  border: 1px solid var(--linie);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+@media (max-width: 64rem) {
+  .phasen {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+  .phasen::before {
+    left: 1.4rem;
+    right: auto;
+    top: 1.4rem;
+    bottom: 1.4rem;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(to bottom, var(--akzent), rgba(31, 95, 166, 0.25));
+  }
+  .phasen__schritt {
+    grid-template-columns: 2.8rem 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.bericht {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--weiss);
+  box-shadow: 0 30px 60px -36px rgba(18, 38, 63, 0.45), 0 0 0 1px var(--linie);
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2rem);
+}
+.bericht__kopf {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem 2rem;
+}
+.bericht__art {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--akzent);
+}
+.bericht__kopf h3 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+}
+.bericht__ampel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ampel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.ampel__icon {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.ampel--gut { background: #e7f3ec; color: #1f5a37; }
+.ampel--gut .ampel__icon { background: #2e7d4f; }
+.ampel--info { background: var(--buehne); color: var(--tinte); }
+.ampel--info .ampel__icon { background: var(--akzent); font-family: var(--serif); font-style: italic; }
+.bericht__zahlen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.bericht__zahlen > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0.8rem;
+  background: var(--papier);
+  font-size: 0.9rem;
+  color: var(--tinte-leise);
+}
+.bericht__wert {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  color: var(--tinte);
+  font-variant-numeric: tabular-nums;
+}
+.bericht__raster {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: clamp(1.5rem, 4vw, 3rem);
+}
+.bericht__raster h4 {
+  margin: 0 0 0.6rem;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.15rem;
+}
+.budget-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  color: var(--tinte-leise);
+}
+.budget-legende span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.chip--bezahlt { background: var(--akzent); }
+.chip--beauftragt { background: #8fb3dc; }
+.chip--budget { background: #e3eaf2; box-shadow: inset 0 0 0 1px #c9d4e0; }
+.chip--heute { width: 2px; height: 12px; border-radius: 0; background: #eb6834; }
+.budget {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.budget li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.92rem;
+}
+.budget__spur {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+  display: block;
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+  background: #e3eaf2;
+}
+.budget__beauftragt,
+.budget__bezahlt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 0 4px 4px 0;
+}
+.budget__beauftragt { background: #8fb3dc; }
+.budget__bezahlt { background: var(--akzent); box-shadow: 2px 0 0 var(--weiss); }
+.budget__wert {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.budget__wert small { color: var(--tinte-leise); }
+.zeitplan {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.zeitplan__raster { stroke: #edf0f4; stroke-width: 1; }
+.zeitplan__achse { fill: var(--tinte-leise); font-size: 12px; }
+.zeitplan__name { fill: var(--tinte); font-size: 13px; }
+.zeitplan__plan { fill: #e3eaf2; }
+.zeitplan__fertig { fill: var(--akzent); }
+.zeitplan__heute { stroke: #eb6834; stroke-width: 2; }
+.zeitplan__heute-text { fill: #b4471f; font-size: 12px; font-weight: 600; }
+.bericht__tabelle summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--tinte-leise);
+}
+.bericht__tabelle table {
+  width: 100%;
+  margin-top: 0.75rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.bericht__tabelle th,
+.bericht__tabelle td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--linie);
+  text-align: right;
+  white-space: nowrap;
+}
+.bericht__tabelle th:first-child { text-align: left; }
+.tabelle-scroll { overflow-x: auto; }
+.bericht__hinweis {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--tinte-leise);
+}
+@media (max-width: 60rem) {
+  .bericht__zahlen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bericht__raster { grid-template-columns: 1fr; }
+}
+
+.zeitplan--schmal { display: none; }
+@media (max-width: 36rem) {
+  .zeitplan--breit { display: none; }
+  .zeitplan--schmal { display: block; }
+}

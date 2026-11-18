@@ -1,0 +1,184 @@
+---
+/**
+ * Grafiken für „Begleitung großer Projekte“:
+ *  1. Ablauf in fünf Phasen mit dem, was der Kunde jeweils bekommt
+ *  2. Beispiel eines Projektberichts (erfundene Werte): Ampel, Kennzahlen,
+ *     Budget je Gewerk (abgerechnet / beauftragt / Budget) und Zeitplan.
+ * Rein statisch (HTML + SVG), ohne JavaScript.
+ */
+const phasen = [
+  { titel: 'Klären & rechnen', text: 'Was ist nötig, was ist sinnvoll, was kostet es? Wir analysieren den Bestand und rechnen das Vorhaben durch.', erhalten: ['Bestandsanalyse', 'Kostenrahmen', 'Zeitplan'] },
+  { titel: 'Planen & finanzieren', text: 'Wir wählen mit Ihnen Fachplaner aus, begleiten die Genehmigung und klären Finanzierung und Fördermittel.', erhalten: ['Planung durch Fachplaner', 'Förder-Übersicht', 'Unterlagen für die Bank'] },
+  { titel: 'Ausschreiben & vergeben', text: 'Wir holen vergleichbare Angebote ein, prüfen sie und empfehlen Ihnen, wer den Auftrag bekommen soll.', erhalten: ['Angebotsvergleich', 'Vergabe-Empfehlung'] },
+  { titel: 'Bauen & steuern', text: 'Wir überwachen die Arbeiten, prüfen Nachträge, halten Kosten und Termine im Blick und informieren die Mieter.', erhalten: ['Regelmäßige Projektberichte', 'Ein Ansprechpartner'] },
+  { titel: 'Abnehmen & abschließen', text: 'Wir nehmen ab, verfolgen Mängel bis zur Beseitigung und rechnen das Projekt sauber ab.', erhalten: ['Abnahmeprotokoll', 'Abschlussbericht', 'Gewährleistung im Kalender'] },
+];
+
+// ---------- Beispielprojekt (erfundene Werte) ----------
+const gewerke = [
+  { name: 'Gerüst', budget: 18000, beauftragt: 17400, abgerechnet: 17400, start: 0, ende: 6.5 },
+  { name: 'Dach', budget: 74000, beauftragt: 71200, abgerechnet: 64300, start: 0.3, ende: 2.6 },
+  { name: 'Fassade & Dämmung', budget: 96000, beauftragt: 91800, abgerechnet: 38600, start: 2, ende: 5.6 },
+  { name: 'Fenster', budget: 42000, beauftragt: 40100, abgerechnet: 15500, start: 3.4, ende: 4.6 },
+  { name: 'Planung & Sonstiges', budget: 18000, beauftragt: 11000, abgerechnet: 7000, start: 0, ende: 7 },
+];
+// Fortschritt folgt aus dem Zeitplan: erledigt ist, was vor „heute“ liegt
+const heute = 3.9;
+const gewerkeMitStand = gewerke.map((g) => ({ ...g, fertig: Math.min(1, Math.max(0, (heute - g.start) / (g.ende - g.start))) }));
+const summe = (k: 'budget' | 'beauftragt' | 'abgerechnet') => gewerke.reduce((a, g) => a + g[k], 0);
+const budget = summe('budget'), beauftragt = summe('beauftragt'), abgerechnet = summe('abgerechnet');
+const euro = (x: number) => x.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const pz = (a: number, b: number) => Math.round((a / b) * 100);
+const maxBudget = Math.max(...gewerke.map((g) => g.budget));
+
+// Zeitplan: 7 Monate, „heute“ nach 3,9 Monaten
+const monate = ['Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'];
+const G = { W: 640, L: 150, R: 12, O: 28, Zeile: 34, U: 8 };
+const gH = G.O + gewerke.length * G.Zeile + G.U;
+const gx = (m: number) => G.L + (m / monate.length) * (G.W - G.L - G.R);
+// Handy-Fassung: Namen über den Balken, volle Breite
+const K = { W: 360, L: 0, R: 4, O: 22, Zeile: 46 };
+const kH = K.O + gewerke.length * K.Zeile + 6;
+const kx = (m: number) => K.L + (m / monate.length) * (K.W - K.L - K.R);
+const fortschritt = Math.round(gewerkeMitStand.reduce((a, g) => a + g.fertig * g.budget, 0) / budget * 100);
+---
+<section class="abschnitt hell" aria-labelledby="phasen">
+  <div class="rahmen">
+    <p class="marke">Der Ablauf</p>
+    <h2 id="phasen">Ihr Projekt in fünf Phasen.</h2>
+    <p class="lead" style="max-width:40rem">Bei jedem Schritt wissen Sie, woran Sie sind – und was Sie von uns in der Hand halten.</p>
+    <ol class="phasen">
+      {phasen.map((p, i) => (
+        <li class="phasen__schritt">
+          <span class="phasen__nr" aria-hidden="true">{i + 1}</span>
+          <div>
+            <h3>{p.titel}</h3>
+            <p class="leise">{p.text}</p>
+            <p class="phasen__erhalten-titel">Das bekommen Sie</p>
+            <ul class="phasen__erhalten">{p.erhalten.map((e) => <li>{e}</li>)}</ul>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<section class="abschnitt" aria-labelledby="bericht">
+  <div class="rahmen">
+    <div class="zweier" style="align-items:end">
+      <div>
+        <p class="marke">Transparenz</p>
+        <h2 id="bericht">So behalten Sie den Überblick.</h2>
+      </div>
+      <p class="leise">Während der Bauphase erhalten Sie regelmäßig einen Projektbericht: Wo steht das Projekt, was ist beauftragt, was bezahlt – und liegen Kosten und Termine im Plan? So sieht das aus:</p>
+    </div>
+
+    <article class="bericht" aria-label="Beispiel eines Projektberichts mit erfundenen Werten">
+      <header class="bericht__kopf">
+        <div>
+          <p class="bericht__art">Projektbericht · Beispiel</p>
+          <h3>Dach- und Fassadensanierung, Mehrfamilienhaus</h3>
+        </div>
+        <ul class="bericht__ampel">
+          <li class="ampel ampel--gut"><span class="ampel__icon" aria-hidden="true">✓</span>Termine im Plan</li>
+          <li class="ampel ampel--gut"><span class="ampel__icon" aria-hidden="true">✓</span>Kosten im Rahmen</li>
+          <li class="ampel ampel--info"><span class="ampel__icon" aria-hidden="true">i</span>1 Entscheidung offen</li>
+        </ul>
+      </header>
+
+      <div class="bericht__zahlen">
+        <div><span class="bericht__wert">{euro(budget)}</span><span>Budget</span></div>
+        <div><span class="bericht__wert">{euro(beauftragt)}</span><span>beauftragt · {pz(beauftragt, budget)} % des Budgets</span></div>
+        <div><span class="bericht__wert">{euro(abgerechnet)}</span><span>bezahlt · {pz(abgerechnet, budget)} % des Budgets</span></div>
+        <div><span class="bericht__wert">{fortschritt} %</span><span>Baufortschritt</span></div>
+      </div>
+
+      <div class="bericht__raster">
+        <section aria-labelledby="bericht-budget">
+          <h4 id="bericht-budget">Budget je Gewerk</h4>
+          <div class="budget-legende" aria-hidden="true">
+            <span><i class="chip chip--bezahlt"></i>bezahlt</span>
+            <span><i class="chip chip--beauftragt"></i>beauftragt</span>
+            <span><i class="chip chip--budget"></i>Budget</span>
+          </div>
+          <ul class="budget">
+            {gewerke.map((g) => (
+              <li>
+                <span class="budget__name">{g.name}</span>
+                <span class="budget__spur" style={`width:${(g.budget / maxBudget) * 100}%`} title={`${g.name}: Budget ${euro(g.budget)}, beauftragt ${euro(g.beauftragt)}, bezahlt ${euro(g.abgerechnet)}`}>
+                  <span class="budget__beauftragt" style={`width:${(g.beauftragt / g.budget) * 100}%`}></span>
+                  <span class="budget__bezahlt" style={`width:${(g.abgerechnet / g.budget) * 100}%`}></span>
+                </span>
+                <span class="budget__wert">{euro(g.abgerechnet)} <small>von {euro(g.budget)}</small></span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="bericht-zeit">
+          <h4 id="bericht-zeit">Zeitplan</h4>
+          <div class="budget-legende" aria-hidden="true">
+            <span><i class="chip chip--bezahlt"></i>erledigt</span>
+            <span><i class="chip chip--budget"></i>geplant</span>
+            <span><i class="chip chip--heute"></i>heute</span>
+          </div>
+          <svg class="zeitplan zeitplan--breit" viewBox={`0 0 ${G.W} ${gH}`} role="img" aria-label="Zeitplan des Beispielprojekts von April bis Oktober mit Fortschritt je Gewerk">
+            {monate.map((m, i) => (
+              <g>
+                <line x1={gx(i)} x2={gx(i)} y1={G.O - 6} y2={gH - G.U} class="zeitplan__raster" />
+                <text x={gx(i + 0.5)} y={G.O - 12} text-anchor="middle" class="zeitplan__achse">{m}</text>
+              </g>
+            ))}
+            {gewerkeMitStand.map((g, i) => {
+              const y = G.O + i * G.Zeile + 9;
+              const x1 = gx(g.start), x2 = gx(g.ende);
+              return (
+                <g>
+                  <title>{`${g.name}: ${monate[Math.floor(g.start)]} bis ${monate[Math.min(monate.length - 1, Math.floor(g.ende - 0.01))]}, ${Math.round(g.fertig * 100)} % erledigt`}</title>
+                  <text x={G.L - 12} y={y + 12} text-anchor="end" class="zeitplan__name">{g.name}</text>
+                  <rect x={x1} y={y} width={x2 - x1} height={16} rx={4} class="zeitplan__plan" />
+                  <rect x={x1} y={y} width={(x2 - x1) * g.fertig} height={16} rx={4} class="zeitplan__fertig" />
+                </g>
+              );
+            })}
+            <line x1={gx(heute)} x2={gx(heute)} y1={G.O - 4} y2={gH - G.U} class="zeitplan__heute" />
+            <text x={gx(heute) + 6} y={gH - G.U - 2} class="zeitplan__heute-text">heute</text>
+          </svg>
+          <svg class="zeitplan zeitplan--schmal" viewBox={`0 0 ${K.W} ${kH}`} role="img" aria-label="Zeitplan des Beispielprojekts von April bis Oktober mit Fortschritt je Gewerk">
+            {monate.map((m, i) => (
+              <g>
+                <line x1={kx(i)} x2={kx(i)} y1={K.O - 4} y2={kH} class="zeitplan__raster" />
+                <text x={kx(i + 0.5)} y={K.O - 8} text-anchor="middle" class="zeitplan__achse">{m}</text>
+              </g>
+            ))}
+            {gewerkeMitStand.map((g, i) => {
+              const y = K.O + i * K.Zeile;
+              const x1 = kx(g.start), x2 = kx(g.ende);
+              return (
+                <g>
+                  <text x={K.L} y={y + 16} class="zeitplan__name">{g.name}</text>
+                  <rect x={x1} y={y + 22} width={x2 - x1} height={14} rx={4} class="zeitplan__plan" />
+                  <rect x={x1} y={y + 22} width={(x2 - x1) * g.fertig} height={14} rx={4} class="zeitplan__fertig" />
+                </g>
+              );
+            })}
+            <line x1={kx(heute)} x2={kx(heute)} y1={K.O - 2} y2={kH} class="zeitplan__heute" />
+          </svg>
+        </section>
+      </div>
+
+      <details class="bericht__tabelle">
+        <summary>Werte als Tabelle</summary>
+        <div class="tabelle-scroll">
+          <table>
+            <thead><tr><th scope="col">Gewerk</th><th scope="col">Budget</th><th scope="col">beauftragt</th><th scope="col">bezahlt</th><th scope="col">erledigt</th></tr></thead>
+            <tbody>
+              {gewerkeMitStand.map((g) => <tr><th scope="row">{g.name}</th><td>{euro(g.budget)}</td><td>{euro(g.beauftragt)}</td><td>{euro(g.abgerechnet)}</td><td>{Math.round(g.fertig * 100)} %</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <p class="bericht__hinweis">Beispiel mit erfundenen Werten. Inhalt und Umfang des Berichts stimmen wir mit Ihnen ab.</p>
+    </article>
+  </div>
+</section>

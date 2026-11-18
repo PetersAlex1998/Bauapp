@@ -4,6 +4,7 @@ import Kreis from '../../components/Kreis.astro';
 import Kontaktband from '../../components/Kontaktband.astro';
 import Platzhalter from '../../components/Platzhalter.astro';
 import Katalog from '../../components/Katalog.astro';
+import Projektgrafik from '../../components/Projektgrafik.astro';
 import { leistungen, gradbereich } from '../../data/leistungen';
 import { site } from '../../data/site';
 import { Picture } from 'astro:assets';
@@ -94,6 +95,8 @@ const schema = [
       </div>
     </section>
   ) : null}
+
+  {l.projektgrafik && <Projektgrafik />}
 
   {l.kundenbereich && (
     <section class="abschnitt kundenbereich-zeigen" aria-labelledby="kundenbereich">
