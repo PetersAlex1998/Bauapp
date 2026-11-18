@@ -51,6 +51,7 @@ import { site } from '../data/site';
           if (ich.status === 401 || !ich.json?.ok) { await abmelden(); return zumLogin(); }
           if (ich.json.rolle !== 'verwaltung') { location.replace('/kundenbereich/'); return; }
           sessionStorage.setItem('hadie-admin', ich.json.admin ? '1' : '');
+          sessionStorage.setItem('hadie-2fa', ich.json.zweiFaktor ? '1' : '');
           try {
             if (!(await ladeVomServer())) { await abmelden(); return zumLogin(); }
           } catch {

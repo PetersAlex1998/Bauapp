@@ -7,10 +7,11 @@
  * Es zeigt ein neues Passwort genau einmal beim Anlegen oder Zurücksetzen.
  */
 import { alle, finde, speichere } from './speicher';
-import { api, istAdmin, modus } from './cloud';
+import qrcode from 'qrcode-generator';
+import { api, hatZweiFaktor, istAdmin, modus } from './cloud';
 import { formular, h, hinweis, marke, routen, zeichne } from './app';
 
-type Konto = { nummer: string; rolle: 'verwaltung' | 'kunde'; kundeId: string | null; angelegt: number; letzterLogin: number | null; admin?: boolean };
+type Konto = { nummer: string; rolle: 'verwaltung' | 'kunde'; kundeId: string | null; angelegt: number; letzterLogin: number | null; admin?: boolean; zweiFaktor?: boolean };
 let konten: Konto[] | null = null;
 let ladeFehler = '';
 let ladeLaeuft = false;
@@ -119,6 +120,62 @@ function eigenesPasswort() {
     } }, 'Passwort ändern')]);
 }
 
+/* ---------- Zwei-Faktor-Anmeldung ---------- */
+async function zweiFaktorEinrichten() {
+  const start = await api('zwei-faktor-start', {});
+  if (!start.json?.ok) { alert(start.json?.fehler || 'Die Einrichtung konnte nicht gestartet werden.'); return; }
+  const qr = qrcode(0, 'M');
+  qr.addData(start.json.uri);
+  qr.make();
+  const bild = h('img', { src: qr.createDataURL(5, 4), alt: 'QR-Code für die Authenticator-App', width: 220, height: 220, style: 'image-rendering:pixelated;background:#fff;border-radius:.5rem' });
+  const geheim = String(start.json.geheim).replace(/(.{4})/g, '$1 ').trim();
+  const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 6, placeholder: '123456' }) as HTMLInputElement;
+  const fehler = h('p', { class: 'formular__status', role: 'alert', 'data-art': 'fehler', style: 'grid-column:1/-1' });
+  const d = fenster('Zwei-Faktor-Anmeldung einrichten', [
+    h('ol', { class: 'feld--breit', style: 'margin:0;padding-left:1.2rem;line-height:1.6' },
+      h('li', {}, 'Öffnen Sie auf Ihrem Handy eine Authenticator-App (z. B. Google Authenticator, Microsoft Authenticator, Apple Passwörter oder 2FAS).'),
+      h('li', {}, 'Scannen Sie diesen QR-Code – oder geben Sie den Schlüssel von Hand ein.'),
+      h('li', {}, 'Tragen Sie zur Bestätigung den 6-stelligen Code aus der App ein.')),
+    h('div', { class: 'feld--breit', style: 'display:flex;flex-wrap:wrap;gap:1.25rem;align-items:center' }, bild,
+      h('div', {}, h('small', {}, 'Schlüssel zum Eintippen:'), h('p', { style: 'font-family:monospace;font-size:1rem;margin:.3rem 0 0;word-break:break-all' }, geheim))),
+    feld('Code aus der App', code, false), fehler,
+  ], [h('button', { type: 'button', class: 'vw-knopf', onclick: () => d.close() }, 'Abbrechen'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: async (e: Event) => {
+    (e.target as HTMLButtonElement).disabled = true;
+    const a = await api('zwei-faktor-bestaetigen', { code: code.value.replace(/\s/g, '') });
+    (e.target as HTMLButtonElement).disabled = false;
+    if (!a.json?.ok) { fehler.textContent = a.json?.grund === 'code' ? 'Der Code stimmt nicht. Bitte nehmen Sie den aktuellen Code aus der App (er wechselt alle 30 Sekunden).' : a.json?.fehler || 'Das hat nicht geklappt.'; code.value = ''; code.focus(); return; }
+    sessionStorage.setItem('hadie-2fa', '1');
+    konten = null;
+    d.close();
+    zeigeErsatzcodes(a.json.ersatzcodes as string[]);
+  } }, 'Bestätigen')]);
+  code.focus();
+}
+
+function zeigeErsatzcodes(codes: string[]) {
+  const text = `HaDie-Immobilien – Ersatzcodes für die Zwei-Faktor-Anmeldung\nJeder Code funktioniert genau einmal.\n\n${codes.join('\n')}`;
+  const kopieren = h('button', { type: 'button', class: 'vw-knopf', onclick: async () => { try { await navigator.clipboard.writeText(text); kopieren.textContent = 'Kopiert ✓'; } catch { kopieren.textContent = 'Bitte abschreiben'; } } }, 'Kopieren');
+  const d = fenster('Fertig – Ihre Ersatzcodes', [
+    h('p', { class: 'feld--breit' }, 'Die Zwei-Faktor-Anmeldung ist aktiv. Wenn Ihr Handy verloren geht, melden Sie sich mit einem dieser Codes an. ', h('strong', {}, 'Bewahren Sie sie getrennt vom Handy auf'), ' (ausdrucken oder im Passwort-Manager). Sie werden nur jetzt angezeigt.'),
+    h('ul', { class: 'feld--breit', style: 'columns:2;list-style:none;padding:0;margin:0;font-family:monospace;font-size:1.05rem;line-height:1.9' }, codes.map((c) => h('li', {}, c))),
+  ], [kopieren, h('button', { type: 'button', class: 'vw-knopf', onclick: () => window.print() }, 'Drucken'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: () => d.close() }, 'Ich habe sie gesichert')]);
+}
+
+function zweiFaktorAus() {
+  const pw = h('input', { type: 'password', autocomplete: 'current-password' }) as HTMLInputElement;
+  const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 12 }) as HTMLInputElement;
+  const fehler = h('p', { class: 'formular__status', role: 'alert', 'data-art': 'fehler', style: 'grid-column:1/-1' });
+  const d = fenster('Zwei-Faktor-Anmeldung abschalten', [
+    h('p', { class: 'feld--breit' }, 'Ohne zweiten Faktor reicht wieder das Passwort allein. Zur Bestätigung:'),
+    feld('Passwort', pw, false), feld('Code aus der App oder Ersatzcode', code, false), fehler,
+  ], [h('button', { type: 'button', class: 'vw-knopf', onclick: () => d.close() }, 'Abbrechen'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--gefahr', onclick: async () => {
+    const a = await api('zwei-faktor-aus', { passwort: pw.value, code: code.value });
+    if (!a.json?.ok) { fehler.textContent = a.json?.grund === 'falsch' ? 'Passwort oder Code stimmen nicht.' : a.json?.fehler || 'Das hat nicht geklappt.'; return; }
+    sessionStorage.setItem('hadie-2fa', '');
+    konten = null; d.close(); hinweis('Zwei-Faktor-Anmeldung abgeschaltet');
+  } }, 'Abschalten')]);
+}
+
 routen.konten = () => {
   const kopf = h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Zugänge'),
     h('p', {}, 'Wer sich anmelden darf: Mitarbeiter der Verwaltung und Kunden. Ein Kunde sieht nach der Anmeldung nur seine eigenen Objekte, Rechnungen und Meldungen.'));
@@ -132,20 +189,29 @@ routen.konten = () => {
   const ohneZugang = alle('mitarbeiter').filter((m) => m.aktiv !== false && !liste.some((k) => k.nummer === String(m.nummer ?? '').toUpperCase())).length;
   return h('div', { class: 'vw-stapel' }, kopf,
     ladeFehler && h('p', { class: 'vw-warnung' }, ladeFehler),
+    !hatZweiFaktor() && h('p', { class: 'vw-warnung' }, h('strong', {}, 'Ihr Zugang ist nur mit Passwort geschützt. '), 'Richten Sie die Zwei-Faktor-Anmeldung ein – dann braucht eine Anmeldung zusätzlich einen Code von Ihrem Handy.'),
     h('div', { class: 'vw-reihe' },
       h('button', { class: 'vw-knopf vw-knopf--voll', onclick: neuesKonto }, '+ Zugang einrichten'),
       h('button', { class: 'vw-knopf', onclick: eigenesPasswort }, 'Mein Passwort ändern'),
+      hatZweiFaktor()
+        ? h('button', { class: 'vw-knopf', onclick: zweiFaktorAus }, 'Zwei-Faktor abschalten')
+        : h('button', { class: 'vw-knopf', onclick: zweiFaktorEinrichten }, 'Zwei-Faktor einrichten'),
       ohneZugang > 0 && h('span', { class: 'vw-fein' }, `${ohneZugang} Mitarbeiter ohne Zugang`)),
     h('section', { class: 'vw-karte' }, h('div', { class: 'vw-tabelle' }, h('table', {},
       h('thead', {}, h('tr', {}, ['Nummer', 'Art', 'Person', 'Letzte Anmeldung', ''].map((t) => h('th', { scope: 'col' }, t)))),
       h('tbody', {}, konten === null ? [h('tr', {}, h('td', { colspan: 5, class: 'vw-leer' }, 'Wird geladen …'))]
         : liste.length ? liste.map((k) => h('tr', {},
           h('td', { 'data-spalte': 'Nummer' }, h('strong', {}, k.nummer)),
-          h('td', { 'data-spalte': 'Art' }, marke(k.rolle === 'verwaltung' ? (k.admin ? 'Verwaltung · Admin' : 'Verwaltung') : 'Kunde', k.rolle === 'verwaltung' ? 'blau' : 'grau')),
+          h('td', { 'data-spalte': 'Art' }, marke(k.rolle === 'verwaltung' ? (k.admin ? 'Verwaltung · Admin' : 'Verwaltung') : 'Kunde', k.rolle === 'verwaltung' ? 'blau' : 'grau'), ' ', k.zweiFaktor ? marke('2FA ✓', 'gruen') : k.rolle === 'verwaltung' && marke('ohne 2FA', 'gelb')),
           h('td', { 'data-spalte': 'Person' }, person(k)),
           h('td', { 'data-spalte': 'Letzte Anmeldung' }, zeit(k.letzterLogin)),
           h('td', { class: 'vw-aktion' }, (k.rolle === 'kunde' || istAdmin()) && [
             h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => zuruecksetzen(k) }, 'Passwort zurücksetzen'), ' ',
+            k.zweiFaktor && istAdmin() && [h('button', { class: 'vw-knopf vw-knopf--klein', onclick: async () => {
+              if (!confirm(`Zwei-Faktor-Anmeldung für ${k.nummer} abschalten? Nötig, wenn das Handy verloren ist. Die Person richtet sie danach neu ein.`)) return;
+              const a = await api('zwei-faktor-zuruecksetzen', { nummer: k.nummer });
+              if (a.json?.ok) { hinweis('Zwei-Faktor zurückgesetzt'); konten = null; zeichne(); } else alert(a.json?.fehler || 'Das hat nicht geklappt.');
+            } }, '2FA zurücksetzen'), ' '],
             h('button', { class: 'vw-knopf vw-knopf--klein vw-knopf--gefahr', onclick: async () => {
               if (!confirm(`Zugang ${k.nummer} (${person(k)}) wirklich löschen? Die Person kann sich dann nicht mehr anmelden.`)) return;
               const a = await api('konto-loeschen', { nummer: k.nummer });

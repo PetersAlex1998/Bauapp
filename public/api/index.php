@@ -66,6 +66,7 @@ function db(): PDO
     if ($typ === 'sqlite') $pdo->exec('PRAGMA foreign_keys = ON');
     tabellenAnlegen($pdo, $typ);
     adminSpalte($pdo);
+    zweiFaktorSpalten($pdo);
     return $pdo;
 }
 function tabellenAnlegen(PDO $pdo, string $typ): void
@@ -74,7 +75,7 @@ function tabellenAnlegen(PDO $pdo, string $typ): void
     $my = $typ !== 'sqlite';
     $ende = $my ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : '';
     $bin = $my ? ' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin' : '';
-    $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_konto (nummer VARCHAR(40) NOT NULL PRIMARY KEY, passwort VARCHAR(255) NOT NULL, rolle VARCHAR(12) NOT NULL, kunde_id VARCHAR(64) NULL, angelegt INT NOT NULL, letzter_login INT NULL, admin INT NOT NULL DEFAULT 0)' . $ende);
+    $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_konto (nummer VARCHAR(40) NOT NULL PRIMARY KEY, passwort VARCHAR(255) NOT NULL, rolle VARCHAR(12) NOT NULL, kunde_id VARCHAR(64) NULL, angelegt INT NOT NULL, letzter_login INT NULL, admin INT NOT NULL DEFAULT 0, totp_secret VARCHAR(64) NULL, totp_aktiv INT NOT NULL DEFAULT 0, totp_letzter BIGINT NOT NULL DEFAULT 0, totp_reserve TEXT NULL)' . $ende);
     $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_sitzung (token_hash CHAR(64) NOT NULL PRIMARY KEY, nummer VARCHAR(40) NOT NULL, gueltig_bis INT NOT NULL)' . $ende);
     $pdo->exec($my
         ? 'CREATE TABLE IF NOT EXISTS hadie_versuch (id BIGINT AUTO_INCREMENT PRIMARY KEY, schluessel VARCHAR(80) NOT NULL, zeit INT NOT NULL, KEY hadie_versuch_idx (schluessel, zeit))' . $ende
@@ -89,6 +90,15 @@ function adminSpalte(PDO $pdo): void
     $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN admin INT NOT NULL DEFAULT 0');
     $erster = $pdo->query("SELECT nummer FROM hadie_konto WHERE rolle = 'verwaltung' ORDER BY angelegt, nummer LIMIT 1")->fetch();
     if ($erster) $pdo->prepare('UPDATE hadie_konto SET admin = 1 WHERE nummer = ?')->execute([$erster['nummer']]);
+}
+/** Nachrüstung: Spalten für die Zwei-Faktor-Anmeldung (TOTP). */
+function zweiFaktorSpalten(PDO $pdo): void
+{
+    try { $pdo->query('SELECT totp_aktiv FROM hadie_konto LIMIT 1'); return; } catch (Throwable $e) { /* fehlt noch */ }
+    $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN totp_secret VARCHAR(64) NULL');
+    $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN totp_aktiv INT NOT NULL DEFAULT 0');
+    $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN totp_letzter BIGINT NOT NULL DEFAULT 0');
+    $pdo->exec('ALTER TABLE hadie_konto ADD COLUMN totp_reserve TEXT NULL');
 }
 function abfrage(string $sql, array $p = []): PDOStatement { $s = db()->prepare($sql); $s->execute($p); return $s; }
 function typ(): string { global $konfig; return $konfig['db']['typ'] ?? 'mysql'; }
@@ -112,6 +122,51 @@ function body(): array
     return $d;
 }
 function norm(string $n): string { return (string)preg_replace('/\s+/', '', mb_strtoupper(trim($n))); }
+
+/* ---------------- Zwei-Faktor-Anmeldung (TOTP, RFC 6238) ---------------- */
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function base32(string $bin): string
+{
+    $bits = ''; foreach (str_split($bin) as $c) $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
+    $aus = ''; foreach (str_split($bits, 5) as $teil) $aus .= B32[bindec(str_pad($teil, 5, '0'))];
+    return $aus;
+}
+function base32Lesen(string $text): string
+{
+    $bits = ''; foreach (str_split(strtoupper($text)) as $c) { $i = strpos(B32, $c); if ($i === false) continue; $bits .= str_pad(decbin($i), 5, '0', STR_PAD_LEFT); }
+    $aus = ''; foreach (str_split($bits, 8) as $teil) if (strlen($teil) === 8) $aus .= chr(bindec($teil));
+    return $aus;
+}
+function totp(string $geheim, int $schritt): string
+{
+    $h = hash_hmac('sha1', pack('J', $schritt), base32Lesen($geheim), true);
+    $o = ord($h[19]) & 0x0f;
+    $zahl = ((ord($h[$o]) & 0x7f) << 24) | (ord($h[$o + 1]) << 16) | (ord($h[$o + 2]) << 8) | ord($h[$o + 3]);
+    return str_pad((string)($zahl % 1000000), 6, '0', STR_PAD_LEFT);
+}
+/** Prüft einen 6-stelligen Code (±30 s) gegen ein Geheimnis; gibt den Zeitschritt zurück oder 0. Jeder Code gilt nur einmal. */
+function totpSchritt(string $geheim, string $code, int $letzter): int
+{
+    if (!preg_match('/^\d{6}$/', $code)) return 0;
+    $jetzt = intdiv(time(), 30);
+    for ($d = -1; $d <= 1; $d++) if ($jetzt + $d > $letzter && hash_equals(totp($geheim, $jetzt + $d), $code)) return $jetzt + $d;
+    return 0;
+}
+/** Zweiter Faktor für ein Konto: App-Code oder einmaliger Ersatzcode. */
+function zweiterFaktorOk(array $k, string $code): bool
+{
+    $code = strtoupper((string)preg_replace('/[\s-]+/', '', $code));
+    $schritt = totpSchritt((string)$k['totp_secret'], $code, (int)$k['totp_letzter']);
+    if ($schritt) { abfrage('UPDATE hadie_konto SET totp_letzter = ? WHERE nummer = ?', [$schritt, $k['nummer']]); return true; }
+    $reserve = json_decode((string)($k['totp_reserve'] ?? '[]'), true) ?: [];
+    $h = hash('sha256', $code);
+    foreach ($reserve as $i => $r) if (hash_equals($r, $h)) {
+        array_splice($reserve, $i, 1);
+        abfrage('UPDATE hadie_konto SET totp_reserve = ? WHERE nummer = ?', [json_encode($reserve), $k['nummer']]);
+        return true;
+    }
+    return false;
+}
 
 /* ---------------- Sitzung ---------------- */
 function cookieSetzen(string $wert, int $bis): void
@@ -248,6 +303,14 @@ switch ($aktion) {
         $hash = $k['passwort'] ?? '$2y$10$usesomesillystringforsaltn0tarealhashvalueXXXXXXXXXXXXXXXX';
         $richtig = password_verify((string)($b['passwort'] ?? ''), $hash) && $k;
         if (!$richtig) { versuchMerken($kombi); versuchMerken($n); versuchMerken(ipSchluessel()); usleep(400000); antwort(200, ['ok' => false, 'grund' => 'ungueltig']); }
+        if ((int)($k['totp_aktiv'] ?? 0) === 1) {
+            $code = trim((string)($b['code'] ?? ''));
+            if ($code === '') antwort(200, ['ok' => false, 'grund' => 'zweiter-faktor']);
+            $tk = 'totp:' . $k['nummer'];
+            if (versuche($tk) >= 10) antwort(200, ['ok' => false, 'grund' => 'gesperrt']);
+            if (!zweiterFaktorOk($k, $code)) { versuchMerken($tk); versuchMerken($kombi); usleep(400000); antwort(200, ['ok' => false, 'grund' => 'code']); }
+            abfrage('DELETE FROM hadie_versuch WHERE schluessel = ?', [$tk]);
+        }
         abfrage('DELETE FROM hadie_versuch WHERE schluessel = ?', [$kombi]);
         $t = bin2hex(random_bytes(32));
         abfrage('INSERT INTO hadie_sitzung (token_hash, nummer, gueltig_bis) VALUES (?, ?, ?)', [hash('sha256', $t), $k['nummer'], time() + SITZUNG]);
@@ -267,7 +330,7 @@ switch ($aktion) {
 
     case 'ich': {
         $k = konto();
-        antwort(200, ['ok' => true, 'rolle' => $k['rolle'], 'nummer' => $k['nummer'], 'kundeId' => $k['kunde_id'], 'admin' => (int)($k['admin'] ?? 0) === 1]);
+        antwort(200, ['ok' => true, 'rolle' => $k['rolle'], 'nummer' => $k['nummer'], 'kundeId' => $k['kunde_id'], 'admin' => (int)($k['admin'] ?? 0) === 1, 'zweiFaktor' => (int)($k['totp_aktiv'] ?? 0) === 1]);
     }
 
     case 'lesen': {
@@ -433,8 +496,8 @@ switch ($aktion) {
     case 'konten': {
         verwaltung();
         $l = [];
-        foreach (db()->query('SELECT nummer, rolle, kunde_id, angelegt, letzter_login, admin FROM hadie_konto ORDER BY rolle, nummer')->fetchAll() as $k)
-            $l[] = ['nummer' => $k['nummer'], 'rolle' => $k['rolle'], 'kundeId' => $k['kunde_id'], 'angelegt' => (int)$k['angelegt'], 'letzterLogin' => $k['letzter_login'] ? (int)$k['letzter_login'] : null, 'admin' => (int)$k['admin'] === 1];
+        foreach (db()->query('SELECT nummer, rolle, kunde_id, angelegt, letzter_login, admin, totp_aktiv FROM hadie_konto ORDER BY rolle, nummer')->fetchAll() as $k)
+            $l[] = ['nummer' => $k['nummer'], 'rolle' => $k['rolle'], 'kundeId' => $k['kunde_id'], 'angelegt' => (int)$k['angelegt'], 'letzterLogin' => $k['letzter_login'] ? (int)$k['letzter_login'] : null, 'admin' => (int)$k['admin'] === 1, 'zweiFaktor' => (int)$k['totp_aktiv'] === 1];
         antwort(200, ['ok' => true, 'konten' => $l]);
     }
 
@@ -490,6 +553,53 @@ switch ($aktion) {
         if (mb_strlen((string)($b['neu'] ?? '')) < 10) antwort(200, ['ok' => false, 'grund' => 'kurz']);
         abfrage('UPDATE hadie_konto SET passwort = ? WHERE nummer = ?', [password_hash((string)$b['neu'], PASSWORD_DEFAULT), $k['nummer']]);
         abfrage('DELETE FROM hadie_sitzung WHERE nummer = ? AND token_hash <> ?', [$k['nummer'], hash('sha256', (string)$_COOKIE['hadie'])]);
+        antwort(200, ['ok' => true]);
+    }
+
+    case 'zwei-faktor-start': {
+        $k = verwaltung();
+        body();
+        if ((int)$k['totp_aktiv'] === 1) fehler(400, 'Die Zwei-Faktor-Anmeldung ist bereits eingerichtet.');
+        $geheim = base32(random_bytes(20));
+        abfrage('UPDATE hadie_konto SET totp_secret = ?, totp_aktiv = 0, totp_letzter = 0 WHERE nummer = ?', [$geheim, $k['nummer']]);
+        $name = rawurlencode('HaDie-Immobilien:' . $k['nummer']);
+        antwort(200, ['ok' => true, 'geheim' => $geheim, 'uri' => "otpauth://totp/$name?secret=$geheim&issuer=HaDie-Immobilien&algorithm=SHA1&digits=6&period=30"]);
+    }
+
+    case 'zwei-faktor-bestaetigen': {
+        $k = verwaltung();
+        $b = body();
+        if ((int)$k['totp_aktiv'] === 1 || empty($k['totp_secret'])) fehler(400, 'Bitte starten Sie die Einrichtung neu.');
+        $tk = 'totp:' . $k['nummer'];
+        if (versuche($tk) >= 10) fehler(429, 'Zu viele Versuche. Bitte warten Sie 15 Minuten.');
+        $schritt = totpSchritt((string)$k['totp_secret'], trim((string)($b['code'] ?? '')), 0);
+        if (!$schritt) { versuchMerken($tk); antwort(200, ['ok' => false, 'grund' => 'code']); }
+        $codes = []; $hashes = [];
+        for ($i = 0; $i < 10; $i++) { $c = substr(base32(random_bytes(8)), 0, 10); $codes[] = substr($c, 0, 5) . '-' . substr($c, 5); $hashes[] = hash('sha256', $c); }
+        abfrage('UPDATE hadie_konto SET totp_aktiv = 1, totp_letzter = ?, totp_reserve = ? WHERE nummer = ?', [$schritt, json_encode($hashes), $k['nummer']]);
+        abfrage('DELETE FROM hadie_sitzung WHERE nummer = ? AND token_hash <> ?', [$k['nummer'], hash('sha256', (string)($_COOKIE['hadie'] ?? ''))]);
+        antwort(200, ['ok' => true, 'ersatzcodes' => $codes]);
+    }
+
+    case 'zwei-faktor-aus': {
+        $k = verwaltung();
+        $b = body();
+        if ((int)$k['totp_aktiv'] !== 1) fehler(400, 'Die Zwei-Faktor-Anmeldung ist nicht eingerichtet.');
+        $tk = 'totp:' . $k['nummer'];
+        if (versuche($tk) >= 10) fehler(429, 'Zu viele Versuche. Bitte warten Sie 15 Minuten.');
+        if (!password_verify((string)($b['passwort'] ?? ''), $k['passwort']) || !zweiterFaktorOk($k, (string)($b['code'] ?? ''))) { versuchMerken($tk); usleep(400000); antwort(200, ['ok' => false, 'grund' => 'falsch']); }
+        abfrage('UPDATE hadie_konto SET totp_secret = NULL, totp_aktiv = 0, totp_letzter = 0, totp_reserve = NULL WHERE nummer = ?', [$k['nummer']]);
+        antwort(200, ['ok' => true]);
+    }
+
+    case 'zwei-faktor-zuruecksetzen': {
+        // Handy verloren: Ein Admin schaltet die Zwei-Faktor-Anmeldung eines anderen Zugangs ab.
+        $ich = admin();
+        $b = body();
+        $n = norm((string)($b['nummer'] ?? ''));
+        if ($n === $ich['nummer']) fehler(400, 'Den eigenen Zugang setzen Sie über „Zwei-Faktor abschalten“ zurück.');
+        abfrage('UPDATE hadie_konto SET totp_secret = NULL, totp_aktiv = 0, totp_letzter = 0, totp_reserve = NULL WHERE nummer = ?', [$n]);
+        abfrage('DELETE FROM hadie_sitzung WHERE nummer = ?', [$n]);
         antwort(200, ['ok' => true]);
     }
 

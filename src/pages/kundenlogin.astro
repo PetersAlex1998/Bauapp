@@ -31,6 +31,11 @@ const zugaenge = demo
           <label for="l-pw">Passwort</label>
           <input id="l-pw" name="passwort" type="password" autocomplete="current-password" required />
         </div>
+        <div class="feld" id="l-code-feld" hidden>
+          <label for="l-code">Bestätigungscode</label>
+          <input id="l-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" aria-describedby="l-code-hilfe" />
+          <small id="l-code-hilfe">Die 6 Ziffern aus Ihrer Authenticator-App – oder einer Ihrer Ersatzcodes.</small>
+        </div>
         <p class="formular__hinweis login__modus" id="modus-hinweis" hidden></p>
         <p class="formular__status" role="alert" data-art="fehler"></p>
         <div><button class="knopf knopf--voll" type="submit">Anmelden</button></div>
@@ -77,7 +82,9 @@ const zugaenge = demo
           const daten = new FormData(formular);
           knopf.disabled = true;
           zeige('Wird geprüft …', 'ok');
-          const a = await api('anmelden', { nummer: String(daten.get('kundennummer') ?? ''), passwort: String(daten.get('passwort') ?? '') });
+          const codeFeld = formular.querySelector<HTMLElement>('#l-code-feld')!;
+          const codeEl = formular.querySelector<HTMLInputElement>('#l-code')!;
+          const a = await api('anmelden', { nummer: String(daten.get('kundennummer') ?? ''), passwort: String(daten.get('passwort') ?? ''), code: codeFeld.hidden ? '' : codeEl.value });
           knopf.disabled = false;
           if (a.json?.ok) {
             sessionStorage.setItem('hadie-modus', 'server');
@@ -85,6 +92,15 @@ const zugaenge = demo
             location.assign(ZIEL[a.json.rolle as keyof typeof ZIEL][1]);
           } else if (a.netz) zeige('Keine Verbindung zum Server. Bitte prüfen Sie Ihre Internetverbindung.');
           else if (a.json?.grund === 'gesperrt') zeige('Zu viele Fehlversuche. Bitte warten Sie 15 Minuten oder rufen Sie uns an.');
+          else if (a.json?.grund === 'zweiter-faktor') {
+            codeFeld.hidden = false;
+            zeige('Ihr Zugang ist zusätzlich geschützt. Bitte geben Sie den Code aus Ihrer Authenticator-App ein.', 'ok');
+            codeEl.focus();
+          } else if (a.json?.grund === 'code') {
+            zeige('Der Code stimmt nicht oder ist abgelaufen. Bitte nehmen Sie den aktuellen Code aus der App.');
+            codeEl.value = '';
+            codeEl.focus();
+          }
           else if (a.json?.grund === 'ungueltig') {
             zeige('Nummer oder Passwort stimmen nicht. Bitte prüfen Sie Ihre Eingabe.');
             formular.querySelector<HTMLInputElement>('#l-pw')!.value = '';

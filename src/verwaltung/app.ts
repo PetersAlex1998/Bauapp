@@ -5,7 +5,7 @@
  * Funktion, die fertige Elemente zurückgibt. Listen und Formulare
  * entstehen aus dem Datenmodell (schema.ts).
  */
-import { istAdmin, modus } from './cloud';
+import { hatZweiFaktor, istAdmin, modus } from './cloud';
 import { alle, beiAenderung, beiSicherung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
 import { ansichtBeschreibung, ansichtId, ansichtWahl, arbeitUebergeben, ds, ich, objektIdVon, offeneArbeit, setzeAnsicht, sichtbar, sichtbareObjektIds, standardZustaendig, unverteiltZuweisen } from './ansicht';
@@ -298,6 +298,7 @@ function cockpit(): HTMLElement {
 
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Cockpit'), h('p', {}, new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), ' · ', ansichtBeschreibung())),
+    modus() === 'server' && !hatZweiFaktor() && h('p', { class: 'vw-warnung' }, h('strong', {}, 'Sicherheit: '), 'Ihr Zugang ist nur mit Passwort geschützt. ', h('a', { href: '#/konten' }, 'Zwei-Faktor-Anmeldung jetzt einrichten'), ' (2 Minuten, mit einer App auf dem Handy).'),
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(String(objekte.length), 'Objekte', '#/liste/objekte'),
       kennzahl(`${einheiten.length - leer}/${einheiten.length}`, leer ? `vermietet · ${leer} leer` : 'Einheiten vermietet', '#/mieten'),
