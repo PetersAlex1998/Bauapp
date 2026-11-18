@@ -10,6 +10,9 @@ import { alle, finde, speichere } from './speicher';
 import qrcode from 'qrcode-generator';
 import { api, hatZweiFaktor, istAdmin, modus } from './cloud';
 import { formular, h, hinweis, marke, routen, zeichne } from './app';
+import { bogen, briefInfo, gruss } from './ansichten2';
+import { druckeBlatt } from './druck';
+import { ich } from './ansicht';
 
 type Konto = { nummer: string; rolle: 'verwaltung' | 'kunde'; kundeId: string | null; angelegt: number; letzterLogin: number | null; admin?: boolean; zweiFaktor?: boolean };
 let konten: Konto[] | null = null;
@@ -47,13 +50,43 @@ function fenster(titel: string, inhalt: Node[], knoepfe: Node[]): HTMLDialogElem
 }
 const feld = (label: string, el: HTMLElement, breit = true, hilfe = '') => h('div', { class: `feld ${breit ? 'feld--breit' : ''}` }, h('label', {}, label), el, hilfe && h('small', {}, hilfe));
 
+type Empfaenger = { name?: string; strasse?: string; ort?: string; kunde?: boolean };
+
+/** Zugangsdaten als Brief im Briefbogen (zum Ausdrucken oder als PDF) */
+function zugangsbrief(nummer: string, passwort: string, an: Empfaenger): HTMLElement {
+  const kunde = an.kunde !== false;
+  const adresse = 'www.hadie-immobilien.de/kundenlogin/';
+  return bogen([an.name || 'Persönlich', an.strasse, an.ort], kunde ? 'Ihre Zugangsdaten zum Kundenbereich' : 'Ihre Zugangsdaten zum Verwaltungstool',
+    briefInfo(['Benutzer', nummer]),
+    h('p', {}, an.name ? `Guten Tag ${an.name},` : 'Guten Tag,'),
+    h('p', {}, kunde
+      ? 'für Sie ist ein persönlicher Zugang zu unserem Kundenbereich eingerichtet. Dort sehen Sie jederzeit Ihre Objekte, Abrechnungen und Rechnungen und können uns Anliegen direkt melden.'
+      : 'für Sie ist ein persönlicher Zugang zu unserem Verwaltungstool eingerichtet.'),
+    h('table', { class: 'vw-tabelle din__zugang' }, h('tbody', {},
+      h('tr', {}, h('th', {}, 'Anmeldung unter'), h('td', {}, adresse)),
+      h('tr', {}, h('th', {}, kunde ? 'Kundennummer' : 'Benutzername'), h('td', {}, h('strong', {}, nummer))),
+      h('tr', {}, h('th', {}, 'Start-Passwort'), h('td', {}, h('strong', { style: 'font-family:monospace;font-size:11pt' }, passwort))))),
+    h('p', {}, 'Bitte ändern Sie das Passwort nach der ersten Anmeldung und bewahren Sie dieses Schreiben sicher auf oder vernichten Sie es. Geben Sie Ihre Zugangsdaten nicht an Dritte weiter.'),
+    h('p', {}, 'Bei Fragen erreichen Sie uns gern telefonisch oder per E-Mail.'),
+    ...gruss());
+}
+
 /** Zeigt Zugangsdaten genau einmal an. */
-function zeigeZugang(nummer: string, passwort: string, titel = 'Zugang bereit') {
+function zeigeZugang(nummer: string, passwort: string, titel = 'Zugang bereit', an: Empfaenger = {}) {
   const kopieren = h('button', { type: 'button', class: 'vw-knopf', onclick: async () => { try { await navigator.clipboard.writeText(`Nummer: ${nummer}\nPasswort: ${passwort}`); kopieren.textContent = 'Kopiert ✓'; } catch { kopieren.textContent = 'Bitte von Hand kopieren'; } } }, 'Kopieren');
+  const drucken = h('button', { type: 'button', class: 'vw-knopf', onclick: () => druckeBlatt(zugangsbrief(nummer, passwort, an)) }, 'Als Brief drucken / PDF');
   const d = fenster(titel, [
     h('p', { class: 'feld--breit' }, 'Geben Sie diese Zugangsdaten sicher weiter (nicht per E-Mail im Klartext, wenn es sich vermeiden lässt). Das Passwort wird nur jetzt angezeigt – danach kann es nur zurückgesetzt werden.'),
     h('dl', { class: 'vw-info feld--breit' }, h('dt', {}, 'Nummer'), h('dd', {}, h('strong', {}, nummer)), h('dt', {}, 'Passwort'), h('dd', {}, h('strong', { style: 'font-family:monospace;font-size:1.1rem' }, passwort))),
-  ], [kopieren, h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: () => d.close() }, 'Fertig')]);
+  ], [kopieren, drucken, h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: () => d.close() }, 'Fertig')]);
+}
+
+/** Empfänger eines Zugangs aus Kunden- oder Mitarbeiterdaten */
+function empfaengerVon(nummer: string, kundeId?: string): Empfaenger {
+  const k = kundeId ? finde('kunden', kundeId) : undefined;
+  if (k) return { name: k.name, strasse: k.strasse, ort: k.ort, kunde: true };
+  const m = alle('mitarbeiter').find((x) => String(x.nummer ?? '').toUpperCase() === nummer.toUpperCase());
+  return m ? { name: m.name, kunde: false } : { kunde: !nummer.toUpperCase().startsWith('V-') };
 }
 
 function neuesKonto() {
@@ -91,7 +124,7 @@ function neuesKonto() {
     if (!kunden) speichere('mitarbeiter', { id: person.value, nummer: n });
     konten = null;
     d.close();
-    zeigeZugang(n, passwort.value);
+    zeigeZugang(n, passwort.value, 'Zugang bereit', empfaengerVon(n, kunden ? person.value : ''));
   } }, 'Zugang anlegen')]);
 }
 
@@ -102,7 +135,7 @@ function zuruecksetzen(k: Konto) {
     [h('button', { type: 'button', class: 'vw-knopf', onclick: () => d.close() }, 'Abbrechen'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: async () => {
       const a = await api('konto-setzen', { nummer: k.nummer, passwort: pw.value, rolle: k.rolle, kundeId: k.kundeId ?? '' });
       if (!a.json?.ok) { fehler.textContent = a.json?.fehler || 'Das Passwort konnte nicht gesetzt werden.'; return; }
-      d.close(); zeigeZugang(k.nummer, pw.value, 'Neues Passwort');
+      d.close(); zeigeZugang(k.nummer, pw.value, 'Neues Passwort', empfaengerVon(k.nummer, k.kundeId ?? undefined));
     } }, 'Zurücksetzen')]);
 }
 
@@ -165,7 +198,7 @@ function mitarbeiterAnlegen() {
     speichere('mitarbeiter', { name: name.value.trim(), rolle: rolle.value, kuerzel: kuerzel.value.trim(), telefon: telefon.value.trim(), email: email.value.trim(), nummer: n, aktiv: true });
     konten = null;
     d.close();
-    zeigeZugang(n, passwort.value, 'Mitarbeiter angelegt');
+    zeigeZugang(n, passwort.value, 'Mitarbeiter angelegt', { name: name.value.trim(), kunde: false });
   } }, 'Anlegen')]);
   name.focus();
 }
@@ -202,13 +235,25 @@ async function zweiFaktorEinrichten() {
   code.focus();
 }
 
+/** Ersatzcodes als persönliches Schreiben im Briefbogen */
+function ersatzbrief(codes: string[]): HTMLElement {
+  const m = ich();
+  return bogen([m?.name || 'Persönlich', 'Persönlich / vertraulich'], 'Ihre Ersatzcodes für die Zwei-Faktor-Anmeldung',
+    m?.nummer ? briefInfo(['Benutzer', m.nummer]) : null,
+    h('p', {}, m?.name ? `Guten Tag ${m.name},` : 'Guten Tag,'),
+    h('p', {}, 'die Zwei-Faktor-Anmeldung für Ihren Zugang ist aktiv. Falls Ihr Handy verloren geht, melden Sie sich mit einem der folgenden Codes an. Jeder Code funktioniert genau einmal.'),
+    h('ul', { class: 'din__codes' }, codes.map((c) => h('li', {}, c))),
+    h('p', {}, 'Bitte bewahren Sie dieses Schreiben getrennt von Ihrem Handy und unter Verschluss auf. Wenn Sie alle Codes verbraucht haben oder das Schreiben verloren geht, richten Sie die Zwei-Faktor-Anmeldung neu ein.'),
+    ...gruss());
+}
+
 function zeigeErsatzcodes(codes: string[]) {
   const text = `HaDie-Immobilien – Ersatzcodes für die Zwei-Faktor-Anmeldung\nJeder Code funktioniert genau einmal.\n\n${codes.join('\n')}`;
   const kopieren = h('button', { type: 'button', class: 'vw-knopf', onclick: async () => { try { await navigator.clipboard.writeText(text); kopieren.textContent = 'Kopiert ✓'; } catch { kopieren.textContent = 'Bitte abschreiben'; } } }, 'Kopieren');
   const d = fenster('Fertig – Ihre Ersatzcodes', [
     h('p', { class: 'feld--breit' }, 'Die Zwei-Faktor-Anmeldung ist aktiv. Wenn Ihr Handy verloren geht, melden Sie sich mit einem dieser Codes an. ', h('strong', {}, 'Bewahren Sie sie getrennt vom Handy auf'), ' (ausdrucken oder im Passwort-Manager). Sie werden nur jetzt angezeigt.'),
     h('ul', { class: 'feld--breit', style: 'columns:2;list-style:none;padding:0;margin:0;font-family:monospace;font-size:1.05rem;line-height:1.9' }, codes.map((c) => h('li', {}, c))),
-  ], [kopieren, h('button', { type: 'button', class: 'vw-knopf', onclick: () => window.print() }, 'Drucken'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: () => d.close() }, 'Ich habe sie gesichert')]);
+  ], [kopieren, h('button', { type: 'button', class: 'vw-knopf', onclick: () => druckeBlatt(ersatzbrief(codes)) }, 'Als Brief drucken / PDF'), h('button', { type: 'button', class: 'vw-knopf vw-knopf--voll', onclick: () => d.close() }, 'Ich habe sie gesichert')]);
 }
 
 function zweiFaktorAus() {

@@ -5,6 +5,7 @@
  * Funktion, die fertige Elemente zurückgibt. Listen und Formulare
  * entstehen aus dem Datenmodell (schema.ts).
  */
+import { druckrahmen } from './druck';
 import { hatZweiFaktor, istAdmin, modus } from './cloud';
 import { alle, beiAenderung, beiSicherung, ersetze, exportiere, finde, heute, importiere, istLeer, loesche, speichere, type Satz } from './speicher';
 import { ARTEN, KREISE, abhaengige, verweise, type Art, type Feld } from './schema';
@@ -676,6 +677,7 @@ export function zeichne() {
         h('button', { type: 'button', onclick: () => { setzeAnsicht('alle'); zeichne(); } }, 'Alle anzeigen'))
     : null;
   buehne.replaceChildren(...(band ? [band] : []), ansicht());
+  druckrahmen(buehne, 'Verwaltung');
   window.scrollTo(0, y);
   const hier = location.hash || '#/';
   navEl.querySelectorAll('a').forEach((a) => {

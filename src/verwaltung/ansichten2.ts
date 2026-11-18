@@ -68,6 +68,9 @@ export function bogen(empfaenger: (string | undefined)[], betreff: string, ...in
     h('div', { class: 'din__marke din__marke--falz1', 'aria-hidden': 'true' }),
     h('div', { class: 'din__marke din__marke--loch', 'aria-hidden': 'true' }),
     h('div', { class: 'din__marke din__marke--falz2', 'aria-hidden': 'true' }),
+    // Kopfzeile ab Seite 2 (wiederholt sich beim Drucken; auf Seite 1 vom Briefkopf verdeckt)
+    h('div', { class: 'din__folgekopf', 'aria-hidden': 'true' }, h('span', {}, a.name), h('span', {}, betreff)),
+    h('div', { class: 'din__deckel', 'aria-hidden': 'true' }),
     h('header', { class: 'din__kopf' },
       a.logo ? h('img', { class: 'din__logo', src: a.logo, alt: a.name ?? 'Logo' }) : h('p', { class: 'din__firma' }, a.name)),
     h('div', { class: 'din__anschriftfeld' },
@@ -76,6 +79,7 @@ export function bogen(empfaenger: (string | undefined)[], betreff: string, ...in
     h('dl', { class: 'din__info' }, zeilen.filter(([, w]) => w).map(([l, w]) => [h('dt', {}, l), h('dd', {}, w!)])),
     // Tabelle nur fürs Drucken: der leere Tabellenfuß reserviert auf jeder Seite Platz für die Fußzeile
     h('table', { class: 'din__seiten', role: 'presentation' },
+      h('thead', {}, h('tr', {}, h('td', { class: 'din__oben' }))),
       h('tbody', {}, h('tr', {}, h('td', {}, h('div', { class: 'din__text' }, h('h2', { class: 'din__betreff' }, betreff), ...text)))),
       h('tfoot', {}, h('tr', {}, h('td', { class: 'din__platz' })))),
     h('footer', { class: 'din__fuss' },

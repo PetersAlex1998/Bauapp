@@ -7,6 +7,7 @@
  * interne Notizen erhält der Browser nie. Der Kunde kann Meldungen anlegen,
  * sonst nichts ändern.
  */
+import { druckrahmen } from './druck';
 import { alle, finde, heute, ladeVomServer } from './speicher';
 import { api } from './cloud';
 import { positionen, rechnungSumme, zahl } from './rechnen';
@@ -155,7 +156,7 @@ function ansicht(): HTMLElement {
     liste('Dokumente', alle('dokumente').map((x) => h('li', {}, h('div', { class: 'vw-punkte__zeile' }, marke(x.art ?? 'Dokument', 'grau'), h('span', { class: 'vw-punkte__text' }, h('strong', {}, x.titel), h('small', { class: 'vw-block' }, `${objName(x.objektId)} · ${datum(x.datum)}`))))), 'Keine Dokumente hinterlegt. Auf Anfrage senden wir Ihnen gern Unterlagen zu.'));
 }
 
-function zeichne() { wurzelEl.replaceChildren(ansicht()); }
+function zeichne() { wurzelEl.replaceChildren(ansicht()); druckrahmen(wurzelEl, 'Ihr Kundenbereich – Übersicht', true); }
 
 export function starteKunde(wurzel: HTMLElement, nutzerNummer: string, abmelden: () => void) {
   wurzelEl = wurzel;
