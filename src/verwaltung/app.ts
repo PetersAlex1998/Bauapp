@@ -565,7 +565,9 @@ function daten(): HTMLElement {
   const datei = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr-only', id: 'vw-import', onchange: async (e: Event) => {
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
-    if (!confirm('Die Sicherung ersetzt alle Daten in diesem Browser. Fortfahren?')) return;
+    if (!confirm(modus() === 'server'
+      ? 'Die Sicherung ersetzt ALLE Daten in der Datenbank – für alle Mitarbeiter. Alles, was nach dieser Sicherung eingetragen wurde, geht verloren. Fortfahren?'
+      : 'Die Sicherung ersetzt alle Daten in diesem Browser. Fortfahren?')) { (e.target as HTMLInputElement).value = ''; return; }
     try { importiere(await f.text()); hinweis('Sicherung eingespielt'); } catch (fehler) { alert((fehler as Error).message || 'Die Datei konnte nicht gelesen werden.'); }
   } });
   const anzahl = Object.keys(ARTEN).reduce((s, k) => s + alle(k).length, 0);
@@ -575,7 +577,8 @@ function daten(): HTMLElement {
       h('h2', {}, 'Wo liegen die Daten?'),
       modus() === 'server'
         ? [h('p', {}, 'Die Daten liegen in der ', h('strong', {}, 'Datenbank auf Ihrem Webspace'), '. Jede Änderung wird sofort dorthin gespeichert; angemeldete Kolleginnen und Kollegen sehen sie nach kurzer Zeit. Der Browser hält die Daten nur im Arbeitsspeicher.'),
-           h('p', {}, h('strong', {}, 'Sicherung:'), ` Zusätzlich zur Datensicherung Ihres Hosters können Sie hier jederzeit eine Kopie herunterladen. Aktuell sind ${anzahl} Einträge gespeichert.`)]
+           h('p', {}, h('strong', {}, 'Sicherung:'), ` Jede Nacht wird automatisch eine verschlüsselte Sicherung angelegt und 30 Tage aufbewahrt (GitHub, Workflow „Nächtliche Datensicherung“). Zusätzlich können Sie hier jederzeit eine Kopie herunterladen. Aktuell sind ${anzahl} Einträge gespeichert.`),
+           h('p', {}, h('small', {}, 'Heruntergeladene Sicherungen enthalten personenbezogene Daten. Bewahren Sie sie geschützt auf und löschen Sie sie, wenn sie nicht mehr gebraucht werden.'))]
         : [h('p', {}, 'Dies ist der ', h('strong', {}, 'Demo-Modus'), ': Alle Eingaben werden ', h('strong', {}, 'nur im Browser dieses Geräts'), ' gespeichert, sind auf keinem anderen Gerät sichtbar und gehen verloren, wenn die Browserdaten gelöscht werden.'),
            h('p', {}, h('strong', {}, 'Sichern Sie deshalb regelmäßig.'), ` Aktuell sind ${anzahl} Einträge gespeichert.`)],
       h('div', { class: 'vw-reihe' },
@@ -584,7 +587,7 @@ function daten(): HTMLElement {
           document.body.append(a); a.click(); a.remove(); hinweis('Sicherung heruntergeladen');
         } }, 'Sicherung herunterladen'),
         h('label', { class: 'vw-knopf', for: 'vw-import' }, 'Sicherung einspielen'), datei)),
-    h('section', { class: 'vw-karte vw-text' },
+    modus() !== 'server' && h('section', { class: 'vw-karte vw-text' },
       h('h2', {}, 'Ausprobieren'),
       h('p', {}, 'Beispieldaten zeigen das Tool mit zwei erfundenen Objekten. Sie ersetzen die vorhandenen Daten.'),
       h('div', { class: 'vw-reihe' },

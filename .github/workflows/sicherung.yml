@@ -1,0 +1,48 @@
+name: Nächtliche Datensicherung
+
+# Holt jede Nacht alle Daten des Verwaltertools von STRATO, verschlüsselt sie
+# (AES-256, Schlüssel = Secret SICHERUNG_SCHLUESSEL) und bewahrt sie 30 Tage
+# als „Artifact“ dieses Laufs auf. Schlägt ein Lauf fehl, schickt GitHub eine E-Mail.
+# Wiederherstellen: siehe README, Abschnitt „Datensicherung“.
+on:
+  schedule:
+    - cron: '17 2 * * *' # täglich 02:17 UTC (03:17/04:17 Uhr deutscher Zeit)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sichern:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: https://www.hadie-immobilien.de
+    steps:
+      - name: Daten holen, prüfen und verschlüsseln
+        env:
+          SCHLUESSEL: ${{ secrets.SICHERUNG_SCHLUESSEL }}
+        run: |
+          set -euo pipefail
+          umask 077
+          if [ -z "${SCHLUESSEL:-}" ]; then echo "::error::Secret SICHERUNG_SCHLUESSEL fehlt."; exit 1; fi
+          curl -fsS --retry 3 --retry-delay 20 -X POST -H "X-HaDie-Sicherung: $SCHLUESSEL" "$SITE_URL/api/?a=sicherung" -o roh.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('roh.json'))
+          assert d.get('format') == 'hadie-verwaltung', 'Unerwartetes Format'
+          n = sum(len(v) for v in (d.get('daten') or {}).values())
+          print(f"Gesichert: {n} Datensätze in {len(d.get('daten') or {})} Bereichen, {len(d.get('konten') or [])} Zugänge")
+          PY
+          name="hadie-sicherung-$(date -u +%Y-%m-%d)"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+          gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 -o "$name.json.gpg" roh.json 3<<<"$SCHLUESSEL"
+          shred -u roh.json
+          ls -l "$name.json.gpg"
+
+      - name: Verschlüsselte Sicherung aufbewahren (30 Tage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.json.gpg
+          retention-days: 30
+          if-no-files-found: error

@@ -30,7 +30,7 @@ project → Import an existing project“, dieses Repository und den gewünschte
   Livegang die Variable wieder löschen. Details: `netlify/edge-functions/vorschau-schutz.ts`.
 - **Suchmaschinen** sind per `X-Robots-Tag` ausgesperrt. Diese Zeile in `netlify.toml` vor dem
   echten Livegang entfernen.
-- Die Seite speichert keine Daten, hat keine Datenbank, kein Login und keine Fremdskripte.
+- Keine Fremdskripte. Logins und Daten des Verwaltertools liegen in der Datenbank bei STRATO (siehe unten).
 
 ## Inhalte ändern
 
@@ -87,19 +87,15 @@ Rechnungen an Kunden: Preisvereinbarungen je Objekt, monatlicher Rechnungslauf u
 liegen ebenfalls in `ansichten2.ts`. Rechnungsnummern (`RE-Jahr-0001`) werden erst beim Stellen vergeben.
 Das Tool erzeugt Rechnungen zum Drucken bzw. als PDF, keine elektronischen Rechnungen (XRechnung/ZUGFeRD).
 
-**Stand der Ausbaustufe:** Die Daten liegen im Browser des jeweiligen Geräts (localStorage),
-die Anmeldung wird nur im Browser geprüft. Es gibt also noch keinen Server, keine gemeinsame
-Datenbasis für mehrere Geräte und keinen echten Zugriffsschutz. Für den Mehrbenutzer-Betrieb
-wird `speicher.ts` gegen eine Server-Anbindung getauscht; die übrigen Dateien bleiben gleich.
-Bis dahin regelmäßig über „Daten & Sicherung“ sichern.
+**Betrieb:** Auf STRATO liegen die Daten in der Datenbank (Server-Modus, echte Anmeldung, Zugriffsschutz
+je Rolle). Ohne Server – z. B. in der Netlify-Vorschau – läuft das Tool im Demo-Modus mit Daten nur im Browser.
 
-## Kunden-Login (Demo)
+## Kunden-Login und Kundenbereich
 
-`/kundenlogin/` und `/kundenbereich/` sind eine **Vorschau ohne echte Anmeldung**. Die
-Zugangsdaten stehen in `src/data/site.ts` (`demoZugang`) und damit offen im Code der Seite;
-geprüft wird nur im Browser. Im Kundenbereich dürfen deshalb ausschließlich Beispieldaten
-stehen. Für echte Kundendaten braucht es einen Server mit Benutzerverwaltung (Anmeldung,
-verschlüsselte Passwörter, Zugriffsschutz für Dokumente).
+Eigentümer melden sich unter `/kundenlogin/` mit ihrer Kundennummer an (Zugänge legt die Verwaltung im
+Tool unter *Stammdaten → Zugänge* an). Der Server liefert nur die eigenen Objekte, Rechnungen, Meldungen,
+Arbeiten und Dokumente – keine Mieterdaten und keine internen Notizen. Ohne Server zeigt der Kundenbereich
+nur einen Demo-Hinweis (`demoZugang` in `src/data/site.ts` gilt nur dort).
 
 ## «Direkt anrufen»
 
@@ -114,7 +110,7 @@ Alles dazu steht in `src/scripts/bewegung.ts`; Tempo über `DAUER` und `EASE` am
 - Vollbild-Hero mit Parallax-Ebenen im 360°-Kreis (Scroll und Maus)
 - Bild, das sich beim Scrollen zur vollen Fläche öffnet (Startseite)
 - Text, der Wort für Wort aufhellt; Einblendungen aller Abschnitte
-- Cursor-Ring und „magnetische“ Buttons (nur mit Maus)
+- „magnetische“ Buttons (nur mit Maus)
 
 Besucher mit der Systemeinstellung „Bewegung reduzieren“ und Browser ohne JavaScript sehen die
 Seite vollständig, nur ohne Animation.
@@ -135,16 +131,16 @@ Vor dem Livegang:
 3. Domain in `astro.config.mjs` eintragen.
 4. Impressum und Datenschutzerklärung rechtlich prüfen lassen.
 
-## Kontaktformular
+## Kontaktformular und Schadensmeldung
 
-Eine statische Website kann selbst keine E-Mails versenden. Das Formular schickt die Daten per POST
-an die Adresse in `formularEndpoint` (`src/data/site.ts`). Geeignet sind z. B. ein kleines PHP-Skript
-beim eigenen Hoster oder ein Formulardienst mit Serverstandort in der EU. Solange das Feld leer ist,
-bleibt das Formular sichtbar, aber deaktiviert. Der gewählte Dienst gehört in die Datenschutzerklärung.
+Beide Formulare (`/kontakt/`, `/schaden-melden/`) senden an die eigene Schnittstelle `/api/?a=anfrage`.
+Die Nachricht wird in der Datenbank gespeichert (Tool → *Überblick → Website-Anfragen*, mit Kachel im Cockpit)
+und zusätzlich per E-Mail an `KONTAKT_EMAIL` aus `.github/workflows/strato.yml` gemeldet. Spam-Falle und
+Mengenbremse (5 Nachrichten je Absender in 15 Minuten) sind eingebaut.
 
 ## Datenschutz-Stand der Technik
 
-- keine Cookies, kein Tracking, daher kein Cookie-Banner nötig
+- kein Tracking; ein technisch notwendiges Cookie nur nach dem Login, daher kein Cookie-Banner nötig
 - Schriften (Fraunces, Instrument Sans) werden lokal ausgeliefert
 - keine eingebetteten Karten oder Dienste Dritter; die Karte ist nur verlinkt
 
@@ -188,3 +184,25 @@ npm run build && npm run og && npm run build
 ```
 
 Fehlt ein Bild, nimmt die Seite automatisch `public/og-bild.png`.
+
+## Datensicherung (automatisch, jede Nacht)
+
+Der Workflow `.github/workflows/sicherung.yml` holt jede Nacht alle Daten des Verwaltertools über
+`/api/?a=sicherung`, verschlüsselt sie mit AES-256 und bewahrt sie **30 Tage** als Artifact des jeweiligen
+Laufs auf (*Actions → Nächtliche Datensicherung → Lauf → Artifacts*). Schlägt ein Lauf fehl, schickt GitHub
+eine E-Mail. Von Hand starten: *Actions → Nächtliche Datensicherung → Run workflow*.
+
+**Einrichten (einmalig):** Secret `SICHERUNG_SCHLUESSEL` anlegen – ein langer Zufallswert (mind. 32 Zeichen),
+den Sie **zusätzlich an einem sicheren Ort aufbewahren** (Passwort-Manager). Ohne ihn lassen sich die
+Sicherungen nicht mehr öffnen. Danach einmal veröffentlichen (Push), damit der Server den Prüfwert kennt.
+
+**Wiederherstellen:**
+1. Gewünschte Sicherung (`hadie-sicherung-JJJJ-MM-TT`) herunterladen und entpacken.
+2. Entschlüsseln, z. B. mit GnuPG: `gpg -d -o sicherung.json hadie-sicherung-JJJJ-MM-TT.json.gpg`
+   (fragt nach dem Schlüssel). Unter Windows geht das mit Gpg4win, auf dem Mac mit GPG Suite.
+3. Im Tool *Stammdaten → Daten & Sicherung → Sicherung einspielen* und `sicherung.json` wählen.
+   Das ersetzt **alle** Daten in der Datenbank.
+4. Die entschlüsselte Datei danach löschen – sie enthält personenbezogene Daten.
+
+Die Sicherung enthält auch die Zugänge (nur Passwort-Prüfwerte, keine Klartext-Passwörter). Diese werden beim
+Einspielen nicht verändert; fehlende Zugänge legen Sie im Tool neu an.

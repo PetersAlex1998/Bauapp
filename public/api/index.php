@@ -390,6 +390,27 @@ switch ($aktion) {
         antwort(200, ['ok' => true]);
     }
 
+    case 'sicherung': {
+        // Datensicherung für den nächtlichen GitHub-Lauf. Nur mit dem geheimen Schlüssel
+        // (Kopfzeile X-HaDie-Sicherung); in config.php steht nur dessen SHA-256-Prüfwert.
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') fehler(405, 'Nur POST erlaubt.');
+        $soll = strtolower((string)($konfig['sicherung_hash'] ?? ''));
+        if (!preg_match('/^[a-f0-9]{64}$/', $soll)) fehler(403, 'Die Datensicherung ist nicht eingerichtet.');
+        $ip = 'sicherung:' . substr(hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 32);
+        if (versuche($ip) >= 5) fehler(429, 'Zu viele Versuche. Bitte warten Sie 15 Minuten.');
+        $schluessel = (string)($_SERVER['HTTP_X_HADIE_SICHERUNG'] ?? '');
+        if (strlen($schluessel) < 20 || !hash_equals($soll, hash('sha256', $schluessel))) { versuchMerken($ip); fehler(403, 'Kein Zugriff.'); }
+        $daten = [];
+        foreach (alleZeilen() as $z) $daten[$z['t']][] = $z['d'];
+        $konten = abfrage('SELECT nummer, passwort, rolle, kunde_id, angelegt, letzter_login FROM hadie_konto ORDER BY nummer')->fetchAll();
+        header('Cache-Control: no-store');
+        antwort(200, [
+            'format' => 'hadie-verwaltung', 'version' => 1, 'stand' => date('c'), 'quelle' => 'nächtliche Sicherung',
+            'daten' => $daten === [] ? new stdClass() : $daten,
+            'konten' => $konten,
+        ]);
+    }
+
     case 'konten': {
         verwaltung();
         $l = [];
