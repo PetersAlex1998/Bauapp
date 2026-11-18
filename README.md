@@ -120,7 +120,7 @@ Seite vollständig, nur ohne Animation.
 **Fotos:** liegen in `src/assets/bilder/` und werden beim Bauen automatisch verkleinert und als AVIF/WebP
 ausgeliefert. Startseite (Abschnitt „Mehr als eine Hausverwaltung“): `objekt-aussen.jpg` in `src/pages/index.astro`.
 Leistungsseiten: Feld `bilder` des jeweiligen Bereichs in `src/data/leistungen.ts` (derzeit nur
-„Renovierung & Sanierung“). Hausnummer, Praxisschild und Logo sind im Außenfoto entfernt.
+„Renovierung & Sanierung“).
 
 ## Platzhalter
 
