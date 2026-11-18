@@ -22,20 +22,22 @@ export const nurFuerAdmin = (titel: string) => h('div', { class: 'vw-stapel' },
 async function logoLesen(datei: File): Promise<string> {
   if (!/^image\/(png|jpeg|webp|svg\+xml|gif)$/.test(datei.type)) throw new Error('Bitte eine Bilddatei wählen (PNG, JPG, WebP oder SVG).');
   if (datei.size > 8 * 1024 * 1024) throw new Error('Die Datei ist größer als 8 MB.');
-  const url = URL.createObjectURL(datei);
-  try {
-    const bild = await new Promise<HTMLImageElement>((ok, fehler) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fehler(new Error('Das Bild konnte nicht gelesen werden.')); i.src = url; });
-    const w0 = bild.naturalWidth || 800, h0 = bild.naturalHeight || 300;
-    const f = Math.min(1, 800 / w0, 300 / h0);
-    const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(w0 * f)); c.height = Math.max(1, Math.round(h0 * f));
-    c.getContext('2d')!.drawImage(bild, 0, 0, c.width, c.height);
-    const daten = c.toDataURL('image/png');
-    if (daten.length > 700_000) throw new Error('Das Logo ist auch verkleinert noch sehr groß. Bitte eine einfachere Datei verwenden (z. B. PNG mit wenigen Farben).');
-    return daten;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  // Als data:-URL einlesen – blob:-Adressen sperrt die Sicherheitsregel der Website (CSP)
+  const quelle = await new Promise<string>((ok, fehler) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result));
+    r.onerror = () => fehler(new Error('Die Datei konnte nicht gelesen werden.'));
+    r.readAsDataURL(datei);
+  });
+  const bild = await new Promise<HTMLImageElement>((ok, fehler) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fehler(new Error('Das Bild konnte nicht gelesen werden. Bitte als PNG oder JPG versuchen.')); i.src = quelle; });
+  const w0 = bild.naturalWidth || 800, h0 = bild.naturalHeight || 300;
+  const f = Math.min(1, 800 / w0, 300 / h0);
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w0 * f)); c.height = Math.max(1, Math.round(h0 * f));
+  c.getContext('2d')!.drawImage(bild, 0, 0, c.width, c.height);
+  const daten = c.toDataURL('image/png');
+  if (daten.length > 700_000) throw new Error('Das Logo ist auch verkleinert noch sehr groß. Bitte eine einfachere Datei verwenden (z. B. PNG mit wenigen Farben).');
+  return daten;
 }
 
 function zeile(label: string, wert?: string) {
