@@ -2,10 +2,15 @@
 import Seite from '../layouts/Seite.astro';
 import Platzhalter from '../components/Platzhalter.astro';
 import { site, demoZugang, verwaltungZugang } from '../data/site';
-const zugaenge = [
-  { nr: verwaltungZugang.nummer, pw: verwaltungZugang.passwort, rolle: 'verwaltung' },
-  { nr: demoZugang.kundennummer, pw: demoZugang.passwort, rolle: 'kunde' },
-];
+// Demo-Zugänge nur beim Entwickeln oder in einem ausdrücklichen Demo-Build (HADIE_DEMO=1).
+// In der echten Website stehen sie nicht im Quelltext.
+const demo = import.meta.env.DEV || process.env.HADIE_DEMO === '1';
+const zugaenge = demo
+  ? [
+      { nr: verwaltungZugang.nummer, pw: verwaltungZugang.passwort, rolle: 'verwaltung' },
+      { nr: demoZugang.kundennummer, pw: demoZugang.passwort, rolle: 'kunde' },
+    ]
+  : [];
 ---
 <Seite titel="Kunden-Login" beschreibung={`Anmeldung zum Kundenbereich von ${site.name}.`} noindex>
   <section class="seitenkopf dunkel login">
@@ -30,9 +35,11 @@ const zugaenge = [
         <p class="formular__status" role="alert" data-art="fehler"></p>
         <div><button class="knopf knopf--voll" type="submit">Anmelden</button></div>
         <p class="formular__hinweis">Zugangsdaten vergessen? Rufen Sie uns an: <a href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a></p>
-        <Platzhalter>
-          <p><strong>Demo-Zugang.</strong> Der Kundenbereich ist eine Vorschau mit Beispieldaten und noch keine echte Anmeldung. Kunde: {demoZugang.kundennummer} · Verwaltung: {verwaltungZugang.nummer} · Passwort jeweils {demoZugang.passwort}</p>
-        </Platzhalter>
+        {demo && (
+          <Platzhalter>
+            <p><strong>Demo-Zugang.</strong> Kunde: {demoZugang.kundennummer} · Verwaltung: {verwaltungZugang.nummer} · Passwort jeweils {demoZugang.passwort}</p>
+          </Platzhalter>
+        )}
         <noscript><p class="formular__hinweis">Für die Anmeldung muss JavaScript im Browser aktiviert sein.</p></noscript>
       </form>
     </div>
@@ -84,6 +91,12 @@ const zugaenge = [
             formular.querySelector<HTMLInputElement>('#l-nr')!.focus();
           } else zeige(a.json?.fehler || 'Die Anmeldung ist gerade nicht möglich. Bitte versuchen Sie es später erneut.');
         });
+      } else if (!demoZugaenge.length) {
+        // Echte Website: ohne erreichbaren Server keine Anmeldung (kein Demo-Ersatz).
+        knopf.disabled = true;
+        zeigeHinweis(server.art === 'netzfehler'
+          ? '<strong>Keine Verbindung zum Server.</strong> Bitte prüfen Sie Ihre Internetverbindung und laden Sie die Seite neu.'
+          : '<strong>Die Anmeldung ist gerade nicht möglich.</strong> Bitte versuchen Sie es später erneut oder rufen Sie uns an.');
       } else if (server.art === 'kein-server' || server.art === 'netzfehler') {
         // Demo-Modus: keine echten Daten, alles bleibt in diesem Browser.
         if (server.art === 'netzfehler') zeigeHinweis('Keine Verbindung zum Server. Es gilt der Demo-Modus.');
