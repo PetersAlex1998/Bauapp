@@ -1839,3 +1839,171 @@ a.vw-kennzahl:hover {
     background: #fff !important;
   }
 }
+
+/* ==========================================================================
+   BRIEFMAPPE (z. B. Betriebskostenabrechnung): Deckblatt nach DIN 5008 +
+   Folgeblätter im gleichen Design. Jede Abrechnung beginnt auf neuer Seite.
+   ========================================================================== */
+.din-mappe {
+  display: grid;
+  gap: 14mm;
+}
+.nk-satz {
+  display: grid;
+  gap: 6mm;
+}
+.nk-satz__leiste {
+  max-width: 210mm;
+  width: 100%;
+  margin: 0 auto;
+}
+.din-folge {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 20mm 20mm 20mm 25mm;
+  background: #fff;
+  color: #111;
+  font-family: 'Instrument Sans Variable', Arial, Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  box-shadow: 0 0 0 1px var(--linie), 0 24px 50px -30px rgba(18, 38, 63, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+.din-folge__kopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8mm;
+  padding-bottom: 4mm;
+  margin-bottom: 8mm;
+  border-bottom: 0.2mm solid #c9d0d8;
+}
+.vw .din-folge p {
+  margin: 0;
+}
+.din-folge__titel {
+  font-weight: 700;
+  font-size: 11pt;
+}
+.din-folge__unter,
+.din-folge__blatt {
+  font-size: 8pt;
+  color: #555;
+}
+.din-folge__rechts {
+  text-align: right;
+  display: grid;
+  justify-items: end;
+  gap: 1.5mm;
+}
+.din-folge__logo {
+  max-height: 11mm;
+  max-width: 45mm;
+  width: auto;
+  height: auto;
+}
+.din-folge__firma {
+  font-family: var(--serif, Georgia, serif);
+  font-size: 12pt;
+  color: #12263f;
+}
+.vw .din-folge h3 {
+  font-family: inherit;
+  font-size: 10.5pt;
+  font-weight: 700;
+  margin: 2mm 0 2mm;
+}
+.vw .din-folge .vw-brief__tabelle {
+  margin-bottom: 6mm;
+}
+.vw .din-folge .vw-brief__tabelle th,
+.vw .din-folge .vw-brief__tabelle td {
+  font-size: 9.5pt;
+  padding: 1.6mm 2mm;
+}
+.vw .din-folge .vw-brief__tabelle th:first-child,
+.vw .din-folge .vw-brief__tabelle td:first-child { padding-left: 0; }
+.vw .din-folge .vw-brief__tabelle th:last-child,
+.vw .din-folge .vw-brief__tabelle td:last-child { padding-right: 0; }
+.vw .din-folge .vw-brief__klein {
+  font-size: 8.5pt;
+  color: #555;
+}
+.din-folge__fuss {
+  margin-top: auto;
+  padding-top: 2.5mm;
+  border-top: 0.2mm solid #c9d0d8;
+  font-size: 6.8pt;
+  color: #555;
+}
+.vw .vw-brief.din .nk-ergebnis {
+  margin: 2mm 0 6mm;
+}
+.vw .vw-brief.din .nk-anlage {
+  margin-top: 8mm;
+  font-size: 8.5pt;
+  color: #555;
+}
+@media screen and (max-width: 60rem) {
+  .din-folge { zoom: 0.45; }
+}
+@media print {
+  @page deckblatt {
+    size: A4;
+    margin: 0 0 8mm 0;
+    @bottom-right { content: none; }
+  }
+  @page folgeblatt {
+    size: A4;
+    margin: 20mm 0 12mm 0;
+    @bottom-right { content: none; }
+  }
+  .din-mappe {
+    display: block;
+  }
+  .din-mappe[data-druck] .nk-satz:not(.nk-aktiv) {
+    display: none !important;
+  }
+  .nk-satz {
+    display: block;
+  }
+  /* Deckblatt: immer genau ein Blatt, Fußzeile fest unten auf diesem Blatt */
+  .din-mappe .vw-brief.din {
+    page: deckblatt;
+    height: 289mm;
+    overflow: hidden;
+    break-after: page;
+    padding-bottom: 0;
+  }
+  .din-mappe .vw-brief.din .din__fuss {
+    position: absolute;
+    top: 271mm;
+    bottom: auto;
+    left: 25mm;
+  }
+  .din-mappe .din__seiten > tfoot {
+    display: none;
+  }
+  .din-folge {
+    page: folgeblatt;
+    width: 210mm;
+    min-height: 0;
+    height: auto;
+    padding: 0 20mm 0 25mm;
+    box-shadow: none;
+    zoom: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 262mm;
+    break-after: page;
+  }
+  .nk-satz:last-child .din-folge {
+    break-after: auto;
+  }
+  .din-folge__fuss {
+    margin-top: auto;
+  }
+}

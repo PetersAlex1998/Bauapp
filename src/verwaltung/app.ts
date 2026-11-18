@@ -529,7 +529,7 @@ function nebenkostenSeite(objektId?: string): HTMLElement {
     h('button', { class: 'vw-knopf', 'aria-label': 'Jahr vor', onclick: () => { nkJahr++; zeichne(); } }, '→'),
     h('span', { class: 'vw-platz' }),
     h('button', { class: 'vw-knopf', onclick: () => formular('kosten', { objektId: id, datum: `${nkJahr}-12-31` }) }, '+ Beleg'),
-    h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => window.print() }, 'Drucken / als PDF'));
+    h('a', { class: 'vw-knopf vw-knopf--voll', href: `#/nkbriefe/${id}/${nkJahr}` }, 'Abrechnungen an Mieter (Briefe)'));
   if (!r.kostenarten.length) return h('div', { class: 'vw-stapel' }, kopf, wahl, h('p', { class: 'vw-leer' }, `Für ${o.bezeichnung} gibt es im Jahr ${nkJahr} noch keine umlagefähigen Belege.`));
   return h('div', { class: 'vw-stapel' }, kopf, wahl,
     r.ohneFlaeche && h('p', { class: 'vw-warnung' }, 'Bei mindestens einer Einheit fehlt die Wohnfläche. Die Verteilung nach Fläche ist dadurch nicht korrekt.'),

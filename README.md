@@ -230,5 +230,6 @@ Briefkopf 45 mm mit Logo · Anschriftfeld 20 mm von links / 45 mm von oben, 85 �
 Zusatz- und Vermerkzone, max. 6 Anschriftzeilen) · Informationsblock ab 125 mm (Ansprechpartner, Telefon, E-Mail,
 Datum, je Brief z. B. Rechnungs- und Kundennummer) · Text ab ca. 98,5 mm, Ränder 25 mm links / 20 mm rechts ·
 Falzmarken 105 und 210 mm, Lochmarke 148,5 mm · Geschäftsangaben in der Fußzeile, ab Seite 2 „Seite x von y“.
+**Betriebskostenabrechnung** (Nebenkosten → „Abrechnungen an Mieter (Briefe)“, `ansichten9.ts`): je Mieter ein Deckblatt im Briefbogen (genau ein Blatt, Anschrift im Fenster) und ein Folgeblatt „Anlage“ im gleichen Design (`folgekopf()`/`folgefuss()`), jede Abrechnung auf neuer Seite; einzeln oder alle drucken.
 Drucken bzw. „Als PDF sichern“ mit Skalierung 100 % und ohne Kopf-/Fußzeilen des Browsers. Das PDF passt in
 Fensterumschläge DL/C5/C4 und kann bei E-Brief-Diensten (z. B. E-POST) hochgeladen werden.
