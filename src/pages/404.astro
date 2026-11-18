@@ -1,18 +1,40 @@
 ---
 import Seite from '../layouts/Seite.astro';
 import { site } from '../data/site';
+const wege = [
+  { href: '/leistungen/', titel: 'Leistungen', text: 'Verwalten, Betreuen, Erneuern, Entwickeln' },
+  { href: '/hausverwaltung/', titel: 'Einsatzgebiet', text: 'Alle Orte im Kreis Paderborn' },
+  { href: '/ratgeber/', titel: 'Ratgeber', text: 'Wissen für Eigentümer und Vermieter' },
+  { href: '/schaden-melden/', titel: 'Schaden melden', text: 'Für Mieter – auch ohne Login' },
+  { href: '/kundenlogin/', titel: 'Kunden-Login', text: 'Ihre Objekte, Rechnungen und Meldungen' },
+  { href: '/kontakt/', titel: 'Kontakt', text: `Anfrage oder Rückruf – Telefon ${site.telefon.anzeige}` },
+];
 ---
 <Seite titel="Seite nicht gefunden" beschreibung="Diese Seite gibt es nicht (mehr)." noindex>
-  <section class="seitenkopf dunkel" style="min-height:60vh;display:grid;align-items:center">
+  <section class="seitenkopf dunkel">
     <div class="rahmen">
       <p class="marke">Fehler 404</p>
       <h1>Hier haben wir uns einmal im Kreis gedreht.</h1>
-      <p class="lead leise">Die gesuchte Seite gibt es nicht oder nicht mehr. So kommen Sie weiter:</p>
+      <p class="lead leise">Die gesuchte Seite gibt es nicht oder nicht mehr. Vielleicht hat sich die Adresse geändert – einer dieser Wege führt sicher weiter.</p>
       <div class="knopfreihe">
         <a class="knopf knopf--voll" href="/">Zur Startseite</a>
-        <a class="knopf knopf--linie" href="/leistungen/">Leistungen</a>
-        <a class="knopf knopf--linie" href="/kontakt/">Kontakt</a>
+        <a class="knopf knopf--linie" href={`tel:${site.telefon.link}`}>{site.telefon.anzeige}</a>
       </div>
+    </div>
+  </section>
+  <section class="abschnitt">
+    <div class="rahmen">
+      <ul class="orte-liste orte-liste--drei">
+        {wege.map((w) => (
+          <li>
+            <a class="orte-karte" href={w.href}>
+              <h2>{w.titel}</h2>
+              <p class="leise">{w.text}</p>
+              <span class="pfeil-link" aria-hidden="true">Öffnen</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   </section>
 </Seite>

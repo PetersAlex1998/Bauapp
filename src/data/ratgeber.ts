@@ -182,6 +182,161 @@ export const artikel: Artikel[] = [
     ],
     passendeLeistung: { text: 'Renovierung bei Mieterwechsel', href: '/leistungen/renovierung-sanierung/' },
   },
+  {
+    slug: 'mieterhoehung-vergleichsmiete',
+    titel: 'Mieterhöhung: So geht es richtig',
+    seoTitel: 'Mieterhöhung auf die Vergleichsmiete: Fristen, Grenzen, Begründung',
+    beschreibung: 'Wann dürfen Vermieter die Miete erhöhen, um wie viel – und wie muss das Schreiben aussehen? Mieterhöhung nach § 558 BGB und nach Modernisierung erklärt.',
+    stand: '2026-11-18',
+    einleitung:
+      'Eine Mieterhöhung ist rechtlich anspruchsvoller, als viele denken. Schon ein Formfehler kann dazu führen, dass das Erhöhungsverlangen unwirksam ist. Die gute Nachricht: Wer die Regeln kennt, kann die Miete regelmäßig und sauber anpassen.',
+    abschnitte: [
+      {
+        titel: 'Der Normalfall: Erhöhung auf die ortsübliche Vergleichsmiete',
+        absaetze: [
+          'Der Vermieter kann die Zustimmung zu einer Erhöhung bis zur ortsüblichen Vergleichsmiete verlangen (§ 558 BGB). Das ist die Miete, die in der Gemeinde für vergleichbare Wohnungen – nach Art, Größe, Ausstattung, Beschaffenheit und Lage – in den letzten Jahren vereinbart wurde.',
+          'Haben Sie mit dem Mieter eine Staffel- oder Indexmiete vereinbart, gelten deren eigene Regeln; eine Erhöhung auf die Vergleichsmiete ist dann ausgeschlossen.',
+        ],
+      },
+      {
+        titel: 'Die Fristen',
+        liste: [
+          'Die Miete muss seit mindestens 15 Monaten unverändert sein, wenn die Erhöhung wirksam wird.',
+          'Das Erhöhungsverlangen darf frühestens ein Jahr nach der letzten Erhöhung gestellt werden.',
+          'Der Mieter hat bis zum Ende des zweiten Kalendermonats nach Zugang Zeit, zuzustimmen.',
+          'Stimmt er zu, gilt die neue Miete ab Beginn des dritten Kalendermonats nach Zugang.',
+        ],
+        absaetze: [
+          'Erhöhungen nach einer Modernisierung und wegen gestiegener Betriebskosten zählen bei diesen Fristen nicht mit.',
+        ],
+      },
+      {
+        titel: 'Die Grenze: Kappung',
+        absaetze: [
+          'Innerhalb von drei Jahren darf die Miete um höchstens 20 Prozent steigen – auch wenn die Vergleichsmiete höher liegt. In Gemeinden, in denen die Landesregierung eine angespannte Wohnungslage festgestellt hat, gilt eine Grenze von 15 Prozent. Welche Gemeinden das sind, regelt die jeweilige Landesverordnung; das sollte vor jeder Erhöhung geprüft werden.',
+        ],
+      },
+      {
+        titel: 'Das Schreiben',
+        absaetze: ['Das Erhöhungsverlangen muss in Textform erfolgen und begründet werden. Als Begründung kommen in Frage:'],
+        liste: [
+          'ein Mietspiegel, wenn es für die Gemeinde einen gibt',
+          'eine Auskunft aus einer Mietdatenbank',
+          'ein Gutachten eines öffentlich bestellten und vereidigten Sachverständigen',
+          'mindestens drei vergleichbare Wohnungen mit ihrer Miete',
+        ],
+      },
+      {
+        titel: 'Mieterhöhung nach Modernisierung',
+        absaetze: [
+          'Nach einer Modernisierung – etwa einer Wärmedämmung oder neuen Fenstern – darf der Vermieter die jährliche Miete um bis zu 8 Prozent der für die Wohnung aufgewendeten Kosten erhöhen (§ 559 BGB). Die monatliche Miete darf dadurch innerhalb von sechs Jahren aber um höchstens 3 Euro je Quadratmeter steigen, bei einer Miete unter 7 Euro je Quadratmeter um höchstens 2 Euro. Kosten für reine Instandhaltung zählen nicht dazu. Die Modernisierung muss vorher angekündigt werden.',
+        ],
+      },
+      {
+        titel: 'Tipp',
+        absaetze: [
+          'Behalten Sie den Mietverlauf jeder Wohnung im Blick: Wann wurde zuletzt erhöht, um wie viel, und wo liegt die Kappungsgrenze? Dann lassen sich Erhöhungen planen, statt sie zu vergessen.',
+        ],
+      },
+    ],
+    passendeLeistung: { text: 'Mietverwaltung: Mieten, Abrechnung und Mieterhöhungen', href: '/leistungen/hausverwaltung/' },
+  },
+  {
+    slug: 'mietkaution-regeln',
+    titel: 'Mietkaution: Höhe, Anlage und Rückzahlung',
+    seoTitel: 'Mietkaution für Vermieter: Höhe, Anlage, Abrechnung',
+    beschreibung: 'Wie hoch darf die Kaution sein, wie muss sie angelegt werden und wann ist sie zurückzuzahlen? Die Regeln zur Mietkaution im Überblick.',
+    stand: '2026-11-18',
+    einleitung:
+      'Die Kaution sichert den Vermieter gegen offene Forderungen ab – etwa Schäden oder Nachzahlungen. Für Höhe, Zahlung und Anlage gelten klare gesetzliche Regeln (§ 551 BGB).',
+    abschnitte: [
+      {
+        titel: 'Wie hoch darf die Kaution sein?',
+        absaetze: [
+          'Höchstens das Dreifache der monatlichen Miete ohne Betriebskosten, die als Pauschale oder Vorauszahlung ausgewiesen sind – also drei Nettokaltmieten.',
+        ],
+      },
+      {
+        titel: 'Zahlung in Raten',
+        absaetze: [
+          'Der Mieter darf die Kaution in drei gleichen monatlichen Raten zahlen. Die erste Rate ist zu Beginn des Mietverhältnisses fällig, die beiden weiteren mit den nächsten Mietzahlungen. Eine Vereinbarung, die das ausschließt, ist unwirksam.',
+        ],
+      },
+      {
+        titel: 'Getrennte Anlage',
+        absaetze: [
+          'Eine Barkaution muss der Vermieter getrennt von seinem eigenen Vermögen bei einem Kreditinstitut anlegen, grundsätzlich zum üblichen Zinssatz für Spareinlagen mit dreimonatiger Kündigungsfrist. Die Erträge stehen dem Mieter zu und erhöhen die Sicherheit. So bleibt die Kaution auch geschützt, wenn der Vermieter in Zahlungsschwierigkeiten gerät.',
+        ],
+      },
+      {
+        titel: 'Rückzahlung nach dem Auszug',
+        absaetze: [
+          'Die Kaution ist nicht sofort fällig. Der Vermieter darf sie eine angemessene Zeit behalten, um zu prüfen, ob noch Forderungen bestehen. Steht noch eine Betriebskostenabrechnung aus, darf er einen angemessenen Teil bis dahin einbehalten. Unstreitige Beträge sollten zügig ausgezahlt werden.',
+          'Wichtig: Ersatzansprüche wegen Schäden an der Wohnung verjähren grundsätzlich sechs Monate nach Rückgabe (§ 548 BGB). Ein ausführliches Übergabeprotokoll ist deshalb entscheidend.',
+        ],
+      },
+      {
+        titel: 'Häufige Fehler',
+        liste: [
+          'Mehr als drei Nettokaltmieten verlangt',
+          'Ratenzahlung verweigert',
+          'Kaution auf dem eigenen Girokonto belassen statt getrennt angelegt',
+          'Zinsen bei der Abrechnung vergessen',
+          'Schäden nicht rechtzeitig geltend gemacht',
+        ],
+      },
+    ],
+    passendeLeistung: { text: 'Mietverwaltung: Kautionen verwalten und abrechnen', href: '/leistungen/hausverwaltung/' },
+  },
+  {
+    slug: 'rauchwarnmelder-pflicht-nrw',
+    titel: 'Rauchwarnmelder in NRW: Wer muss was tun?',
+    seoTitel: 'Rauchwarnmelderpflicht NRW: Einbau, Wartung, Zuständigkeit',
+    beschreibung: 'Wo müssen in Nordrhein-Westfalen Rauchwarnmelder hängen, wer baut sie ein und wer kümmert sich um die Wartung – Eigentümer oder Mieter?',
+    stand: '2026-11-18',
+    einleitung:
+      'In Nordrhein-Westfalen sind Rauchwarnmelder in allen Wohnungen Pflicht. Die Regel steht in der Landesbauordnung (§ 47 Abs. 3 BauO NRW). Für Vermieter stellt sich vor allem eine Frage: Wer ist wofür verantwortlich?',
+    abschnitte: [
+      {
+        titel: 'Wo müssen Rauchwarnmelder hängen?',
+        liste: [
+          'in Schlafräumen',
+          'in Kinderzimmern',
+          'in Fluren, über die Rettungswege von Aufenthaltsräumen führen',
+        ],
+        absaetze: ['Die Pflicht gilt für Neubauten und – nach Ablauf der Übergangsfrist Ende 2016 – auch für alle bestehenden Wohnungen.'],
+      },
+      {
+        titel: 'Einbau: Sache des Eigentümers',
+        absaetze: [
+          'Für den Einbau ist der Eigentümer verantwortlich. Er muss die Geräte anbringen oder anbringen lassen – in der vermieteten Wohnung ebenso wie in der selbst genutzten.',
+        ],
+      },
+      {
+        titel: 'Wartung: grundsätzlich Sache der Bewohner',
+        absaetze: [
+          'Die Sicherstellung der Betriebsbereitschaft obliegt den unmittelbaren Besitzern, also in der Regel den Mietern – es sei denn, der Eigentümer übernimmt diese Pflicht selbst. Viele Vermieter tun das, zum Beispiel über einen Wartungsvertrag. Dann ist sichergestellt, dass die Geräte regelmäßig geprüft und Prüfungen dokumentiert werden.',
+        ],
+      },
+      {
+        titel: 'Worauf Vermieter achten sollten',
+        liste: [
+          'Geräte mit Prüfzeichen nach der einschlägigen Norm verwenden',
+          'Einbau dokumentieren: welche Räume, welche Geräte, welches Datum',
+          'Klar regeln, wer die Wartung übernimmt – am besten schriftlich',
+          'Geräte mit fest eingebauter Langzeitbatterie sparen Aufwand',
+          'Austauschtermine im Blick behalten, Geräte haben eine begrenzte Lebensdauer',
+        ],
+      },
+      {
+        titel: 'Kosten',
+        absaetze: [
+          'Die Anschaffung trägt der Eigentümer. Ob und wie Kosten für Miete oder Wartung von Rauchwarnmeldern als Betriebskosten auf Mieter umgelegt werden können, hängt vom Mietvertrag und der Art der Kosten ab – hier lohnt sich ein genauer Blick, denn die Rechtsprechung unterscheidet zwischen Wartung und Anmietung der Geräte.',
+        ],
+      },
+    ],
+    passendeLeistung: { text: 'Service rund ums Objekt: Fristen und Wartungen im Blick', href: '/leistungen/objektservice/' },
+  },
 ];
 
 export const datumText = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });

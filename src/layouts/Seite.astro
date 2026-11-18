@@ -1,4 +1,6 @@
 ---
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/fraunces/wght-italic.css';
 import '@fontsource-variable/instrument-sans';
@@ -38,6 +40,9 @@ const unternehmen = {
   },
   areaServed: site.region.map((ort) => ({ '@type': 'AdministrativeArea', name: ort })),
 };
+// Vorschaubild je Seite (public/og/<seite>.png, erzeugt mit `npm run og`), sonst das allgemeine Bild
+const ogSchluessel = Astro.url.pathname.replace(/^\/|\/$/g, '').replace(/\//g, '-') || 'start';
+const ogBild = existsSync(join(process.cwd(), 'public', 'og', `${ogSchluessel}.png`)) ? `/og/${ogSchluessel}.png` : '/og-bild.png';
 ---
 <!doctype html>
 <html lang="de">
@@ -56,7 +61,9 @@ const unternehmen = {
     <meta property="og:title" content={ganzerTitel} />
     <meta property="og:description" content={beschreibung} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL('/og-bild.png', Astro.site).href} />
+    <meta property="og:image" content={new URL(ogBild, Astro.site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="format-detection" content="telephone=no" />
     <!-- Bewegung nur, wenn der Besucher sie nicht abgeschaltet hat. Fällt das Skript aus, wird nach 3 s alles sichtbar. -->

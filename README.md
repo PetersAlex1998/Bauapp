@@ -178,3 +178,13 @@ Die Seite ist statisch (Astro). Zusätzlich liegt in `public/api/` eine kleine P
 **Erster Start:** `https://ihre-domain.de/einrichtung/` öffnen → Einrichtungscode, Verwaltungs-Nummer (`V-…`) und Passwort wählen. Weitere Mitarbeiter und Kunden legen Sie im Tool unter *Stammdaten → Zugänge* an. Danach den Secret `EINRICHTUNGSCODE` löschen oder ändern.
 
 Ohne `/api` (z. B. Netlify-Vorschau) läuft das Tool im Demo-Modus; Daten bleiben dann nur im Browser.
+
+## Vorschaubilder für WhatsApp, Facebook & Co.
+
+Jede öffentliche Seite hat ein eigenes Vorschaubild unter `public/og/` (1200 × 630). Nach neuen Seiten oder geänderten Überschriften neu erzeugen und einchecken:
+
+```
+npm run build && npm run og && npm run build
+```
+
+Fehlt ein Bild, nimmt die Seite automatisch `public/og-bild.png`.
