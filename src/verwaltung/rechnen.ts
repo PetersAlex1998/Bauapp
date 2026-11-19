@@ -245,3 +245,45 @@ export function mietStand(m: Satz): MietStand {
   if (m.ende) return 'Gekündigt';
   return 'Laufend';
 }
+
+/* ---------- Kündigungsfristen (§ 573c BGB) ---------- */
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+function ostersonntag(j: number): Date {
+  const a = j % 19, b = Math.floor(j / 100), c = j % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const hh = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - hh - k) % 7, m = Math.floor((a + 11 * hh + 22 * l) / 451);
+  const monat = Math.floor((hh + l - 7 * m + 114) / 31), tag = ((hh + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(j, monat - 1, tag));
+}
+/** Gesetzliche Feiertage in Nordrhein-Westfalen */
+export function feiertageNRW(j: number): Set<string> {
+  const o = ostersonntag(j).getTime();
+  const plus = (n: number) => iso(new Date(o + n * 86400000));
+  return new Set([`${j}-01-01`, `${j}-05-01`, `${j}-10-03`, `${j}-11-01`, `${j}-12-25`, `${j}-12-26`, plus(-2), plus(1), plus(39), plus(50), plus(60)]);
+}
+/** Werktag im Sinne von § 573c BGB: Montag bis Freitag, kein Feiertag (der Samstag zählt nach BGH nicht mit). */
+export function istWerktag(tag: string): boolean {
+  const d = new Date(tag + 'T00:00:00Z');
+  const wt = d.getUTCDay();
+  return wt !== 0 && wt !== 6 && !feiertageNRW(d.getUTCFullYear()).has(tag);
+}
+const monatsletzter = (monat: string) => iso(new Date(Date.UTC(Number(monat.slice(0, 4)), Number(monat.slice(5, 7)), 0)));
+/**
+ * Mietende bei ordentlicher Kündigung: Zugang bis zum 3. Werktag eines Monats → Ende des übernächsten Monats.
+ * Kündigt der Vermieter, verlängert sich die Frist nach 5 und 8 Jahren Mietdauer um je 3 Monate.
+ */
+export function kuendigungsEnde(eingang: string, durch: string, beginn?: string): { ende: string; text: string } | null {
+  if (!eingang) return null;
+  const monat = monatVon(eingang);
+  let werktage = 0;
+  for (let t = `${monat}-01`; t <= eingang; t = datumPlus(t, 1)) if (istWerktag(t)) werktage++;
+  const rechtzeitig = werktage <= 3;
+  let monate = 2;
+  let jahre = 0;
+  if (durch === 'Vermieter' && beginn) {
+    jahre = (Date.parse(eingang) - Date.parse(beginn)) / (365.25 * 86400000);
+    monate = jahre >= 8 ? 8 : jahre >= 5 ? 5 : 2;
+  }
+  const ende = monatsletzter(monatPlus(monat, monate + (rechtzeitig ? 0 : 1)));
+  const frist = `${monate + 1} Monate`;
+  return { ende, text: `${rechtzeitig ? `Zugang am ${werktage}. Werktag – rechtzeitig für diesen Monat` : `Zugang nach dem 3. Werktag (${werktage}.) – zählt erst ab dem Folgemonat`}; Frist ${frist}${durch === 'Vermieter' && beginn ? ` (Mietdauer ${Math.floor(jahre)} Jahre)` : ''}.` };
+}

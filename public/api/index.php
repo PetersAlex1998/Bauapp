@@ -68,7 +68,15 @@ function db(): PDO
     tabellenAnlegen($pdo, $typ);
     adminSpalte($pdo);
     zweiFaktorSpalten($pdo);
+    dateienTabelle($pdo, $typ);
     return $pdo;
+}
+/** Fotos und Dateien (z. B. Übergabeprotokolle) liegen getrennt: sie werden nicht bei jedem „lesen“ mitgeschickt. */
+function dateienTabelle(PDO $pdo, string $typ): void
+{
+    try { $pdo->query('SELECT 1 FROM hadie_dateien LIMIT 1'); return; } catch (Throwable $e) { /* fehlt noch */ }
+    $my = $typ !== 'sqlite';
+    $pdo->exec('CREATE TABLE IF NOT EXISTS hadie_dateien (id VARCHAR(64) NOT NULL PRIMARY KEY, objekt_id VARCHAR(64) NULL, mime VARCHAR(40) NOT NULL, data ' . ($my ? 'MEDIUMTEXT' : 'TEXT') . ' NOT NULL, erstellt INT NOT NULL)' . ($my ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : ''));
 }
 function tabellenAnlegen(PDO $pdo, string $typ): void
 {
@@ -434,6 +442,44 @@ switch ($aktion) {
         antwort(200, ['ok' => true]);
     }
 
+    case 'datei-speichern': {
+        verwaltung();
+        $b = body();
+        $id = (string)($b['id'] ?? '');
+        if (!preg_match('/^[a-z0-9]{6,40}$/', $id)) fehler(400, 'Ungültige Kennung.');
+        if (!preg_match('#^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$#', (string)($b['daten'] ?? ''), $t)) fehler(400, 'Nur Fotos (JPEG, PNG, WebP).');
+        $roh = base64_decode($t[2], true);
+        if ($roh === false || strlen($roh) > 3 * 1024 * 1024) fehler(413, 'Das Foto ist zu groß (höchstens 3 MB).');
+        $info = @getimagesizefromstring($roh);
+        if (!$info || ($info['mime'] ?? '') !== $t[1]) fehler(400, 'Die Datei ist kein gültiges Bild.');
+        $sql = typ() === 'sqlite'
+            ? 'INSERT INTO hadie_dateien (id, objekt_id, mime, data, erstellt) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET objekt_id = excluded.objekt_id, mime = excluded.mime, data = excluded.data'
+            : 'INSERT INTO hadie_dateien (id, objekt_id, mime, data, erstellt) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE objekt_id = VALUES(objekt_id), mime = VALUES(mime), data = VALUES(data)';
+        abfrage($sql, [$id, substr((string)($b['objektId'] ?? ''), 0, 64), $t[1], $t[2], time()]);
+        antwort(200, ['ok' => true, 'id' => $id]);
+    }
+
+    case 'datei': {
+        verwaltung();
+        $id = (string)($_GET['id'] ?? '');
+        if (!preg_match('/^[a-z0-9]{6,40}$/', $id)) fehler(400, 'Ungültige Kennung.');
+        $d = abfrage('SELECT mime, data FROM hadie_dateien WHERE id = ?', [$id])->fetch();
+        if (!$d) fehler(404, 'Nicht gefunden.');
+        header_remove('Content-Type');
+        header('Content-Type: ' . $d['mime']);
+        header('Cache-Control: private, max-age=86400');
+        header('X-Content-Type-Options: nosniff');
+        echo base64_decode($d['data']);
+        exit;
+    }
+
+    case 'datei-loeschen': {
+        verwaltung();
+        $b = body();
+        abfrage('DELETE FROM hadie_dateien WHERE id = ?', [(string)($b['id'] ?? '')]);
+        antwort(200, ['ok' => true]);
+    }
+
     case 'ersetzen': {
         admin();
         $b = body();
@@ -555,6 +601,7 @@ switch ($aktion) {
             'format' => 'hadie-verwaltung', 'version' => 1, 'stand' => date('c'), 'quelle' => 'nächtliche Sicherung',
             'daten' => $daten === [] ? new stdClass() : $daten,
             'konten' => $konten,
+            'dateien' => abfrage('SELECT id, objekt_id, mime, data, erstellt FROM hadie_dateien ORDER BY id')->fetchAll(),
         ]);
     }
 

@@ -688,9 +688,16 @@ function ansichtOptionen() {
     opt('offen', 'Nicht zugewiesen')));
 }
 
+let erzwingen = false;
+/** Neu zeichnen, auch wenn die Seite das sonst selbst steuert (Übergabeprotokoll) */
+export function zeichneNeu() { erzwingen = true; zeichne(); }
 export function zeichne() {
   if (!buehne) return;
   if (document.querySelector('dialog[open]')) return; // nicht unter einem offenen Formular neu aufbauen
+  // Vor-Ort-Erfassung: die Seite verwaltet ihre Felder selbst – kein Neuaufbau bei jeder Speicherung
+  const selbst = buehne.dataset.ort === location.hash && !!buehne.querySelector('.vw-protokoll');
+  if (selbst && !erzwingen) return;
+  erzwingen = false;
   const y = window.scrollY;
   ansichtOptionen();
   const eingeschraenkt = ansichtId() !== 'alle';
@@ -700,6 +707,7 @@ export function zeichne() {
         h('button', { type: 'button', onclick: () => { setzeAnsicht('alle'); zeichne(); } }, 'Alle anzeigen'))
     : null;
   buehne.replaceChildren(...(band ? [band] : []), ansicht());
+  buehne.dataset.ort = location.hash;
   druckrahmen(buehne, 'Verwaltung');
   window.scrollTo(0, y);
   const hier = location.hash || '#/';

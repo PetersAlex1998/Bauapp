@@ -10,7 +10,7 @@
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
-import { kautionBestand, kautionErhalten, positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
+import { kautionBestand, kautionErhalten, kuendigungsEnde, positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
 import { ds, standardZustaendig } from './ansicht';
 import { ich } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
@@ -287,11 +287,24 @@ aktionen.mieterwechsel = (m: Satz) => {
   const objektId = objektVonMieter(m);
   const dialog = h('dialog', { class: 'vw-dialog', 'aria-labelledby': 'vw-mw-titel' }) as HTMLDialogElement;
   const haken = (name: string, text: string, an = true) => h('label', { class: 'vw-haken' }, h('input', { type: 'checkbox', name, checked: an }), ' ', text);
+  const fristText = h('small', {});
+  /** Mietende nach § 573c BGB vorschlagen */
+  const frist = () => {
+    const durch = (form.querySelector('#mw-durch') as HTMLSelectElement).value;
+    const eingang = (form.querySelector('#mw-eingang') as HTMLInputElement).value;
+    const r = durch === 'Aufhebungsvertrag' ? null : kuendigungsEnde(eingang, durch, m.beginn);
+    fristText.textContent = r ? `Frühestens zum ${datum(r.ende)} – ${r.text}` : 'Beim Aufhebungsvertrag gilt das vereinbarte Datum.';
+    if (r) (form.querySelector('#mw-ende') as HTMLInputElement).value = r.ende;
+  };
   const form = h('form', { method: 'dialog', class: 'vw-form' },
     h('header', { class: 'vw-dialog__kopf' }, h('h2', { id: 'vw-mw-titel' }, `Auszug: ${m.name}`), h('button', { type: 'button', class: 'vw-x', 'aria-label': 'Schließen', onclick: () => dialog.close() }, '×')),
     h('div', { class: 'vw-form__felder' },
       h('p', { class: 'feld--breit vw-fein' }, `${einheit ? ARTEN.einheiten.anzeige(einheit) : ''} – der Assistent beendet das Mietverhältnis und legt alles an, was danach zu tun ist. So greifen Verwalten, Betreuen und Erneuern ineinander.`),
-      h('div', { class: 'feld' }, h('label', { for: 'mw-ende' }, 'Mietende *'), h('input', { id: 'mw-ende', name: 'ende', type: 'date', required: true, value: heute() })),
+      h('div', { class: 'feld' }, h('label', { for: 'mw-durch' }, 'Kündigung durch'),
+        h('select', { id: 'mw-durch', name: 'durch', onchange: () => frist() }, ['Mieter', 'Vermieter', 'Aufhebungsvertrag'].map((o) => h('option', { value: o, selected: o === (m.kuendigungDurch || 'Mieter') }, o)))),
+      h('div', { class: 'feld' }, h('label', { for: 'mw-eingang' }, 'Kündigung eingegangen am'), h('input', { id: 'mw-eingang', name: 'eingang', type: 'date', value: m.kuendigungEingang || heute(), oninput: () => frist() })),
+      h('div', { class: 'feld' }, h('label', { for: 'mw-ende' }, 'Mietende *'), h('input', { id: 'mw-ende', name: 'ende', type: 'date', required: true, value: m.ende || heute() }), fristText),
+      h('div', { class: 'feld' }, h('label', { for: 'mw-neu' }, 'Neue Anschrift (falls bekannt)'), h('textarea', { id: 'mw-neu', name: 'neu', rows: 2 }, m.anschriftNeu ?? '')),
       h('div', { class: 'feld feld--breit vw-mehr', style: 'display:grid' },
         haken('uebergabe', 'Aufgabe: Wohnungsübergabe mit Zählerständen und Schlüsseln'),
         haken('kaution', `Aufgabe: Kaution abrechnen (${geld(kautionBestand(m))} verwahrt)`, kautionBestand(m) > 0),
@@ -309,7 +322,7 @@ aktionen.mieterwechsel = (m: Satz) => {
     if (!ende) return;
     const wo = einheit?.bezeichnung ?? 'Wohnung';
     const aufgabe = (titel: string, faellig: string) => speichere('aufgaben', { titel, objektId, faellig, zustaendigId: standardZustaendig(objektId), prioritaet: 'Normal', bereich: 'Verwalten' });
-    speichere('mieter', { id: m.id, ende });
+    speichere('mieter', { id: m.id, ende, kuendigungDurch: String(d.get('durch') || ''), kuendigungEingang: String(d.get('eingang') || ''), ...(String(d.get('neu') || '').trim() ? { anschriftNeu: String(d.get('neu')).trim() } : {}) });
     if (d.get('uebergabe')) aufgabe(`Übergabe ${wo}: Zählerstände, Schlüssel, Protokoll (${m.name})`, ende);
     if (d.get('kaution')) aufgabe(`Kaution abrechnen: ${m.name}`, datumPlus(ende, 90));
     if (d.get('nk')) aufgabe(`Nebenkosten bis Auszug abrechnen: ${m.name}`, datumPlus(ende, 60));
@@ -317,13 +330,14 @@ aktionen.mieterwechsel = (m: Satz) => {
     if (d.get('renovierung')) speichere('auftraege', { objektId, einheitId: m.einheitId, titel: `Renovierung ${wo} nach Auszug`, gewerk: 'Wohnungsrenovierung', status: 'Anfrage', start: datumPlus(ende, 1) });
     if (d.get('kontrolle')) speichere('service', { objektId, leistung: 'Leerstandskontrolle', rhythmus: 'Wöchentlich', naechster: datumPlus(ende, 7), notiz: `${wo}: lüften, heizen, Wasser laufen lassen.` });
     dialog.close();
-    hinweis('Auszug angelegt – Aufgaben und Auftrag sind eingetragen');
-    location.hash = `#/brief/uebergabe/${m.id}`;
+    hinweis('Auszug angelegt – Checkliste, Aufgaben und Auftrag sind eingetragen');
+    location.hash = `#/mietverhaeltnis/${m.id}`;
   });
   dialog.append(form);
   dialog.addEventListener('close', () => { dialog.remove(); zeichne(); });
   document.body.append(dialog);
   dialog.showModal();
+  if (!m.ende) frist();
 };
 
 /* ================= Rechnungen an Kunden ================= */

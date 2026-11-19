@@ -9,7 +9,7 @@
  * Alle Schreiben im DIN-5008-Briefbogen.
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
-import { datumPlusMonate, kautionBestand, kautionErhalten, kautionsbuchungen, mietStand, mieteAm, monatHeute, monatVon, rueckstand, soll, verlaufVon, zahl, type MietStand } from './rechnen';
+import { datumPlus, datumPlusMonate, kuendigungsEnde, kautionBestand, kautionErhalten, kautionsbuchungen, mietStand, mieteAm, monatHeute, monatVon, rueckstand, soll, verlaufVon, zahl, type MietStand } from './rechnen';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
 import { absender, bogen, briefInfo, gruss, mietkonto, werkzeug } from './ansichten2';
 
@@ -31,6 +31,8 @@ export function standMarke(m: Satz) {
 }
 
 /** Alle Mieter eines Vertrags als Liste */
+/** „die Wohnung 3 (1. OG links)“ ohne doppeltes „Wohnung“ */
+export const wohnungText = (e: Satz) => `${/^wohnung/i.test(e.bezeichnung ?? '') ? 'die' : 'die Wohnung'} ${e.bezeichnung}${e.lage ? ` (${e.lage})` : ''}`;
 const personen = (m: Satz) => [m.name, ...String(m.name2 ?? '').split(',')].map((x) => String(x ?? '').trim()).filter(Boolean);
 const nachname = (name: string) => name.trim().split(/\s+/).pop() ?? name;
 
@@ -47,8 +49,10 @@ export function anschriftMieter({ m, objekt }: Kontext): string[] {
   const namen = personen(m);
   const kopf = m.anrede === 'Familie' ? [`Familie ${nachname(m.name)}`] : m.anrede === 'Herr' || m.anrede === 'Frau' ? [`${m.anrede} ${namen[0]}`, ...namen.slice(1, 2)] : namen.slice(0, 2);
   const bisher = String(m.anschriftBisher ?? '').split(/\n|,\s*(?=\d{5})/).map((x) => x.trim()).filter(Boolean);
+  const neu = String(m.anschriftNeu ?? '').split(/\n|,\s*(?=\d{5})/).map((x) => x.trim()).filter(Boolean);
   const vorEinzug = m.beginn && m.beginn > heute() && bisher.length;
-  return [...kopf, ...(vorEinzug ? bisher : [objekt.strasse || objekt.bezeichnung, objekt.ort])].slice(0, 6);
+  const nachAuszug = m.ende && m.ende < heute() && neu.length;
+  return [...kopf, ...(nachAuszug ? neu : vorEinzug ? bisher : [objekt.strasse || objekt.bezeichnung, objekt.ort])].slice(0, 6);
 }
 
 const kautionskonto = (m: Satz) => finde('bankkonten', m.kautionKontoId) ?? alle('bankkonten').find((k) => k.zweck === 'Kautionen');
@@ -79,14 +83,32 @@ function schritte(k: Kontext): Schritt[] {
     { key: 'vertrag', text: 'Mietvertrag erstellt und unterschrieben', hilfe: m.vertragsdatum ? `Unterschrieben am ${datum(m.vertragsdatum)}` : 'Vertrag aus dem Tool drucken, unterschreiben lassen, Datum eintragen.', fertig: !!m.vertragsdatum, auto: true, tun: link(`#/mietvertrag/${m.id}`, 'Mietvertrag') },
     { key: 'kaution', text: 'Kaution erhalten', hilfe: keineKaution ? 'Keine Kaution vereinbart.' : `${geld(kautionErhalten(m))} von ${geld(m.kautionSoll)} eingegangen`, fertig: keineKaution || kautionErhalten(m) >= zahl(m.kautionSoll), auto: true, tun: !keineKaution && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => kautionBuchen(m) }, 'Eingang buchen') },
     { key: 'energieausweis', text: 'Energieausweis übergeben', hilfe: 'Pflicht bei Vertragsschluss (§ 80 Abs. 4 GEG), spätestens beim Abschluss.', fertig: !!s.energieausweis },
-    { key: 'uebergabe', text: 'Wohnung übergeben mit Protokoll', hilfe: 'Zustand, Zählerstände und Schlüssel festhalten.', fertig: !!s.uebergabe, tun: link(`#/brief/uebergabe/${m.id}`, 'Protokoll') },
-    { key: 'zaehler', text: 'Zählerstände zum Einzug erfasst', hilfe: 'Für die Nebenkostenabrechnung und die Versorger.', fertig: !!s.zaehler },
+    { key: 'uebergabe', text: 'Wohnung übergeben mit Protokoll', hilfe: 'Am Handy vor Ort: Räume, Fotos, Zähler, Schlüssel, Unterschriften.', fertig: !!s.uebergabe, tun: link(`#/uebergabe/${m.id}/einzug`, 'Protokoll') },
+    { key: 'zaehler', text: 'Zählerstände zum Einzug erfasst', hilfe: 'Wird mit dem Protokoll übernommen.', fertig: !!s.zaehler },
     { key: 'wgb', text: 'Wohnungsgeberbestätigung ausgestellt', hilfe: 'Der Mieter braucht sie für die Anmeldung innerhalb von zwei Wochen (§ 17, § 19 BMG).', fertig: !!s.wgb, tun: link(`#/wohnungsgeber/${m.id}/einzug`, 'Bestätigung') },
     { key: 'versorger', text: 'Versorger informiert (Strom, ggf. Gas)', hilfe: 'Mieterwechsel mit Zählerstand melden.', fertig: !!s.versorger },
   ];
 }
-function checkliste(k: Kontext): HTMLElement {
-  const liste_ = schritte(k);
+function auszugSchritte(k: Kontext): Schritt[] {
+  const { m } = k;
+  const s: Record<string, string> = m.schritte ?? {};
+  const link = (href: string, text: string) => h('a', { class: 'vw-knopf vw-knopf--klein', href }, text);
+  const b = kautionsbuchungen(m);
+  const kautionFertig = (!zahl(m.kautionSoll) && !b.length && !zahl(m.kautionIst)) || (b.length > 0 && Math.abs(kautionBestand(m)) < 0.005);
+  return [
+    { key: 'kuendigungBestaetigt', text: 'Kündigung schriftlich bestätigt', hilfe: m.kuendigungEingang ? `Eingang ${datum(m.kuendigungEingang)} · Mietende ${datum(m.ende)}` : 'Eingang und Mietende festhalten.', fertig: !!s.kuendigungBestaetigt, tun: m.kuendigungDurch !== 'Vermieter' && link(`#/kuendigung/${m.id}`, 'Bestätigung') },
+    { key: 'anschriftNeu', text: 'Neue Anschrift erfasst', hilfe: m.anschriftNeu ? String(m.anschriftNeu).replace(/\n+/g, ', ') : 'Für Kautions- und Nebenkostenabrechnung.', fertig: !!m.anschriftNeu, auto: true, tun: !m.anschriftNeu && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => formular('mieter', m) }, 'Eintragen') },
+    { key: 'abnahmetermin', text: 'Abnahmetermin vereinbart', hilfe: 'Möglichst am letzten Tag des Mietverhältnisses.', fertig: !!s.abnahmetermin },
+    { key: 'auszugUebergabe', text: 'Wohnung abgenommen mit Protokoll', hilfe: 'Vergleich mit dem Einzugsprotokoll, Fotos von Mängeln.', fertig: !!s.auszugUebergabe, tun: link(`#/uebergabe/${m.id}/auszug`, 'Protokoll') },
+    { key: 'auszugZaehler', text: 'Zählerstände zum Auszug erfasst', hilfe: 'Wird mit dem Protokoll übernommen; Versorger informieren.', fertig: !!s.auszugZaehler },
+    { key: 'schluesselZurueck', text: 'Alle Schlüssel zurückerhalten', hilfe: m.schluessel ? `Übergeben waren: ${m.schluessel}` : 'Anzahl mit dem Einzug vergleichen.', fertig: !!s.schluesselZurueck },
+    { key: 'wgbAuszug', text: 'Wohnungsgeberbestätigung Auszug (falls nötig)', hilfe: 'Nur nötig, wenn sich der Mieter abmelden muss – z. B. bei Wegzug ins Ausland.', fertig: !!s.wgbAuszug, tun: link(`#/wohnungsgeber/${m.id}/auszug`, 'Bestätigung') },
+    { key: 'nkAuszug', text: 'Nebenkosten bis zum Auszug abgerechnet', hilfe: 'Mit der nächsten Jahresabrechnung (anteilig nach Nutzungszeit).', fertig: !!s.nkAuszug },
+    { key: 'kaution', text: 'Kaution abgerechnet und ausgezahlt', hilfe: kautionFertig ? 'Erledigt.' : `Noch verwahrt: ${geld(kautionBestand(m))}`, fertig: kautionFertig, auto: true, tun: !kautionFertig && link(`#/kautionsbrief/${m.id}/abrechnung`, 'Abrechnung') },
+  ];
+}
+function checkliste(k: Kontext, auszug = false): HTMLElement {
+  const liste_ = auszug ? auszugSchritte(k) : schritte(k);
   const fertig = liste_.filter((x) => x.fertig).length;
   const umschalten = (key: string, an: boolean) => {
     const neu = { ...(k.m.schritte ?? {}) };
@@ -95,14 +117,14 @@ function checkliste(k: Kontext): HTMLElement {
     zeichne();
   };
   return h('section', { class: 'vw-karte' },
-    h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Einzug'), h('span', {}, `${fertig} von ${liste_.length} erledigt`)),
+    h('header', { class: 'vw-karte__kopf' }, h('h2', {}, auszug ? 'Auszug' : 'Einzug'), h('span', {}, `${fertig} von ${liste_.length} erledigt`)),
     h('ul', { class: 'vw-schritte' }, liste_.map((x) => h('li', { class: x.fertig ? 'ist-fertig' : '' },
       x.auto
         ? h('span', { class: 'vw-schritte__haken', 'aria-hidden': 'true' }, x.fertig ? '✓' : '')
         : h('input', { type: 'checkbox', checked: x.fertig, 'aria-label': x.text, onchange: (e: Event) => umschalten(x.key, (e.target as HTMLInputElement).checked) }),
       h('div', {}, h('strong', {}, x.text), h('small', { class: 'vw-block' }, x.hilfe, !x.auto && k.m.schritte?.[x.key] ? ` · erledigt am ${datum(k.m.schritte[x.key])}` : '')),
       x.tun || null))),
-    !k.m.vertragsdatum && h('p', { class: 'vw-innen' }, h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => { speichere('mieter', { id: k.m.id, vertragsdatum: heute() }); hinweis('Vertrag als heute unterschrieben eingetragen'); zeichne(); } }, 'Vertrag heute unterschrieben')));
+    !auszug && !k.m.vertragsdatum && h('p', { class: 'vw-innen' }, h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => { speichere('mieter', { id: k.m.id, vertragsdatum: heute() }); hinweis('Vertrag als heute unterschrieben eingetragen'); zeichne(); } }, 'Vertrag heute unterschrieben')));
 }
 
 /* ---------- Kaution ---------- */
@@ -155,7 +177,10 @@ routen.mietverhaeltnis = (id) => {
   const offen = rueckstand(m);
   const monate = m.beginn && m.beginn <= heute() ? Math.max(0, (Number(heute().slice(0, 4)) - Number(m.beginn.slice(0, 4))) * 12 + Number(heute().slice(5, 7)) - Number(m.beginn.slice(5, 7))) : 0;
   const dauer = st === 'Geplant' ? `ab ${datum(m.beginn)}` : monate >= 12 ? `${Math.floor(monate / 12)} J. ${monate % 12} M.` : `${monate} Monate`;
-  const einzugOffen = st === 'Geplant' || schritte(k).some((x) => !x.fertig);
+  const imAuszug = st === 'Gekündigt' || st === 'Beendet';
+  const auszugOffen = imAuszug && auszugSchritte(k).some((x) => !x.fertig);
+  const einzugOffen = !imAuszug && (st === 'Geplant' || schritte(k).some((x) => !x.fertig));
+  const listeOffen = einzugOffen || auszugOffen;
   return h('div', { class: 'vw-stapel' },
     h('header', { class: 'vw-seitenkopf' },
       h('p', { class: 'vw-pfad' }, h('a', { href: '#/liste/objekte' }, 'Objekte'), ' / ', h('a', { href: `#/objekt/${objekt.id}` }, objekt.bezeichnung), ' / ', einheit.bezeichnung),
@@ -165,7 +190,8 @@ routen.mietverhaeltnis = (id) => {
         h('button', { class: 'vw-knopf', onclick: () => formular('mieter', m) }, 'Bearbeiten'),
         h('a', { class: 'vw-knopf', href: `#/mietvertrag/${m.id}` }, 'Mietvertrag'),
         h('a', { class: 'vw-knopf', href: `#/wohnungsgeber/${m.id}/${st === 'Beendet' || st === 'Gekündigt' ? 'auszug' : 'einzug'}` }, 'Wohnungsgeberbestätigung'),
-        h('a', { class: 'vw-knopf', href: `#/brief/uebergabe/${m.id}` }, 'Übergabeprotokoll'),
+        h('a', { class: 'vw-knopf', href: `#/uebergabe/${m.id}/${imAuszug ? 'auszug' : 'einzug'}` }, 'Übergabeprotokoll'),
+        m.kuendigungEingang && m.kuendigungDurch !== 'Vermieter' && h('a', { class: 'vw-knopf', href: `#/kuendigung/${m.id}` }, 'Kündigungsbestätigung'),
         offen > 0 && h('a', { class: 'vw-knopf', href: `#/brief/erinnerung/${m.id}` }, 'Zahlungserinnerung'),
         st === 'Laufend' && h('button', { class: 'vw-knopf', onclick: () => aktionen.mieterwechsel?.(m) }, 'Auszug …'))),
     h('div', { class: 'vw-kennzahlen' },
@@ -174,14 +200,15 @@ routen.mietverhaeltnis = (id) => {
       kennzahl(geld(kautionBestand(m)), `Kaution verwahrt${zahl(m.kautionSoll) ? ` von ${geld(m.kautionSoll)}` : ''}`, undefined, kautionErhalten(m) < zahl(m.kautionSoll) ? 'vw-kennzahl--gelb' : ''),
       kennzahl(dauer, 'Mietdauer')),
     h('div', { class: 'vw-zwei' },
-      einzugOffen ? checkliste(k) : kautionKarte(k),
+      listeOffen ? checkliste(k, imAuszug) : kautionKarte(k),
       h('section', { class: 'vw-karte' },
         h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Vertrag')),
         h('dl', { class: 'vw-info vw-info--innen' },
           h('dt', {}, 'Mieter'), h('dd', {}, personen(m).join(', ')),
           h('dt', {}, 'Kontakt'), h('dd', {}, [m.telefon, m.email].filter(Boolean).join(' · ') || '–'),
           h('dt', {}, 'Mietbeginn'), h('dd', {}, datum(m.beginn)),
-          m.ende && [h('dt', {}, 'Mietende'), h('dd', {}, datum(m.ende))],
+          m.ende && [h('dt', {}, 'Mietende'), h('dd', {}, datum(m.ende), m.kuendigungDurch ? ` · Kündigung durch ${m.kuendigungDurch}${m.kuendigungEingang ? ` (Eingang ${datum(m.kuendigungEingang)})` : ''}` : '')],
+          m.anschriftNeu && [h('dt', {}, 'Neue Anschrift'), h('dd', {}, String(m.anschriftNeu).replace(/\n+/g, ', '))],
           h('dt', {}, 'Kaltmiete'), h('dd', {}, `${geld(mieteAm(m, st === 'Geplant' ? m.beginn : heute()))}${m.mietart && m.mietart !== 'Normale Miete' ? ` · ${m.mietart}` : ''}`),
           h('dt', {}, 'Vorauszahlung'), h('dd', {}, geld(m.nebenkosten)),
           h('dt', {}, 'Personen'), h('dd', {}, String(m.personen ?? '–')),
@@ -190,7 +217,8 @@ routen.mietverhaeltnis = (id) => {
           m.schluessel && [h('dt', {}, 'Schlüssel'), h('dd', {}, m.schluessel)]),
         verlauf.length ? h('div', { class: 'vw-innen' }, h('h3', {}, 'Mietentwicklung'),
           h('ul', { class: 'vw-fein' }, verlauf.map((v) => h('li', {}, `ab ${datum(v.ab)}: ${geld(v.alt)} → ${geld(v.kaltmiete)} (${v.grund})`)))) : null)),
-    einzugOffen ? kautionKarte(k) : null,
+    listeOffen ? kautionKarte(k) : null,
+    imAuszug && !auszugOffen && h('details', { class: 'vw-karte vw-innen' }, h('summary', {}, 'Auszug – alle Schritte erledigt'), checkliste(k, true)),
     h('section', { class: 'vw-karte' },
       h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Zahlungen'),
         h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => formular('zahlungen', { mieterId: m.id, monat: monatHeute(), betrag: soll(m), datum: heute() }) }, '+ Zahlung')),
@@ -200,6 +228,11 @@ routen.mietverhaeltnis = (id) => {
           h('td', { 'data-spalte': 'Eingang' }, datum(z.datum)), h('td', { 'data-spalte': 'Für Monat' }, monatText(z.monat)),
           h('td', { 'data-spalte': 'Betrag', class: 'vw-zahlspalte' }, geld(z.betrag)), h('td', { 'data-spalte': 'Notiz' }, z.notiz || '')))
           : [h('tr', {}, h('td', { colspan: 4, class: 'vw-leer' }, 'Noch keine Zahlungen gebucht.'))])))),
+    alle('uebergaben').some((u) => u.mieterId === m.id) && h('section', { class: 'vw-karte' },
+      h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Übergabeprotokolle')),
+      h('ul', { class: 'vw-innen vw-liste-schlicht' }, alle('uebergaben').filter((u) => u.mieterId === m.id).map((u) => h('li', {},
+        h('a', { href: `#/uebergabedruck/${u.id}` }, `${u.art} am ${datum(u.datum)}`),
+        ` · ${(u.raeume ?? []).filter((r: any) => r.ok === false).length} Räume mit Mängeln · ${(u.raeume ?? []).reduce((n: number, r: any) => n + (r.fotos?.length ?? 0), 0)} Fotos · ${u.abgeschlossen ? 'abgeschlossen' : 'in Arbeit'}`)))),
     liste('dokumente', { filter: (s) => s.mieterId === m.id, vorgaben: { objektId: objekt.id, mieterId: m.id, datum: heute(), art: 'Mietvertrag' }, ohneSpalte: 'objektId', titel: 'Dokumente zu diesem Mietverhältnis', kompakt: true }),
     m.notiz && h('section', { class: 'vw-karte vw-text' }, h('h2', {}, 'Interne Notiz'), h('p', {}, m.notiz)));
 };
@@ -328,19 +361,33 @@ routen.kautionsbrief = (id, artText) => {
     const eingezahlt = kautionErhalten(m);
     const zinsen = summe('Zinsen');
     const einbehalte = b.filter((x) => x.art === 'Einbehalt');
-    const auszahlung = eingezahlt + zinsen - einbehalte.reduce((s, x) => s + zahl(x.betrag), 0);
+    const bestand = eingezahlt + zinsen - einbehalte.reduce((s, x) => s + zahl(x.betrag), 0);
+    const vorbehalt = Math.min(Math.max(0, zahl(m.kautionVorbehalt)), Math.max(0, bestand));
+    const auszahlung = bestand - vorbehalt;
     const gezahltAm = b.filter((x) => x.art === 'Auszahlung an Mieter').pop();
+    const nkJahr = (m.ende || heute()).slice(0, 4);
+    const vorschlag = Math.round(3 * zahl(m.nebenkosten) * 100) / 100;
+    const vorbehaltFeld = h('input', { type: 'number', step: '0.01', min: '0', value: m.kautionVorbehalt ?? '', id: 'kv-betrag', inputmode: 'decimal' }) as HTMLInputElement;
     return h('div', { class: 'vw-stapel' }, werkzeug(`#/mietverhaeltnis/${m.id}`),
       !m.ende && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Für dieses Mietverhältnis ist noch kein Mietende eingetragen.'),
+      !m.anschriftNeu && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Die neue Anschrift des Mieters fehlt – das Schreiben geht sonst an die alte Wohnung. ', h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => formular('mieter', m) }, 'Eintragen')),
+      h('section', { class: 'vw-karte vw-nichtdrucken' }, h('div', { class: 'vw-innen' },
+        h('h2', {}, 'Einbehalt für die Nebenkosten'),
+        h('p', { class: 'vw-fein' }, `Steht die Betriebskostenabrechnung ${nkJahr} noch aus, dürfen Sie einen angemessenen Teil der Kaution bis dahin zurückbehalten. Üblich sind etwa drei bis vier Monatsvorauszahlungen (Vorschlag: ${geld(vorschlag)}). Der Rest wird jetzt ausgezahlt.`),
+        h('div', { class: 'vw-reihe' }, h('label', { for: 'kv-betrag' }, 'Vorläufig einbehalten (€)'), vorbehaltFeld,
+          h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => { vorbehaltFeld.value = String(vorschlag); } }, 'Vorschlag übernehmen'),
+          h('button', { class: 'vw-knopf vw-knopf--voll vw-knopf--klein', onclick: () => { speichere('mieter', { id: m.id, kautionVorbehalt: vorbehaltFeld.value === '' ? '' : Number(vorbehaltFeld.value) }); zeichne(); } }, 'Übernehmen')))),
       bogen(anschriftMieter(k), 'Abrechnung Ihrer Mietkaution',
         briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung], ['Mietende', m.ende ? datum(m.ende) : undefined]),
         h('p', {}, anredeZeile(m)),
-        h('p', {}, `nach Beendigung des ${bezug} rechnen wir Ihre Mietkaution wie folgt ab:`),
+        h('p', {}, `nach Beendigung Ihres Mietverhältnisses (${objekt.bezeichnung}, ${einheit.bezeichnung}) rechnen wir Ihre Mietkaution wie folgt ab:`),
         h('table', { class: 'vw-brief__tabelle' }, h('tbody', {},
           zeile('Eingezahlte Kaution', geld(eingezahlt)),
           zeile('Zinsen', geld(zinsen)),
           ...einbehalte.map((x) => zeile(`abzüglich ${x.notiz || 'Einbehalt'}`, `− ${geld(x.betrag)}`)),
-          zeile(auszahlung >= 0 ? 'Auszahlung an Sie' : 'Restforderung', geld(Math.abs(auszahlung)), true))),
+          vorbehalt > 0 && zeile(`vorläufig einbehalten bis zur Betriebskostenabrechnung ${nkJahr}`, `− ${geld(vorbehalt)}`),
+          zeile(auszahlung >= 0 ? (vorbehalt > 0 ? 'Auszahlung jetzt' : 'Auszahlung an Sie') : 'Restforderung', geld(Math.abs(auszahlung)), true))),
+        vorbehalt > 0 && h('p', {}, `Den einbehaltenen Betrag von ${geld(vorbehalt)} rechnen wir ab, sobald die Betriebskostenabrechnung ${nkJahr} vorliegt. Ein Guthaben zahlen wir Ihnen dann zusammen mit dem Rest aus.`),
         auszahlung > 0 && h('p', {}, gezahltAm ? `Den Betrag haben wir am ${datum(gezahltAm.datum)} an Sie überwiesen.` : 'Den Betrag überweisen wir auf das Konto, das Sie uns genannt haben. Bitte teilen Sie uns Ihre Bankverbindung mit, falls noch nicht geschehen.'),
         auszahlung < 0 && h('p', {}, `Bitte überweisen Sie den offenen Betrag von ${geld(-auszahlung)} innerhalb von 14 Tagen.`),
         h('p', {}, 'Bei Fragen zur Abrechnung sprechen Sie uns gern an.'),
@@ -359,6 +406,34 @@ routen.kautionsbrief = (id, artText) => {
         zahl(m.kautionSoll) > kautionErhalten(m) && zeile('Noch offen', geld(zahl(m.kautionSoll) - kautionErhalten(m))))),
       konto && h('p', {}, `Die Kaution wird getrennt von unserem Vermögen auf dem Kautionskonto ${konto.bezeichnung}${konto.bank ? ` bei der ${konto.bank}` : ''} (IBAN ${konto.iban}) verwahrt. Zinsen stehen Ihnen zu und erhöhen die Sicherheit (§ 551 Abs. 3 BGB).`),
       h('p', {}, 'Bitte bewahren Sie diese Bestätigung bis zur Rückzahlung der Kaution auf.'),
+      ...gruss()));
+};
+
+/* ---------- Kündigungsbestätigung ---------- */
+routen.kuendigung = (id) => {
+  const k = kontext(id);
+  if (!k) return fehlt();
+  const { m, einheit, objekt } = k;
+  const rechnung = kuendigungsEnde(m.kuendigungEingang, m.kuendigungDurch || 'Mieter', m.beginn);
+  const abweichend = rechnung && m.ende && rechnung.ende !== m.ende;
+  return h('div', { class: 'vw-stapel' },
+    werkzeug(`#/mietverhaeltnis/${m.id}`, h('button', { class: 'vw-knopf', onclick: () => { speichere('mieter', { id: m.id, schritte: { ...(m.schritte ?? {}), kuendigungBestaetigt: heute() } }); hinweis('In der Checkliste vermerkt'); } }, 'Als versandt vermerken')),
+    !m.kuendigungEingang && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Bitte tragen Sie ein, wann die Kündigung eingegangen ist (Mietverhältnis bearbeiten).'),
+    rechnung && h('p', { class: 'vw-fein vw-nichtdrucken' }, `Fristberechnung: ${rechnung.text} Frühestes Mietende: ${datum(rechnung.ende)}.`),
+    abweichend && h('p', { class: 'vw-warnung vw-nichtdrucken' }, `Eingetragenes Mietende (${datum(m.ende)}) weicht von der gesetzlichen Frist ab (${datum(rechnung!.ende)}). Ist ein anderer Termin vereinbart, passt das so.`),
+    bogen(anschriftMieter(k), 'Bestätigung Ihrer Kündigung',
+      briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung]),
+      h('p', {}, anredeZeile(m)),
+      h('p', {}, `wir bestätigen den Eingang Ihrer Kündigung${m.kuendigungEingang ? ` am ${datum(m.kuendigungEingang)}` : ''} für ${wohnungText(einheit)}, ${[objekt.strasse, objekt.ort].filter(Boolean).join(', ')}. Das Mietverhältnis endet am `, h('strong', {}, datum(m.ende)), '.'),
+      h('p', {}, 'Für die Rückgabe der Wohnung schlagen wir einen gemeinsamen Termin am letzten Tag des Mietverhältnisses vor. Bitte melden Sie sich bei uns, damit wir ihn abstimmen können. Bei der Abnahme erstellen wir ein Protokoll, lesen die Zähler ab und nehmen alle Schlüssel zurück.'),
+      h('p', {}, 'Bitte denken Sie an:'),
+      h('ul', {},
+        h('li', {}, 'die Wohnung vollständig geräumt und besenrein zurückzugeben,'),
+        h('li', {}, `alle Schlüssel mitzubringen${m.schluessel ? ` (übergeben wurden: ${m.schluessel})` : ''},`),
+        h('li', {}, 'Ihre Verträge mit dem Strom- und gegebenenfalls Gasversorger zu kündigen oder umzumelden,'),
+        h('li', {}, 'uns Ihre neue Anschrift und Bankverbindung mitzuteilen – für die Abrechnung von Nebenkosten und Kaution.')),
+      zahl(m.kautionSoll) > 0 && h('p', {}, 'Ihre Kaution rechnen wir nach der Rückgabe ab. Steht noch eine Betriebskostenabrechnung aus, kann ein angemessener Teil bis zu deren Vorliegen einbehalten werden.'),
+      h('p', {}, 'Wir bedanken uns für das Mietverhältnis und wünschen Ihnen für die Zukunft alles Gute.'),
       ...gruss()));
 };
 
