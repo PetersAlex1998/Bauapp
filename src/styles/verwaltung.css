@@ -2199,3 +2199,96 @@ a.vw-kennzahl:hover {
     font-size: 7.5pt;
   }
 }
+.vw .vw-form__abschnitt {
+  margin: 0.8rem 0 -0.2rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--linie);
+  font-size: 1rem;
+}
+.vw .vw-form__felder > .vw-form__abschnitt:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ---------- Mietverhältnis: Einzugs-Checkliste ---------- */
+.vw-schritte {
+  list-style: none;
+  margin: 0;
+  padding: 0 1.1rem 0.6rem;
+}
+.vw-schritte li {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr auto;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--linie);
+}
+.vw-schritte li:last-child {
+  border-bottom: 0;
+}
+.vw-schritte input[type='checkbox'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  accent-color: #2f8f5b;
+}
+.vw-schritte__haken {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  border: 1.5px solid var(--linie);
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  color: #fff;
+}
+.vw-schritte li.ist-fertig .vw-schritte__haken {
+  background: #2f8f5b;
+  border-color: #2f8f5b;
+}
+.vw-schritte li.ist-fertig strong {
+  color: var(--tinte-leise);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.vw-schritte small {
+  color: var(--tinte-leise);
+}
+@media (max-width: 40rem) {
+  .vw-schritte li {
+    grid-template-columns: 1.4rem 1fr;
+  }
+  .vw-schritte li > :last-child:not(div) {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ---------- Mietvertrag, Wohnungsgeberbestätigung ---------- */
+.vw .vw-brief.din .din__para {
+  margin: 5mm 0 1.5mm;
+  font-size: 10.5pt;
+  break-after: avoid;
+}
+.vw .vw-brief.din .din__vereinbart {
+  white-space: pre-wrap;
+}
+.vw .vw-brief.din .din__sign {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14mm 10mm;
+  margin-top: 16mm;
+  break-inside: avoid;
+}
+.vw .vw-brief.din .din__formular th {
+  width: 55mm;
+  text-align: left;
+  font-weight: 400;
+  color: #444;
+  vertical-align: top;
+}
+.vw .vw-brief.din .din__formular td.vw-linie {
+  height: 9mm;
+}

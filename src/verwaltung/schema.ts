@@ -19,6 +19,8 @@ export type Feld = {
   vorgabe?: any;
   /** Nur ein Admin-Zugang darf das Feld ändern (der Server prüft das ebenfalls) */
   nurAdmin?: boolean;
+  /** Zwischenüberschrift im Formular vor diesem Feld */
+  abschnitt?: string;
 };
 export type Art = {
   titel: string;
@@ -137,17 +139,45 @@ export const ARTEN: Record<string, Art> = {
   mieter: {
     titel: 'Mietverhältnisse', einzahl: 'Mietverhältnis', kreis: 'verwalten',
     felder: [
-      f('einheitId', 'Einheit', 'ref', { auf: 'einheiten', pflicht: true }),
-      f('name', 'Mieter', 'text', { pflicht: true }), f('telefon', 'Telefon'), f('email', 'E-Mail'),
-      f('beginn', 'Mietbeginn', 'datum', { pflicht: true }), f('ende', 'Mietende', 'datum', { hilfe: 'Leer lassen, solange das Mietverhältnis läuft.' }),
-      f('kaltmiete', 'Kaltmiete monatlich', 'geld', { pflicht: true }), f('nebenkosten', 'Nebenkosten-Vorauszahlung monatlich', 'geld'),
+      f('einheitId', 'Einheit', 'ref', { auf: 'einheiten', pflicht: true, abschnitt: 'Mietsache' }),
+      f('mitvermietet', 'Mitvermietet', 'text', { hilfe: 'z. B. Kellerraum Nr. 3, Stellplatz 5, Einbauküche' }),
+      f('anrede', 'Anrede', 'wahl', { optionen: ['Herr', 'Frau', 'Familie', 'Firma', 'Divers / ohne'], abschnitt: 'Mieter' }),
+      f('name', 'Mieter (Vor- und Nachname)', 'text', { pflicht: true }),
+      f('name2', 'Weitere Mieter', 'text', { hilfe: 'Alle, die den Vertrag mit unterschreiben, durch Komma getrennt.' }),
+      f('telefon', 'Telefon'), f('email', 'E-Mail'),
+      f('anschriftBisher', 'Bisherige Anschrift', 'lang', { hilfe: 'Für Vertrag und Schriftverkehr bis zum Einzug.' }),
       f('personen', 'Personen im Haushalt', 'zahl', { vorgabe: 1 }),
+      f('beginn', 'Mietbeginn', 'datum', { pflicht: true, abschnitt: 'Mietzeit und Miete' }),
+      f('ende', 'Mietende', 'datum', { hilfe: 'Leer lassen, solange das Mietverhältnis läuft. Für einen Auszug besser „Auszug …“ verwenden.' }),
+      f('kaltmiete', 'Kaltmiete (Grundmiete) monatlich', 'geld', { pflicht: true }),
+      f('nebenkosten', 'Vorauszahlung Betriebs- und Heizkosten monatlich', 'geld'),
       f('mietart', 'Mietart', 'wahl', { optionen: ['Normale Miete', 'Staffelmiete', 'Indexmiete'], vorgabe: 'Normale Miete', hilfe: 'Bei Staffel- und Indexmiete ist eine Erhöhung auf die Vergleichsmiete ausgeschlossen.' }),
-      f('kautionSoll', 'Kaution vereinbart', 'geld'), f('kautionIst', 'Kaution erhalten', 'geld'), f('notiz', 'Notiz', 'lang'),
+      f('staffeln', 'Staffeln (nur Staffelmiete)', 'lang', { hilfe: 'Je Zeile: Datum und neue Kaltmiete, z. B. „01.12.2027: 720,00 €“. Jede Staffel muss mindestens ein Jahr gelten (§ 557a BGB).' }),
+      f('kautionSoll', 'Kaution vereinbart', 'geld', { abschnitt: 'Kaution', hilfe: 'Höchstens drei Monatskaltmieten (§ 551 BGB).' }),
+      f('kautionArt', 'Art der Kaution', 'wahl', { optionen: ['Überweisung auf Kautionskonto', 'Verpfändetes Sparbuch / Kautionskonto des Mieters', 'Bürgschaft', 'Keine Kaution'], vorgabe: 'Überweisung auf Kautionskonto' }),
+      f('kautionKontoId', 'Kautionskonto', 'ref', { auf: 'bankkonten', hilfe: 'Konto mit der Verwendung „Kautionen“ (Administration → Unternehmen). Eingänge buchen Sie in der Akte des Mietverhältnisses.' }),
+      f('vertragsdatum', 'Vertrag unterschrieben am', 'datum', { abschnitt: 'Vertrag' }),
+      f('schluessel', 'Übergebene Schlüssel', 'text', { hilfe: 'z. B. 2 × Haustür, 2 × Wohnung, 1 × Briefkasten' }),
+      f('vereinbarungen', 'Besondere Vereinbarungen', 'lang', { hilfe: 'Erscheinen so im Mietvertrag.' }),
+      f('notiz', 'Interne Notiz', 'lang'),
     ],
     spalten: ['einheitId', 'name', 'beginn', 'ende', 'kaltmiete'],
     anzeige: (s) => `${s.name} (${ARTEN.einheiten.anzeige(finde('einheiten', s.einheitId) ?? ({} as Satz))})`,
     leer: 'Ein Mietverhältnis verbindet einen Mieter mit einer Einheit – mit Miete, Vorauszahlung und Kaution.',
+  },
+  kautionsbuchungen: {
+    titel: 'Kautionsbuchungen', einzahl: 'Kautionsbuchung', kreis: 'verwalten',
+    felder: [
+      f('mieterId', 'Mietverhältnis', 'ref', { auf: 'mieter', pflicht: true }),
+      f('art', 'Buchung', 'wahl', { optionen: ['Eingang', 'Zinsen', 'Einbehalt', 'Auszahlung an Mieter'], vorgabe: 'Eingang', pflicht: true }),
+      f('datum', 'Datum', 'datum', { pflicht: true }),
+      f('betrag', 'Betrag', 'geld', { pflicht: true, hilfe: 'Immer positiv eintragen – die Art bestimmt, ob es zu- oder abgeht.' }),
+      f('kontoId', 'Auf / von Konto', 'ref', { auf: 'bankkonten' }),
+      f('notiz', 'Notiz', 'text', { hilfe: 'z. B. „1. Rate“, „Verrechnung Nebenkosten 2026“' }),
+    ],
+    spalten: ['mieterId', 'datum', 'art', 'betrag', 'kontoId'],
+    anzeige: (s) => `${s.art} ${s.betrag} €`,
+    leer: 'Jede Bewegung der Kaution: Eingang, Zinsen, Einbehalt und Auszahlung.',
   },
   mietaenderungen: {
     titel: 'Mietverlauf', einzahl: 'Mietänderung', kreis: 'verwalten',
@@ -266,7 +296,8 @@ export const ARTEN: Record<string, Art> = {
     titel: 'Dokumente', einzahl: 'Dokument', kreis: 'verwalten',
     felder: [
       objekt, f('titel', 'Dokument', 'text', { pflicht: true }),
-      f('art', 'Art', 'wahl', { optionen: ['Mietvertrag', 'Übergabeprotokoll', 'Abrechnung', 'Rechnung', 'Versicherung', 'Wartungsnachweis', 'Energieausweis', 'Plan / Grundriss', 'Schriftverkehr', 'Protokoll', 'Sonstiges'], vorgabe: 'Sonstiges' }),
+      f('mieterId', 'Zu Mietverhältnis', 'ref', { auf: 'mieter', hilfe: 'Optional – dann erscheint es in der Akte des Mietverhältnisses.' }),
+      f('art', 'Art', 'wahl', { optionen: ['Mietvertrag', 'Wohnungsgeberbestätigung', 'Kautionsnachweis', 'Übergabeprotokoll', 'Abrechnung', 'Rechnung', 'Versicherung', 'Wartungsnachweis', 'Energieausweis', 'Plan / Grundriss', 'Schriftverkehr', 'Protokoll', 'Sonstiges'], vorgabe: 'Sonstiges' }),
       f('datum', 'Datum', 'datum'), f('ablage', 'Ablageort oder Link', 'text', { hilfe: 'Wo liegt das Dokument? z. B. Ordner, Laufwerk oder Internetadresse.' }), f('notiz', 'Notiz'),
     ],
     spalten: ['objektId', 'titel', 'art', 'datum', 'ablage'],
@@ -407,7 +438,7 @@ export const ARTEN: Record<string, Art> = {
     titel: 'Bankverbindungen', einzahl: 'Bankverbindung', kreis: 'basis',
     felder: [
       f('bezeichnung', 'Bezeichnung', 'text', { pflicht: true, hilfe: 'z. B. „Geschäftskonto“ oder „Mietkonto Musterstraße 12“.' }),
-      f('zweck', 'Verwendung', 'wahl', { optionen: ['Geschäftskonto', 'Kautionen', 'Rücklage', 'Sonstiges'], vorgabe: 'Geschäftskonto', hilfe: 'Mietkonten pflegen Sie im jeweiligen Objekt (Reiter „Verwalten“).' }),
+      f('zweck', 'Verwendung', 'wahl', { optionen: ['Geschäftskonto', 'Kautionen', 'Rücklage', 'Sonstiges'], vorgabe: 'Geschäftskonto', hilfe: 'Mietkonten pflegen Sie im jeweiligen Objekt (Reiter „Finanzen“).' }),
       f('inhaber', 'Kontoinhaber', 'text', { pflicht: true }), f('iban', 'IBAN', 'text', { pflicht: true }), f('bic', 'BIC'), f('bank', 'Bank'),
       f('aufRechnungen', 'Auf Rechnungen und Schreiben angeben', 'ja', { vorgabe: false }),
       f('notiz', 'Notiz'),

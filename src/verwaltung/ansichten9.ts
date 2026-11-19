@@ -97,7 +97,7 @@ routen.nkbriefe = (objektId, jahrText) => {
       h('span', { class: 'vw-platz' }),
       h('button', { class: 'vw-knopf vw-knopf--voll', disabled: !r.zeilen.length, onclick: () => druckeNur() }, 'Alle drucken / PDF (DIN A4)'),
       h('p', { class: 'vw-fein', style: 'flex-basis:100%;margin:0' }, 'Je Mieter ein Deckblatt nach DIN 5008 (Fensterumschlag, E-Brief) und eine Anlage. Im Druckdialog: Skalierung 100 %, „Kopf- und Fußzeilen“ aus.')),
-    !konto && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Für dieses Objekt ist kein Mietkonto hinterlegt (Objekt → Verwalten). Bei Nachzahlungen fehlt sonst die Bankverbindung.'),
+    !konto && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Für dieses Objekt ist kein Mietkonto hinterlegt (Objekt → Finanzen). Bei Nachzahlungen fehlt sonst die Bankverbindung.'),
     h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Vorauszahlungen sind als Soll gerechnet. Bitte vor dem Versand mit den tatsächlichen Zahlungen abgleichen.'),
     r.zeilen.length ? mappe : h('p', { class: 'vw-leer' }, `Für ${jahr} gibt es keine Mietverhältnisse oder keine umlagefähigen Belege.`));
 };

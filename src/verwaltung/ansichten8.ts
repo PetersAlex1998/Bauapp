@@ -89,7 +89,7 @@ routen.unternehmen = () => {
             a.logo && vorhanden && h('button', { class: 'vw-knopf vw-knopf--gefahr', onclick: () => { if (confirm('Logo entfernen?')) { speichere('absender', { id: vorhanden.id, logo: '' }); hinweis('Logo entfernt'); } } }, 'Entfernen'))))),
     h('section', { class: 'vw-karte' },
       h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Bankverbindungen')),
-      h('p', { class: 'vw-fein vw-innen' }, 'Nur Unternehmenskonten und übergreifende Konten (z. B. Kautionen, Rücklage). Konten mit „Auf Rechnungen und Schreiben angeben“ erscheinen in der Fußzeile und als Zahlungsziel auf Rechnungen. ', h('strong', {}, 'Mietkonten pflegen Sie im jeweiligen Objekt'), ' (Objekt → Reiter „Verwalten“).'),
+      h('p', { class: 'vw-fein vw-innen' }, 'Nur Unternehmenskonten und übergreifende Konten (z. B. Kautionen, Rücklage). Konten mit „Auf Rechnungen und Schreiben angeben“ erscheinen in der Fußzeile und als Zahlungsziel auf Rechnungen. ', h('strong', {}, 'Mietkonten pflegen Sie im jeweiligen Objekt'), ' (Objekt → Reiter „Finanzen“).'),
       alle('bankkonten').some((k) => k.zweck === 'Mieten / Treuhand' || k.objektId) && h('p', { class: 'vw-warnung vw-innen' }, 'Hier steht noch ein Mietkonto aus der vorigen Version. Bitte im passenden Objekt als Mietkonto anlegen und hier löschen.'),
       liste('bankkonten', { kompakt: true })),
     h('section', { class: 'vw-karte' },

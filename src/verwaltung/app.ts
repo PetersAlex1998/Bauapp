@@ -13,6 +13,7 @@ import { ansichtBeschreibung, ansichtId, ansichtWahl, arbeitUebergeben, ds, ich,
 import {
   aktivIm, datumPlus, datumPlusMonate, einheitenVon, gezahlt, sollIm, mahnstufe, mieterVon, monatHeute, monatPlus, naechsterTermin,
   nebenkosten, objektVonMieter, rechnungSumme, rechnungUeberfaellig, rueckstand, soll, status360, tageBis, zahl, type Zustand,
+  mietStand,
 } from './rechnen';
 import { beispieldaten } from './beispiel';
 
@@ -108,9 +109,10 @@ export function formular(artName: string, satz: Partial<Satz> = {}, nachher?: (s
     });
     const gesperrt = !!feld.nurAdmin && modus() === 'server' && !istAdmin();
     if (gesperrt) eingabe.setAttribute('disabled', '');
-    return h('div', { class: `feld ${feld.typ === 'lang' || feld.typ === 'mehr' ? 'feld--breit' : ''}` },
+    const feldEl = h('div', { class: `feld ${feld.typ === 'lang' || feld.typ === 'mehr' ? 'feld--breit' : ''}` },
       feld.typ !== 'ja' && h('label', { for: id }, feld.label, feld.pflicht && ' *'),
       eingabe, gesperrt ? h('small', {}, 'Ändern kann nur ein Admin-Zugang (Administration → Objekt-Zuweisung).') : feld.hilfe && h('small', {}, feld.hilfe));
+    return feld.abschnitt ? [h('h3', { class: 'feld--breit vw-form__abschnitt' }, feld.abschnitt), feldEl] : feldEl;
   });
 
   const form = h('form', { method: 'dialog', class: 'vw-form', novalidate: false },
@@ -236,7 +238,7 @@ export function liste(artName: string, opt: { filter?: (s: Satz) => boolean; vor
     if (sortFeld) saetze = [...saetze].sort((a, b) => String(a[sortFeld] ?? '').localeCompare(String(b[sortFeld] ?? '')) * (['fristen', 'service', 'aufgaben', 'vertraege'].includes(artName) ? 1 : -1));
     zaehler.textContent = q ? `${saetze.length} von ${gesamt}` : String(gesamt);
     koerper.replaceChildren(...(saetze.length
-      ? saetze.map((s) => h('tr', { tabindex: 0, class: s.erledigt ? 'vw-erledigt' : '', onclick: () => (artName === 'objekte' ? (location.hash = `#/objekt/${s.id}`) : formular(artName, s)),
+      ? saetze.map((s) => h('tr', { tabindex: 0, class: s.erledigt ? 'vw-erledigt' : '', onclick: () => (artName === 'objekte' ? (location.hash = `#/objekt/${s.id}`) : artName === 'mieter' ? (location.hash = `#/mietverhaeltnis/${s.id}`) : formular(artName, s)),
           onkeydown: (e: KeyboardEvent) => { if (e.key === 'Enter') (e.currentTarget as HTMLElement).click(); } },
           spalten.map((name) => h('td', { 'data-spalte': feldVon(art, name).label }, zelle(artName, art, name, s))),
           h('td', { class: 'vw-aktion' }, zeilenAktion(artName, s))))
@@ -368,35 +370,51 @@ export function personWahl(o: Satz, feld: 'betreuerId' | 'vertretungId'): HTMLEl
     h('option', { value: '' }, '– nicht zugewiesen –'), leute.map((m) => h('option', { value: m.id, selected: m.id === o[feld] }, m.name)));
 }
 
-/** Einheiten des Objekts mit dem jeweiligen Mieter – die Einheit ist Teil des Objekts. */
+/** Einheiten des Objekts mit laufendem und geplantem Mietverhältnis – die Einheit ist Teil des Objekts. */
+const MIETFARBE: Record<string, string> = { Geplant: 'blau', Laufend: 'gruen', Gekündigt: 'gelb', Beendet: 'grau' };
+function mietMarke(m: Satz) {
+  const st = mietStand(m);
+  return marke(st === 'Geplant' ? `Einzug ${datum(m.beginn)}` : st === 'Gekündigt' ? `Auszug ${datum(m.ende)}` : st === 'Beendet' ? `Beendet ${datum(m.ende)}` : 'Vermietet', MIETFARBE[st]);
+}
+const akte = (m: Satz) => { location.hash = `#/mietverhaeltnis/${m.id}`; };
 function einheitenTabelle(o: Satz): HTMLElement {
-  const m0 = monatHeute();
   const zeilen = einheitenVon(o.id).map((e) => {
-    const mv = alle('mieter').filter((x) => x.einheitId === e.id);
-    const aktiv = mv.find((x) => aktivIm(x, m0));
-    return { e, aktiv, offen: aktiv ? rueckstand(aktiv) : 0, bisher: mv.length };
+    const mv = alle('mieter').filter((x) => x.einheitId === e.id).sort((a, b) => String(a.beginn).localeCompare(String(b.beginn)));
+    const aktiv = mv.find((x) => ['Laufend', 'Gekündigt'].includes(mietStand(x)));
+    const geplant = mv.find((x) => mietStand(x) === 'Geplant');
+    const frueher = mv.filter((x) => mietStand(x) === 'Beendet');
+    return { e, aktiv, geplant, frueher, offen: aktiv ? rueckstand(aktiv) : 0 };
   });
   const vermietbar = zeilen.filter((z) => z.e.art === 'Wohnung' || z.e.art === 'Gewerbe');
+  const ehemalige = zeilen.flatMap((z) => z.frueher.map((m) => ({ m, e: z.e }))).sort((a, b) => String(b.m.ende).localeCompare(String(a.m.ende)));
   return h('section', { class: 'vw-karte' },
     h('header', { class: 'vw-karte__kopf' },
       h('h2', {}, 'Einheiten & Mieter ', h('span', { class: 'vw-zahl' }, String(zeilen.length))),
-      h('span', {}, `${vermietbar.filter((z) => z.aktiv).length} von ${vermietbar.length} vermietet`),
+      h('span', {}, `${vermietbar.filter((z) => z.aktiv).length} von ${vermietbar.length} vermietet${vermietbar.some((z) => z.geplant) ? ` · ${vermietbar.filter((z) => z.geplant).length} Einzug geplant` : ''}`),
       h('button', { class: 'vw-knopf vw-knopf--voll', onclick: () => formular('einheiten', { objektId: o.id }) }, '+ Einheit')),
     h('div', { class: 'vw-tabelle' }, h('table', {},
       h('thead', {}, h('tr', {}, ['Einheit', 'Fläche', 'Mieter', 'Miete (Soll)', 'Rückstand', 'Stand', ''].map((t) => h('th', { scope: 'col' }, t)))),
-      h('tbody', {}, zeilen.length ? zeilen.map(({ e, aktiv, offen }) => h('tr', { tabindex: 0, onclick: () => (aktiv ? formular('mieter', aktiv) : formular('mieter', { einheitId: e.id })),
-          onkeydown: (ev: KeyboardEvent) => { if (ev.key === 'Enter') (ev.currentTarget as HTMLElement).click(); } },
-        h('td', { 'data-spalte': 'Einheit' }, h('strong', {}, e.bezeichnung), e.lage && h('small', { class: 'vw-block' }, e.lage)),
-        h('td', { 'data-spalte': 'Fläche', class: 'vw-zahlspalte' }, e.flaeche ? `${e.flaeche} m²` : '–'),
-        h('td', { 'data-spalte': 'Mieter' }, aktiv?.name ?? '–'),
-        h('td', { 'data-spalte': 'Miete (Soll)', class: 'vw-zahlspalte' }, aktiv ? geld(soll(aktiv)) : '–'),
-        h('td', { 'data-spalte': 'Rückstand', class: 'vw-zahlspalte' }, offen > 0 ? h('strong', {}, geld(offen)) : '–'),
-        h('td', { 'data-spalte': 'Stand' }, !(e.art === 'Wohnung' || e.art === 'Gewerbe') ? marke(e.art, 'grau') : aktiv ? (offen > 0 ? marke(mahnstufe(aktiv).text, mahnstufe(aktiv).stufe >= 2 ? 'rot' : 'gelb') : marke('Vermietet', 'gruen')) : marke('Leer', 'gelb')),
-        h('td', { class: 'vw-aktion' },
-          aktiv ? h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); aktionen.mieterwechsel?.(aktiv); } }, 'Auszug …')
-                : (e.art === 'Wohnung' || e.art === 'Gewerbe') && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); formular('mieter', { einheitId: e.id }); } }, 'Vermieten'),
-          ' ', h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); formular('einheiten', e); } }, 'Einheit'))))
-        : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'Legen Sie die Einheiten dieses Objekts an: Wohnungen, Gewerbe, Stellplätze.'))]))));
+      h('tbody', {}, zeilen.length ? zeilen.map(({ e, aktiv, geplant, offen }) => {
+        const vermietbarE = e.art === 'Wohnung' || e.art === 'Gewerbe';
+        const haupt = aktiv ?? geplant;
+        return h('tr', { tabindex: 0, onclick: () => (haupt ? akte(haupt) : vermietbarE ? aktionen.neuvermietung?.(e) : formular('einheiten', e)),
+            onkeydown: (ev: KeyboardEvent) => { if (ev.key === 'Enter') (ev.currentTarget as HTMLElement).click(); } },
+          h('td', { 'data-spalte': 'Einheit' }, h('strong', {}, e.bezeichnung), e.lage && h('small', { class: 'vw-block' }, e.lage)),
+          h('td', { 'data-spalte': 'Fläche', class: 'vw-zahlspalte' }, e.flaeche ? `${e.flaeche} m²` : '–'),
+          h('td', { 'data-spalte': 'Mieter' }, aktiv?.name ?? (geplant ? '' : '–'), geplant && aktiv && h('small', { class: 'vw-block' }, `danach: ${geplant.name}`), geplant && !aktiv && geplant.name),
+          h('td', { 'data-spalte': 'Miete (Soll)', class: 'vw-zahlspalte' }, aktiv ? geld(soll(aktiv)) : geplant ? geld(zahl(geplant.kaltmiete) + zahl(geplant.nebenkosten)) : '–'),
+          h('td', { 'data-spalte': 'Rückstand', class: 'vw-zahlspalte' }, offen > 0 ? h('strong', {}, geld(offen)) : '–'),
+          h('td', { 'data-spalte': 'Stand' }, !vermietbarE ? marke(e.art, 'grau')
+            : aktiv ? [offen > 0 ? marke(mahnstufe(aktiv).text, mahnstufe(aktiv).stufe >= 2 ? 'rot' : 'gelb') : mietMarke(aktiv), geplant && [' ', mietMarke(geplant)]]
+            : geplant ? mietMarke(geplant) : marke('Leer', 'gelb')),
+          h('td', { class: 'vw-aktion' },
+            aktiv && mietStand(aktiv) === 'Laufend' && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); aktionen.mieterwechsel?.(aktiv); } }, 'Auszug …'),
+            vermietbarE && !geplant && (!aktiv || mietStand(aktiv) === 'Gekündigt') && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); aktionen.neuvermietung?.(e); } }, aktiv ? 'Nachmieter' : 'Vermieten'),
+            ' ', h('button', { class: 'vw-knopf vw-knopf--klein', onclick: (ev: Event) => { ev.stopPropagation(); formular('einheiten', e); } }, 'Einheit')));
+      })
+        : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'Legen Sie die Einheiten dieses Objekts an: Wohnungen, Gewerbe, Stellplätze.'))]))),
+    ehemalige.length > 0 && h('details', { class: 'vw-innen' }, h('summary', {}, `Frühere Mietverhältnisse (${ehemalige.length})`),
+      h('ul', {}, ehemalige.map(({ m, e }) => h('li', {}, h('a', { href: `#/mietverhaeltnis/${m.id}` }, m.name), ` – ${e.bezeichnung}, ${datum(m.beginn)} bis ${datum(m.ende)}`)))));
 }
 
 /** Mietkonto des Objekts: Admins pflegen es hier, Mitarbeiter sehen es nur. */
@@ -434,11 +452,16 @@ function objektSeite(id: string): HTMLElement {
           o.notiz && [h('dt', {}, 'Notiz'), h('dd', {}, o.notiz)]))),
       liste('aufgaben', { filter: (s) => s.objektId === id && !s.erledigt, vorgaben: { objektId: id }, ohneSpalte: 'objektId', titel: 'Offene Aufgaben', kompakt: true })],
     'Einheiten & Mieter': () => [einheitenTabelle(o)],
-    Verwalten: () => [
+    Finanzen: () => [
       mietkontoBlock(o, L),
-      L('fristen'), L('vertraege'), L('kosten'), L('zaehler'), L('schluessel'), L('vereinbarungen'), L('dokumente', { datum: heute() }),
+      routen.objektkautionen?.(id) ?? h('span'),
+      L('kosten'), L('vereinbarungen'),
+    ],
+    Verwalten: () => [
+      L('fristen'), L('vertraege'), L('zaehler'), L('schluessel'),
       ...(String(o.art).includes('WEG') ? [L('versammlungen'), L('beschluesse')] : []),
     ],
+    Dokumente: () => [L('dokumente', { datum: heute() })],
     Betreuen: () => [L('service', { naechster: heute() }), L('vorgaenge', { gemeldet: heute() }), L('einsaetze', { datum: heute() })],
     Erneuern: () => [L('auftraege')],
     Entwickeln: () => [L('projekte')],
@@ -500,7 +523,7 @@ function mieten(): HTMLElement {
       h('thead', {}, h('tr', {}, ['Einheit', 'Mieter', 'Soll', 'Eingegangen', 'Rückstand gesamt', 'Stand', ''].map((t) => h('th', { scope: 'col' }, t)))),
       h('tbody', {}, zeilen.length ? zeilen.map((z) => h('tr', {},
         h('td', { 'data-spalte': 'Einheit' }, ARTEN.einheiten.anzeige(finde('einheiten', z.m.einheitId) ?? ({} as Satz))),
-        h('td', { 'data-spalte': 'Mieter' }, h('a', { href: '#', onclick: (e: Event) => { e.preventDefault(); formular('mieter', z.m); } }, z.m.name)),
+        h('td', { 'data-spalte': 'Mieter' }, h('a', { href: `#/mietverhaeltnis/${z.m.id}` }, z.m.name)),
         h('td', { 'data-spalte': 'Soll', class: 'vw-zahlspalte' }, geld(z.soll)),
         h('td', { 'data-spalte': 'Eingegangen', class: 'vw-zahlspalte' }, geld(z.ist)),
         h('td', { 'data-spalte': 'Rückstand gesamt', class: 'vw-zahlspalte' }, z.offen > 0 ? h('strong', {}, geld(z.offen)) : '–'),

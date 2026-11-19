@@ -52,7 +52,7 @@ export function objektIdVon(art: string, s: Satz): string | undefined {
   switch (art) {
     case 'objekte': return s.id;
     case 'mieter': return objektVonMieter(s);
-    case 'zahlungen': case 'mietaenderungen': case 'mieterhoehungen': {
+    case 'zahlungen': case 'mietaenderungen': case 'mieterhoehungen': case 'kautionsbuchungen': {
       const m = finde('mieter', s.mieterId);
       return m ? objektVonMieter(m) : undefined;
     }

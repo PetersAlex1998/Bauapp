@@ -221,3 +221,27 @@ export function naechsterTermin(datum: string, rhythmus: string): string {
     default: return basis;
   }
 }
+
+/* ---------- Kaution ---------- */
+export const kautionsbuchungen = (m: Satz) => alle('kautionsbuchungen').filter((b) => b.mieterId === m.id).sort((a, b) => String(a.datum).localeCompare(String(b.datum)));
+const VORZEICHEN: Record<string, number> = { Eingang: 1, Zinsen: 1, Einbehalt: -1, 'Auszahlung an Mieter': -1 };
+/** Eingezahlte Kaution (ohne Zinsen). Ältere Einträge ohne Buchungen: Feld „kautionIst“. */
+export function kautionErhalten(m: Satz): number {
+  const b = kautionsbuchungen(m);
+  return b.length ? b.filter((x) => x.art === 'Eingang').reduce((s, x) => s + zahl(x.betrag), 0) : zahl(m.kautionIst);
+}
+/** Was aktuell für den Mieter verwahrt wird (Eingänge + Zinsen − Einbehalt − Auszahlung) */
+export function kautionBestand(m: Satz): number {
+  const b = kautionsbuchungen(m);
+  return b.length ? b.reduce((s, x) => s + (VORZEICHEN[x.art] ?? 0) * zahl(x.betrag), 0) : zahl(m.kautionIst);
+}
+
+/* ---------- Stand eines Mietverhältnisses ---------- */
+export type MietStand = 'Geplant' | 'Laufend' | 'Gekündigt' | 'Beendet';
+export function mietStand(m: Satz): MietStand {
+  const t = heute();
+  if (m.ende && m.ende < t) return 'Beendet';
+  if (m.beginn && m.beginn > t) return 'Geplant';
+  if (m.ende) return 'Gekündigt';
+  return 'Laufend';
+}

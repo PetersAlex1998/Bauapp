@@ -10,7 +10,7 @@
  */
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
-import { positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
+import { kautionBestand, kautionErhalten, positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
 import { ds, standardZustaendig } from './ansicht';
 import { ich } from './ansicht';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
@@ -226,23 +226,30 @@ routen.bericht = (objektId) => {
 
 /* ================= Kautionen ================= */
 routen.kautionen = () => {
-  const zeilen = ds('mieter').map((m) => ({ m, soll: zahl(m.kautionSoll), ist: zahl(m.kautionIst), beendet: !!m.ende && m.ende < heute() }));
-  const laufend = zeilen.filter((z) => !z.beendet);
+  const zeilen = ds('mieter').filter((m) => zahl(m.kautionSoll) > 0 || kautionBestand(m) > 0)
+    .map((m) => ({ m, soll: zahl(m.kautionSoll), ist: kautionErhalten(m), bestand: kautionBestand(m), beendet: !!m.ende && m.ende < heute(), konto: finde('bankkonten', m.kautionKontoId) }));
+  const laufend = zeilen.filter((z) => !z.beendet || z.bestand > 0.005);
+  const jeKonto = new Map<string, number>();
+  for (const z of laufend) jeKonto.set(z.konto?.bezeichnung ?? 'Ohne Kautionskonto', (jeKonto.get(z.konto?.bezeichnung ?? 'Ohne Kautionskonto') ?? 0) + z.bestand);
   return h('div', { class: 'vw-stapel' },
-    h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Kautionen'), h('p', {}, 'Vereinbarte und erhaltene Kautionen. Nach Auszug steht die Abrechnung an.')),
+    h('header', { class: 'vw-seitenkopf' }, h('h1', {}, 'Kautionen'), h('p', {}, 'Jede Kaution mit ihren Buchungen und dem Konto, auf dem sie liegt. Ein Klick öffnet das Mietverhältnis.')),
     h('div', { class: 'vw-kennzahlen' },
-      kennzahl(geld(laufend.reduce((s, z) => s + z.ist, 0)), 'verwaltete Kautionen'),
-      kennzahl(geld(laufend.reduce((s, z) => s + Math.max(0, z.soll - z.ist), 0)), 'noch nicht eingegangen', undefined, 'vw-kennzahl--gelb'),
-      kennzahl(String(zeilen.filter((z) => z.beendet && z.ist > 0).length), 'nach Auszug abzurechnen', undefined, 'vw-kennzahl--blau')),
+      kennzahl(geld(laufend.reduce((s, z) => s + z.bestand, 0)), 'verwahrte Kautionen'),
+      kennzahl(geld(zeilen.filter((z) => !z.beendet).reduce((s, z) => s + Math.max(0, z.soll - z.ist), 0)), 'noch nicht eingegangen', undefined, 'vw-kennzahl--gelb'),
+      kennzahl(String(zeilen.filter((z) => z.beendet && z.bestand > 0.005).length), 'nach Auszug abzurechnen', undefined, 'vw-kennzahl--blau')),
+    jeKonto.size > 0 && h('section', { class: 'vw-karte' }, h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Bestand je Konto'), h('span', {}, 'zum Abgleich mit dem Kontoauszug')),
+      h('dl', { class: 'vw-info vw-info--innen' }, [...jeKonto].map(([k, v]) => [h('dt', {}, k), h('dd', {}, h('strong', {}, geld(v)))]))),
     h('section', { class: 'vw-karte' }, h('div', { class: 'vw-tabelle' }, h('table', {},
-      h('thead', {}, h('tr', {}, ['Einheit', 'Mieter', 'Vereinbart', 'Erhalten', 'Stand'].map((t) => h('th', { scope: 'col' }, t)))),
-      h('tbody', {}, zeilen.length ? zeilen.map((z) => h('tr', { tabindex: 0, onclick: () => formular('mieter', z.m) },
+      h('thead', {}, h('tr', {}, ['Einheit', 'Mieter', 'Vereinbart', 'Eingezahlt', 'Verwahrt', 'Konto', 'Stand'].map((t) => h('th', { scope: 'col' }, t)))),
+      h('tbody', {}, zeilen.length ? zeilen.map((z) => h('tr', { tabindex: 0, onclick: () => (location.hash = `#/mietverhaeltnis/${z.m.id}`) },
         h('td', { 'data-spalte': 'Einheit' }, ARTEN.einheiten.anzeige(finde('einheiten', z.m.einheitId) ?? ({} as Satz))),
         h('td', { 'data-spalte': 'Mieter' }, z.m.name),
         h('td', { 'data-spalte': 'Vereinbart', class: 'vw-zahlspalte' }, geld(z.soll)),
-        h('td', { 'data-spalte': 'Erhalten', class: 'vw-zahlspalte' }, geld(z.ist)),
-        h('td', { 'data-spalte': 'Stand' }, z.beendet ? (z.ist > 0 ? marke('Abrechnen', 'blau') : marke('Abgeschlossen', 'gruen')) : z.ist >= z.soll ? marke('Vollständig', 'gruen') : marke(`${geld(z.soll - z.ist)} offen`, 'gelb'))))
-        : [h('tr', {}, h('td', { colspan: 5, class: 'vw-leer' }, 'Noch keine Mietverhältnisse angelegt.'))])))));
+        h('td', { 'data-spalte': 'Eingezahlt', class: 'vw-zahlspalte' }, geld(z.ist)),
+        h('td', { 'data-spalte': 'Verwahrt', class: 'vw-zahlspalte' }, geld(z.bestand)),
+        h('td', { 'data-spalte': 'Konto' }, z.konto?.bezeichnung ?? '–'),
+        h('td', { 'data-spalte': 'Stand' }, z.beendet ? (z.bestand > 0.005 ? marke('Abrechnen', 'blau') : marke('Abgeschlossen', 'gruen')) : z.ist >= z.soll ? marke('Vollständig', 'gruen') : marke(`${geld(z.soll - z.ist)} offen`, 'gelb'))))
+        : [h('tr', {}, h('td', { colspan: 7, class: 'vw-leer' }, 'Noch keine Kautionen erfasst.'))])))));
 };
 
 /* ================= Kalender ================= */
@@ -287,7 +294,7 @@ aktionen.mieterwechsel = (m: Satz) => {
       h('div', { class: 'feld' }, h('label', { for: 'mw-ende' }, 'Mietende *'), h('input', { id: 'mw-ende', name: 'ende', type: 'date', required: true, value: heute() })),
       h('div', { class: 'feld feld--breit vw-mehr', style: 'display:grid' },
         haken('uebergabe', 'Aufgabe: Wohnungsübergabe mit Zählerständen und Schlüsseln'),
-        haken('kaution', `Aufgabe: Kaution abrechnen (${geld(m.kautionIst)} erhalten)`, zahl(m.kautionIst) > 0),
+        haken('kaution', `Aufgabe: Kaution abrechnen (${geld(kautionBestand(m))} verwahrt)`, kautionBestand(m) > 0),
         haken('nk', 'Aufgabe: Nebenkosten bis zum Auszug abrechnen'),
         haken('renovierung', 'Renovierungsauftrag für die Wohnung anlegen'),
         haken('nachmieter', 'Aufgabe: Nachmieter suchen'),
