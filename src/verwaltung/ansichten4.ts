@@ -37,6 +37,7 @@ function pruefeZeile(m: Satz) {
   let stand: Stand;
   const vereinbart = alle('mietaenderungen').filter((x) => x.mieterId === m.id && x.ab > heute()).sort((a, b) => a.ab.localeCompare(b.ab))[0];
   if (vereinbart) stand = { text: `Erhöhung vereinbart ab ${datum(vereinbart.ab)}`, farbe: 'gruen', moeglich: false };
+  else if (m.mietart === 'Indexmiete') stand = { text: 'Indexmiete – Anpassung über den Index', farbe: 'grau', moeglich: false };
   else if (m.mietart && m.mietart !== 'Normale Miete') stand = { text: `Nicht möglich: ${m.mietart}`, farbe: 'grau', moeglich: false };
   else if (laeuft) stand = { text: 'Verlangen läuft', farbe: 'blau', moeglich: false };
   else if (p.keineEinheitsdaten) stand = { text: 'Fläche oder Vergleichsmiete fehlt', farbe: 'gelb', moeglich: false };
@@ -75,7 +76,7 @@ routen.mieterhoehung = () => {
         h('td', { 'data-spalte': 'Kappung bis', class: 'vw-zahlspalte' }, geld(z.p.kappung), h('small', { class: 'vw-block' }, `${prozent(z.p.satz * 100)} in 3 Jahren`)),
         h('td', { 'data-spalte': 'Mögliche Miete', class: 'vw-zahlspalte' }, z.p.erhoehung > 0.005 ? [h('strong', {}, geld(z.p.ziel)), h('small', { class: 'vw-block' }, `+ ${geld(z.p.erhoehung * 12)} pro Jahr`)] : '–'),
         h('td', { 'data-spalte': 'Stand' }, marke(z.stand.text, z.stand.farbe)),
-        h('td', { class: 'vw-aktion' }, (z.stand.moeglich || (z.stand.farbe === 'gelb' && !z.p.keineEinheitsdaten && z.stand.text.startsWith('Möglich ab'))) && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => vorbereiten(z) }, 'Vorbereiten'))))
+        h('td', { class: 'vw-aktion' }, z.m.mietart === 'Indexmiete' && h('a', { class: 'vw-knopf vw-knopf--klein', href: `#/indexmiete/${z.m.id}` }, 'Indexanpassung'), (z.stand.moeglich || (z.stand.farbe === 'gelb' && !z.p.keineEinheitsdaten && z.stand.text.startsWith('Möglich ab'))) && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => vorbereiten(z) }, 'Vorbereiten'))))
         : [h('tr', {}, h('td', { colspan: 8, class: 'vw-leer' }, 'Es gibt keine laufenden Mietverhältnisse.'))])))),
     h('div', { class: 'vw-reihe' },
       h('a', { class: 'vw-knopf', href: '#/liste/mietaenderungen' }, 'Mietverlauf erfassen'),

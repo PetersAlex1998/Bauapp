@@ -156,6 +156,8 @@ export const ARTEN: Record<string, Art> = {
       f('nebenkosten', 'Vorauszahlung Betriebs- und Heizkosten monatlich', 'geld'),
       f('mietart', 'Mietart', 'wahl', { optionen: ['Normale Miete', 'Staffelmiete', 'Indexmiete'], vorgabe: 'Normale Miete', hilfe: 'Bei Staffel- und Indexmiete ist eine Erhöhung auf die Vergleichsmiete ausgeschlossen.' }),
       f('staffeln', 'Staffeln (nur Staffelmiete)', 'lang', { hilfe: 'Je Zeile: Datum und neue Kaltmiete, z. B. „01.12.2027: 720,00 €“. Jede Staffel muss mindestens ein Jahr gelten (§ 557a BGB).' }),
+      f('indexBasisMonat', 'Indexmiete: Basismonat', 'monat', { hilfe: 'Monat des Verbraucherpreisindex (VPI, Statistisches Bundesamt), auf dem die Miete beruht – meist der Monat des Vertragsschlusses.' }),
+      f('indexBasisWert', 'Indexmiete: Indexwert im Basismonat', 'zahl', { hilfe: 'z. B. 121,4 (VPI 2020 = 100)' }),
       f('kautionSoll', 'Kaution vereinbart', 'geld', { abschnitt: 'Kaution', hilfe: 'Höchstens drei Monatskaltmieten (§ 551 BGB).' }),
       f('kautionArt', 'Art der Kaution', 'wahl', { optionen: ['Überweisung auf Kautionskonto', 'Verpfändetes Sparbuch / Kautionskonto des Mieters', 'Bürgschaft', 'Keine Kaution'], vorgabe: 'Überweisung auf Kautionskonto' }),
       f('kautionKontoId', 'Kautionskonto', 'ref', { auf: 'bankkonten', hilfe: 'Konto mit der Verwendung „Kautionen“ (Administration → Unternehmen). Eingänge buchen Sie in der Akte des Mietverhältnisses.' }),

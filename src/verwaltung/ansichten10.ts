@@ -193,6 +193,7 @@ routen.mietverhaeltnis = (id) => {
         h('a', { class: 'vw-knopf', href: `#/uebergabe/${m.id}/${imAuszug ? 'auszug' : 'einzug'}` }, 'Übergabeprotokoll'),
         m.kuendigungEingang && m.kuendigungDurch !== 'Vermieter' && h('a', { class: 'vw-knopf', href: `#/kuendigung/${m.id}` }, 'Kündigungsbestätigung'),
         offen > 0 && h('a', { class: 'vw-knopf', href: `#/brief/erinnerung/${m.id}` }, 'Zahlungserinnerung'),
+        m.mietart === 'Indexmiete' && st === 'Laufend' && h('a', { class: 'vw-knopf', href: `#/indexmiete/${m.id}` }, 'Indexanpassung'),
         st === 'Laufend' && h('button', { class: 'vw-knopf', onclick: () => aktionen.mieterwechsel?.(m) }, 'Auszug …'))),
     h('div', { class: 'vw-kennzahlen' },
       kennzahl(geld(st === 'Geplant' ? mieteAm(m, m.beginn) + zahl(m.nebenkosten) : soll(m)), 'Miete gesamt im Monat'),
@@ -216,7 +217,7 @@ routen.mietverhaeltnis = (id) => {
           h('dt', {}, 'Unterschrieben'), h('dd', {}, m.vertragsdatum ? datum(m.vertragsdatum) : 'noch nicht'),
           m.schluessel && [h('dt', {}, 'Schlüssel'), h('dd', {}, m.schluessel)]),
         verlauf.length ? h('div', { class: 'vw-innen' }, h('h3', {}, 'Mietentwicklung'),
-          h('ul', { class: 'vw-fein' }, verlauf.map((v) => h('li', {}, `ab ${datum(v.ab)}: ${geld(v.alt)} → ${geld(v.kaltmiete)} (${v.grund})`)))) : null)),
+          h('ul', { class: 'vw-fein' }, verlauf.map((v) => h('li', { class: v.ab > heute() ? 'vw-kuenftig' : '' }, `ab ${datum(v.ab)}: ${geld(v.alt)} → ${geld(v.kaltmiete)} (${v.grund}${v.automatisch ? ', laut Vertrag' : ''})${v.ab > heute() ? ' – kommt noch' : ''}`)))) : null)),
     listeOffen ? kautionKarte(k) : null,
     imAuszug && !auszugOffen && h('details', { class: 'vw-karte vw-innen' }, h('summary', {}, 'Auszug – alle Schritte erledigt'), checkliste(k, true)),
     h('section', { class: 'vw-karte' },
@@ -456,6 +457,12 @@ export function objektKautionen(objektId: string): HTMLElement {
 }
 
 export { kautionskonto, personen };
+/** Offene Schritte der Einzugs- oder Auszugs-Checkliste (für „Heute“) */
+export function offeneSchritte(m: Satz, auszug: boolean): string[] {
+  const k = kontext(m.id);
+  if (!k) return [];
+  return (auszug ? auszugSchritte(k) : schritte(k)).filter((x) => !x.fertig).map((x) => x.text);
+}
 // Für das Objektmodul (app.ts lädt dieses Modul nicht direkt)
 routes_registrieren();
 function routes_registrieren() { routen.objektkautionen = (id) => objektKautionen(id ?? ''); }

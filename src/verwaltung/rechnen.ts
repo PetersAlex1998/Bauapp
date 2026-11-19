@@ -38,7 +38,30 @@ export const mieterVon = (objektId: string) => alle('mieter').filter((m) => obje
 export const aktivIm = (m: Satz, monat: string) => !!m.beginn && monatVon(m.beginn) <= monat && (!m.ende || monatVon(m.ende) >= monat);
 /* ---------- Mietverlauf und Mieterhöhung ---------- */
 export const MODERNISIERUNG = 'Modernisierung (§ 559)';
-export const verlaufVon = (m: Satz) => alle('mietaenderungen').filter((x) => x.mieterId === m.id && x.ab).sort((a, b) => String(a.ab).localeCompare(String(b.ab)));
+/** Staffeln aus dem Vertrag lesen: je Zeile Datum und Betrag, z. B. „01.12.2027: 720,00 €“ */
+export function staffelnVon(m: Satz): { ab: string; kaltmiete: number }[] {
+  if (m.mietart !== 'Staffelmiete') return [];
+  return String(m.staffeln ?? '').split('\n').map((zeile) => {
+    const d = zeile.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})|(\d{4})-(\d{2})-(\d{2})/);
+    const rest = d ? zeile.slice((d.index ?? 0) + d[0].length) : '';
+    const b = rest.match(/(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:\.\d{1,2})?)/);
+    if (!d || !b) return null;
+    const ab = d[4] ? `${d[4]}-${d[5]}-${d[6]}` : `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')}`;
+    const betrag = b[1].includes(',') ? Number(b[1].replace(/\./g, '').replace(',', '.')) : Number(b[1]);
+    return Number.isFinite(betrag) && betrag > 0 ? { ab, kaltmiete: betrag } : null;
+  }).filter((x): x is { ab: string; kaltmiete: number } => !!x).sort((a, b) => a.ab.localeCompare(b.ab));
+}
+/** Mietverlauf: erfasste Änderungen plus die vertraglichen Staffeln (gelten automatisch). */
+export function verlaufVon(m: Satz): Satz[] {
+  const echt = alle('mietaenderungen').filter((x) => x.mieterId === m.id && x.ab);
+  const staffeln = staffelnVon(m).filter((st) => !echt.some((x) => x.ab === st.ab))
+    .map((st, i) => ({ id: `staffel-${m.id}-${i}`, mieterId: m.id, ab: st.ab, kaltmiete: st.kaltmiete, grund: 'Staffelmiete', automatisch: true } as Satz));
+  const alle_ = [...echt, ...staffeln].sort((a, b) => String(a.ab).localeCompare(String(b.ab)));
+  // „bisherige Miete“ der automatischen Staffeln aus der Reihenfolge ergänzen
+  let vorher = zahl(m.kaltmiete);
+  for (const x of alle_) { if (x.automatisch) x.alt = vorher; vorher = zahl(x.kaltmiete); }
+  return alle_;
+}
 /** Kaltmiete, die an einem Stichtag galt. Ohne erfasste Änderungen gilt: unverändert seit Mietbeginn. */
 export function mieteAm(m: Satz, tag: string): number {
   const v = verlaufVon(m);
@@ -98,6 +121,7 @@ export function mahnstufe(m: Satz): { stufe: 0 | 1 | 2 | 3; text: string } {
 }
 
 /* ---------- Nebenkostenabrechnung ---------- */
+export const tageZwischen = (von: string, bis: string) => Math.round((Date.parse(bis + 'T00:00:00Z') - Date.parse(von + 'T00:00:00Z')) / 86400000);
 export function nebenkosten(objektId: string, jahr: number) {
   const einheiten = einheitenVon(objektId);
   const belege = alle('kosten').filter((k) => k.objektId === objektId && k.umlage && (k.datum || '').startsWith(String(jahr)));
@@ -110,30 +134,35 @@ export function nebenkosten(objektId: string, jahr: number) {
   }
   const kostenarten = [...gruppen.values()].sort((a, b) => a.art.localeCompare(b.art));
 
-  // Belegte Monate je Mietverhältnis im Abrechnungsjahr
+  // Nutzungszeit je Mietverhältnis tagesgenau; Vorauszahlungen je angefangenem Monat (Soll)
+  const jahrBeginn = `${jahr}-01-01`, jahrEnde = `${jahr}-12-31`;
+  const jahrTage = tageZwischen(jahrBeginn, jahrEnde) + 1;
   const mv = mieterVon(objektId)
     .map((m) => {
+      const von = m.beginn && m.beginn > jahrBeginn ? m.beginn : jahrBeginn;
+      const bis = m.ende && m.ende < jahrEnde ? m.ende : jahrEnde;
+      const tage = m.beginn && m.beginn <= jahrEnde && (!m.ende || m.ende >= jahrBeginn) ? tageZwischen(von, bis) + 1 : 0;
       let monate = 0;
       for (let i = 1; i <= 12; i++) if (aktivIm(m, `${jahr}-${String(i).padStart(2, '0')}`)) monate++;
-      return { m, monate, einheit: finde('einheiten', m.einheitId)! };
+      return { m, monate, tage, von, bis, einheit: finde('einheiten', m.einheitId)! };
     })
-    .filter((x) => x.monate > 0 && x.einheit);
+    .filter((x) => x.tage > 0 && x.einheit);
 
-  const flaecheGesamt = einheiten.reduce((s, e) => s + zahl(e.flaeche), 0) * 12;
-  const einheitenGesamt = einheiten.length * 12;
-  const personenGesamt = mv.reduce((s, x) => s + Math.max(1, zahl(x.m.personen)) * x.monate, 0);
+  const flaecheGesamt = einheiten.reduce((s, e) => s + zahl(e.flaeche), 0) * jahrTage;
+  const einheitenGesamt = einheiten.length * jahrTage;
+  const personenGesamt = mv.reduce((s, x) => s + Math.max(1, zahl(x.m.personen)) * x.tage, 0);
 
-  const zeilen = mv.map(({ m, monate, einheit }) => {
+  const zeilen = mv.map(({ m, monate, tage, von, bis, einheit }) => {
     const posten = kostenarten.map((k) => {
       let anteil = 0;
-      if (k.schluessel === 'Einheiten') anteil = einheitenGesamt ? monate / einheitenGesamt : 0;
-      else if (k.schluessel === 'Personen') anteil = personenGesamt ? (Math.max(1, zahl(m.personen)) * monate) / personenGesamt : 0;
-      else anteil = flaecheGesamt ? (zahl(einheit.flaeche) * monate) / flaecheGesamt : 0;
+      if (k.schluessel === 'Einheiten') anteil = einheitenGesamt ? tage / einheitenGesamt : 0;
+      else if (k.schluessel === 'Personen') anteil = personenGesamt ? (Math.max(1, zahl(m.personen)) * tage) / personenGesamt : 0;
+      else anteil = flaecheGesamt ? (zahl(einheit.flaeche) * tage) / flaecheGesamt : 0;
       return { art: k.art, schluessel: k.schluessel, betrag: Math.round(k.summe * anteil * 100) / 100 };
     });
     const summe = Math.round(posten.reduce((s, p) => s + p.betrag, 0) * 100) / 100;
     const voraus = Math.round(zahl(m.nebenkosten) * monate * 100) / 100;
-    return { mieter: m, einheit, monate, posten, summe, voraus, saldo: Math.round((summe - voraus) * 100) / 100 };
+    return { mieter: m, einheit, monate, tage, jahrTage, von, bis, posten, summe, voraus, saldo: Math.round((summe - voraus) * 100) / 100 };
   });
   const gesamt = Math.round(kostenarten.reduce((s, k) => s + k.summe, 0) * 100) / 100;
   const umgelegt = Math.round(zeilen.reduce((s, z) => s + z.summe, 0) * 100) / 100;

@@ -330,7 +330,9 @@ function cockpit(): HTMLElement {
         h('p', { class: 'vw-fein' }, 'Grün: im Plan · Gelb: etwas steht an · Rot: Handlungsbedarf · Grau: nicht gebucht'))));
 }
 
-type Punkt = { datum: string; text: string; art: string; farbe: string; ziel: string };
+export type Punkt = { datum: string; text: string; art: string; farbe: string; ziel: string };
+/** Weitere Quellen für „Jetzt wichtig“ (z. B. Mietverhältnisse) – Module tragen sich hier ein. */
+export const weiterePunkte: ((objektId?: string) => Punkt[])[] = [];
 /** Was ansteht – für ein Objekt oder (ohne Angabe) für alle Objekte der aktuellen Ansicht. */
 export function wichtigFuer(objektId?: string): Punkt[] {
   const quelle = (art: string) => (objektId ? alle(art).filter((x) => objektIdVon(art, x) === objektId) : ds(art));
@@ -343,6 +345,7 @@ export function wichtigFuer(objektId?: string): Punkt[] {
     ...quelle('rechnungen').filter(rechnungUeberfaellig).map((x) => ({ datum: x.faellig, text: `Rechnung ${x.nummer ?? ''} überfällig · ${finde('kunden', x.kundeId)?.name ?? ''}`, art: 'Rechnung', farbe: 'rot', ziel: `#/rechnung/${x.id}` })),
     ...quelle('aufgaben').filter((x) => !x.erledigt && x.faellig && tageBis(x.faellig) <= 7).map((x) => ({ datum: x.faellig, text: x.titel, art: 'Aufgabe', farbe: x.faellig < h0 ? 'rot' : 'gelb', ziel: '#/aufgaben' })),
     ...quelle('vertraege').filter((x) => x.kuendigenBis && tageBis(x.kuendigenBis) >= 0 && tageBis(x.kuendigenBis) <= 60).map((x) => ({ datum: x.kuendigenBis, text: mit(`Kündbar bis: ${x.art} · ${x.partner}`, x.objektId), art: 'Vertrag', farbe: 'gelb', ziel: '#/liste/vertraege' })),
+    ...weiterePunkte.flatMap((f) => { try { return f(objektId); } catch { return []; } }),
   ].sort((a, b) => a.datum.localeCompare(b.datum));
 }
 export const wichtigListe = (punkte: Punkt[], max = 12) => punkte.length
@@ -557,7 +560,7 @@ function nebenkostenSeite(objektId?: string): HTMLElement {
   if (!r.kostenarten.length) return h('div', { class: 'vw-stapel' }, kopf, wahl, h('p', { class: 'vw-leer' }, `Für ${o.bezeichnung} gibt es im Jahr ${nkJahr} noch keine umlagefähigen Belege.`));
   return h('div', { class: 'vw-stapel' }, kopf, wahl,
     r.ohneFlaeche && h('p', { class: 'vw-warnung' }, 'Bei mindestens einer Einheit fehlt die Wohnfläche. Die Verteilung nach Fläche ist dadurch nicht korrekt.'),
-    h('p', { class: 'vw-fein' }, `Die Abrechnung für ${nkJahr} muss den Mietern bis zum 31.12.${nkJahr + 1} zugehen (§ 556 Abs. 3 BGB). Vorauszahlungen sind als Soll gerechnet; bitte vor dem Versand prüfen.`),
+    h('p', { class: 'vw-fein' }, `Die Abrechnung für ${nkJahr} muss den Mietern bis zum 31.12.${nkJahr + 1} zugehen (§ 556 Abs. 3 BGB). Kosten werden tagesgenau nach Nutzungszeit verteilt (Ein- und Auszug im Jahr), Vorauszahlungen als Soll je Monat; bitte vor dem Versand prüfen.`),
     h('section', { class: 'vw-karte' },
       h('header', { class: 'vw-karte__kopf' }, h('h2', {}, `${o.bezeichnung} · Kosten ${nkJahr}`)),
       h('div', { class: 'vw-tabelle' }, h('table', {},
@@ -568,7 +571,7 @@ function nebenkostenSeite(objektId?: string): HTMLElement {
           h('tr', {}, h('td', { colspan: 2 }, 'davon auf Mieter umgelegt'), h('td', { class: 'vw-zahlspalte' }, geld(r.umgelegt))),
           h('tr', {}, h('td', { colspan: 2 }, 'Anteil Eigentümer (Leerstand)'), h('td', { class: 'vw-zahlspalte' }, geld(r.eigentuemer))))))),
     ...r.zeilen.map((z) => h('section', { class: 'vw-karte vw-abrechnung' },
-      h('header', { class: 'vw-karte__kopf' }, h('h2', {}, z.mieter.name), h('span', {}, `${z.einheit.bezeichnung} · ${z.monate} von 12 Monaten`)),
+      h('header', { class: 'vw-karte__kopf' }, h('h2', {}, z.mieter.name), h('span', {}, `${z.einheit.bezeichnung} · ${z.tage < z.jahrTage ? `${datum(z.von)} – ${datum(z.bis)} (${z.tage} Tage)` : 'ganzes Jahr'}`)),
       h('div', { class: 'vw-tabelle' }, h('table', {},
         h('tbody', {}, z.posten.map((p) => h('tr', {}, h('td', {}, p.art), h('td', {}, p.schluessel), h('td', { class: 'vw-zahlspalte' }, geld(p.betrag))))),
         h('tfoot', {},
@@ -636,7 +639,7 @@ function daten(): HTMLElement {
 
 /* ================= Navigation und Start ================= */
 const NAV: { titel: string; punkte: [string, string][] }[] = [
-  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Kalender', '#/kalender'], ['Aufgaben', '#/aufgaben'], ['Website-Anfragen', '#/liste/anfragen']] },
+  { titel: 'Überblick', punkte: [['Cockpit', '#/'], ['Heute zu tun', '#/heute'], ['Kalender', '#/kalender'], ['Aufgaben', '#/aufgaben'], ['Website-Anfragen', '#/liste/anfragen']] },
   { titel: 'Objekte', punkte: [['Alle Objekte', '#/liste/objekte'], ['Kunden', '#/liste/kunden']] },
   { titel: KREISE.verwalten, punkte: [['Mieten', '#/mieten'], ['Bankabgleich', '#/bank'], ['Mieterhöhung', '#/mieterhoehung'], ['Kautionen', '#/kautionen'], ['Nebenkosten', '#/nebenkosten'], ['Kosten & Belege', '#/liste/kosten'], ['Fristen & Wartungen', '#/liste/fristen'], ['Verträge', '#/liste/vertraege']] },
   { titel: KREISE.betreuen, punkte: [['Tagesplan', '#/tagesplan'], ['Serviceplan', '#/liste/service'], ['Meldungen & Schäden', '#/liste/vorgaenge'], ['Einsatznachweise', '#/liste/einsaetze']] },

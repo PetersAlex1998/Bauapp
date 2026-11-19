@@ -7,9 +7,10 @@
  * neuen Seite; das Deckblatt ist immer genau ein Blatt, damit die Anschrift bei
  * jedem Mieter exakt im Fenster sitzt.
  */
-import { finde, heute } from './speicher';
+import { finde, heute, speichere } from './speicher';
 import { datumPlus, einheitenVon, nebenkosten, zahl } from './rechnen';
-import { geld, h, marke, routen } from './app';
+import { datum, geld, h, hinweis, marke, routen, zeichne } from './app';
+import { anredeZeile, anschriftMieter } from './ansichten10';
 import { absender, bogen, briefInfo, gruss, mietkonto } from './ansichten2';
 
 /** Kopf für Folgeblätter: gleiches Erscheinungsbild wie der Briefbogen */
@@ -47,12 +48,13 @@ routen.nkbriefe = (objektId, jahrText) => {
 
   r.zeilen.forEach((z) => {
     const m = z.mieter, e = z.einheit;
-    const an = [m.name, o.strasse || o.bezeichnung, o.ort];
+    const an = anschriftMieter({ m, einheit: e, objekt: o });
+    const nutzung = z.tage < z.jahrTage ? `${datum(z.von)} – ${datum(z.bis)}, ${z.tage} von ${z.jahrTage} Tagen` : '';
     const nachzahlung = z.saldo > 0.004;
     const deckblatt = bogen(an, `Betriebskostenabrechnung ${jahr}`,
       briefInfo(['Objekt', o.bezeichnung], ['Einheit', e.bezeichnung], ['Zeitraum', zeitraum]),
-      h('p', {}, 'Sehr geehrte Damen und Herren,'),
-      h('p', {}, `anbei erhalten Sie die Abrechnung der Betriebskosten für ${e.bezeichnung} im Objekt ${o.bezeichnung} für den Zeitraum ${zeitraum}${z.monate < 12 ? ` (Ihr Nutzungszeitraum: ${z.monate} Monate)` : ''}.`),
+      h('p', {}, anredeZeile(m)),
+      h('p', {}, `anbei erhalten Sie die Abrechnung der Betriebskosten für ${e.bezeichnung} im Objekt ${o.bezeichnung} für den Zeitraum ${zeitraum}${nutzung ? ` (Ihr Nutzungszeitraum: ${nutzung})` : ''}.`),
       h('table', { class: 'vw-brief__tabelle nk-ergebnis' }, h('tbody', {},
         h('tr', {}, h('td', {}, 'Ihr Anteil an den Betriebskosten'), h('td', { class: 'vw-zahlspalte' }, geld(z.summe))),
         h('tr', {}, h('td', {}, 'abzüglich Ihrer Vorauszahlungen'), h('td', { class: 'vw-zahlspalte' }, geld(-z.voraus)))),
@@ -79,9 +81,9 @@ routen.nkbriefe = (objektId, jahrText) => {
         h('tr', {}, h('td', {}, 'Wohnfläche'), h('td', { class: 'vw-zahlspalte' }, `${String(zahl(e.flaeche)).replace('.', ',')} m² von ${String(flaecheGesamt).replace('.', ',')} m²`)),
         h('tr', {}, h('td', {}, 'Einheiten'), h('td', { class: 'vw-zahlspalte' }, `1 von ${einheitenVon(o.id).length}`)),
         h('tr', {}, h('td', {}, 'Personen im Haushalt'), h('td', { class: 'vw-zahlspalte' }, String(Math.max(1, zahl(m.personen))))),
-        h('tr', {}, h('td', {}, 'Nutzungszeitraum'), h('td', { class: 'vw-zahlspalte' }, `${z.monate} von 12 Monaten`)),
+        h('tr', {}, h('td', {}, 'Nutzungszeitraum'), h('td', { class: 'vw-zahlspalte' }, nutzung || `ganzes Jahr (${z.jahrTage} Tage)`)),
         h('tr', {}, h('td', {}, 'Vorauszahlung monatlich'), h('td', { class: 'vw-zahlspalte' }, geld(zahl(m.nebenkosten)))))),
-      h('p', { class: 'vw-brief__klein' }, 'Die Kosten werden nach dem jeweils angegebenen Schlüssel und anteilig nach Ihrem Nutzungszeitraum verteilt. Auf Leerstand entfallende Kosten trägt der Eigentümer.'),
+      h('p', { class: 'vw-brief__klein' }, 'Die Kosten werden nach dem jeweils angegebenen Schlüssel und tagesgenau nach Ihrem Nutzungszeitraum verteilt; Vorauszahlungen je Monat des Mietverhältnisses. Auf Leerstand entfallende Kosten trägt der Eigentümer.'),
       folgefuss());
 
     mappe.append(h('div', { class: 'nk-satz', 'data-id': m.id },
@@ -95,6 +97,9 @@ routen.nkbriefe = (objektId, jahrText) => {
       h('a', { class: 'vw-knopf', href: `#/nebenkosten/${o.id}` }, '← Zur Übersicht'),
       h('strong', {}, `${o.bezeichnung} · Betriebskosten ${jahr} · ${r.zeilen.length} Abrechnung${r.zeilen.length === 1 ? '' : 'en'}`),
       h('span', { class: 'vw-platz' }),
+      (o.nkVersandt ?? {})[jahr]
+        ? marke(`Versandt am ${datum(o.nkVersandt[jahr])}`, 'gruen')
+        : h('button', { class: 'vw-knopf', disabled: !r.zeilen.length, onclick: () => { speichere('objekte', { id: o.id, nkVersandt: { ...(o.nkVersandt ?? {}), [jahr]: heute() } }); hinweis(`Abrechnung ${jahr} als versandt vermerkt`); zeichne(); } }, 'Als versandt vermerken'),
       h('button', { class: 'vw-knopf vw-knopf--voll', disabled: !r.zeilen.length, onclick: () => druckeNur() }, 'Alle drucken / PDF (DIN A4)'),
       h('p', { class: 'vw-fein', style: 'flex-basis:100%;margin:0' }, 'Je Mieter ein Deckblatt nach DIN 5008 (Fensterumschlag, E-Brief) und eine Anlage. Im Druckdialog: Skalierung 100 %, „Kopf- und Fußzeilen“ aus.')),
     !konto && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Für dieses Objekt ist kein Mietkonto hinterlegt (Objekt → Finanzen). Bei Nachzahlungen fehlt sonst die Bankverbindung.'),
