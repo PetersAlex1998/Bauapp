@@ -80,7 +80,9 @@ function schritte(k: Kontext): Schritt[] {
   const keineKaution = m.kautionArt === 'Keine Kaution' || !zahl(m.kautionSoll);
   const link = (href: string, text: string) => h('a', { class: 'vw-knopf vw-knopf--klein', href }, text);
   return [
-    { key: 'vertrag', text: 'Mietvertrag erstellt und unterschrieben', hilfe: m.vertragsdatum ? `Unterschrieben am ${datum(m.vertragsdatum)}` : 'Vertrag aus dem Tool drucken, unterschreiben lassen, Datum eintragen.', fertig: !!m.vertragsdatum, auto: true, tun: link(`#/mietvertrag/${m.id}`, 'Mietvertrag') },
+    { key: 'vertrag', text: 'Mietvertrag erstellt und unterschrieben', hilfe: m.vertragsdatum ? `Unterschrieben am ${datum(m.vertragsdatum)}` : 'Vertragsmappe drucken (Vertrag, Hausordnung, Datenschutz, Einzugsformular …), unterschreiben lassen, Datum eintragen.', fertig: !!m.vertragsdatum, auto: true, tun: link(`#/vertragsmappe/${m.id}`, 'Vertragsmappe') },
+    { key: 'unterlagen', text: 'Hausordnung und Datenschutzinformation unterschrieben', hilfe: 'Gehören zum Vertrag; unterschrieben zur Akte nehmen.', fertig: !!s.unterlagen, tun: link(`#/hausordnung/${m.id}`, 'Hausordnung') },
+    { key: 'einzugsformular', text: 'Einzugsformular ausgefüllt', hilfe: m.einzug?.ausgefuellt ? `Erfasst am ${datum(m.einzug.ausgefuellt)}${m.einzug.zahlweise ? ` · ${m.einzug.zahlweise}` : ''}` : 'Haushalt, Klingelschild, Bankverbindung, Zahlweise.', fertig: !!m.einzug?.ausgefuellt, auto: true, tun: link(`#/einzugsformular/${m.id}`, 'Formular') },
     { key: 'kaution', text: 'Kaution erhalten', hilfe: keineKaution ? 'Keine Kaution vereinbart.' : `${geld(kautionErhalten(m))} von ${geld(m.kautionSoll)} eingegangen`, fertig: keineKaution || kautionErhalten(m) >= zahl(m.kautionSoll), auto: true, tun: !keineKaution && h('button', { class: 'vw-knopf vw-knopf--klein', onclick: () => kautionBuchen(m) }, 'Eingang buchen') },
     { key: 'energieausweis', text: 'Energieausweis übergeben', hilfe: 'Pflicht bei Vertragsschluss (§ 80 Abs. 4 GEG), spätestens beim Abschluss.', fertig: !!s.energieausweis },
     { key: 'uebergabe', text: 'Wohnung übergeben mit Protokoll', hilfe: 'Am Handy vor Ort: Räume, Fotos, Zähler, Schlüssel, Unterschriften.', fertig: !!s.uebergabe, tun: link(`#/uebergabe/${m.id}/einzug`, 'Protokoll') },
@@ -188,7 +190,7 @@ routen.mietverhaeltnis = (id) => {
       h('p', {}, `${einheit.bezeichnung}${einheit.lage ? ` (${einheit.lage})` : ''} · ${einheit.flaeche ? `${einheit.flaeche} m² · ` : ''}`, standMarke(m)),
       h('div', { class: 'vw-reihe' },
         h('button', { class: 'vw-knopf', onclick: () => formular('mieter', m) }, 'Bearbeiten'),
-        h('a', { class: 'vw-knopf', href: `#/mietvertrag/${m.id}` }, 'Mietvertrag'),
+        h('a', { class: 'vw-knopf', href: `#/vertragsmappe/${m.id}` }, 'Vertragsunterlagen'),
         h('a', { class: 'vw-knopf', href: `#/wohnungsgeber/${m.id}/${st === 'Beendet' || st === 'Gekündigt' ? 'auszug' : 'einzug'}` }, 'Wohnungsgeberbestätigung'),
         h('a', { class: 'vw-knopf', href: `#/uebergabe/${m.id}/${imAuszug ? 'auszug' : 'einzug'}` }, 'Übergabeprotokoll'),
         m.kuendigungEingang && m.kuendigungDurch !== 'Vermieter' && h('a', { class: 'vw-knopf', href: `#/kuendigung/${m.id}` }, 'Kündigungsbestätigung'),
@@ -302,7 +304,7 @@ routen.mietvertrag = (id) => {
         'Die Wohnung wird zu Wohnzwecken vermietet. Eine Untervermietung oder sonstige Gebrauchsüberlassung an Dritte bedarf der Erlaubnis des Vermieters (§§ 540, 553 BGB).',
         'Kleintiere (z. B. Ziervögel, Zierfische, Hamster) dürfen ohne Erlaubnis gehalten werden. Für andere Tiere, insbesondere Hunde und Katzen, holt der Mieter vorher die Zustimmung ein; sie wird nach Abwägung im Einzelfall erteilt.'),
       ...absatz('§ 7 Instandhaltung, Mängel, Sorgfalt',
-        'Der Vermieter erhält die Wohnung in vertragsgemäßem Zustand (§ 535 BGB). Mängel zeigt der Mieter unverzüglich an (§ 536c BGB) – am einfachsten über die Hausverwaltung. Der Mieter behandelt die Mietsache pfleglich, lüftet und heizt ausreichend und beachtet die Hausordnung.',
+        'Der Vermieter erhält die Wohnung in vertragsgemäßem Zustand (§ 535 BGB). Mängel zeigt der Mieter unverzüglich an (§ 536c BGB) – am einfachsten über die Hausverwaltung. Der Mieter behandelt die Mietsache pfleglich, lüftet und heizt ausreichend und beachtet die beigefügte Hausordnung, die Bestandteil dieses Vertrags ist.',
         'Bauliche Veränderungen durch den Mieter bedürfen der vorherigen Zustimmung des Vermieters.'),
       ...absatz('§ 8 Übergabe und Rückgabe',
         `Die Wohnung wird mit einem gemeinsamen Protokoll übergeben (Zustand, Zählerstände, Schlüssel).${m.schluessel ? ` Übergeben werden: ${m.schluessel}.` : ''} Bei Ende des Mietverhältnisses gibt der Mieter die Wohnung geräumt mit allen Schlüsseln zurück.`),
@@ -312,7 +314,7 @@ routen.mietvertrag = (id) => {
       ...absatz('§ 10 Besondere Vereinbarungen', m.vereinbarungen ? h('p', { class: 'din__vereinbart' }, m.vereinbarungen) : 'Keine.'),
       ...absatz('§ 11 Schlussbestimmungen',
         'Mündliche Nebenabreden bestehen nicht. Ist eine Bestimmung unwirksam, bleibt der Vertrag im Übrigen wirksam; es gilt dann die gesetzliche Regelung.',
-        `Anlagen: Übergabeprotokoll, Hausordnung, Energieausweis (Kopie), Datenschutzinformation${m.kautionArt === 'Bürgschaft' ? ', Bürgschaftserklärung' : ''}.`),
+        `Anlagen: Hausordnung, Datenschutzinformation, Einzugsformular, Übergabeprotokoll, Energieausweis (Kopie)${m.einzug?.zahlweise === 'SEPA-Lastschrift' ? ', SEPA-Lastschriftmandat' : ''}${m.kautionArt === 'Bürgschaft' ? ', Bürgschaftserklärung' : ''}.`),
       unterschriften));
 };
 

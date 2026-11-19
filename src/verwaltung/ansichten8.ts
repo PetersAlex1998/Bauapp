@@ -6,6 +6,7 @@
  * der Unternehmensdaten gespeichert. Es erscheint im Briefkopf aller Schreiben,
  * Rechnungen und Berichte.
  */
+import { hausordnungKarte } from './ansichten13';
 import { alle, speichere, type Satz } from './speicher';
 import { istAdmin, modus } from './cloud';
 import { formular, h, hinweis, liste, routen } from './app';
@@ -92,6 +93,7 @@ routen.unternehmen = () => {
       h('p', { class: 'vw-fein vw-innen' }, 'Nur Unternehmenskonten und übergreifende Konten (z. B. Kautionen, Rücklage). Konten mit „Auf Rechnungen und Schreiben angeben“ erscheinen in der Fußzeile und als Zahlungsziel auf Rechnungen. ', h('strong', {}, 'Mietkonten pflegen Sie im jeweiligen Objekt'), ' (Objekt → Reiter „Finanzen“).'),
       alle('bankkonten').some((k) => k.zweck === 'Mieten / Treuhand' || k.objektId) && h('p', { class: 'vw-warnung vw-innen' }, 'Hier steht noch ein Mietkonto aus der vorigen Version. Bitte im passenden Objekt als Mietkonto anlegen und hier löschen.'),
       liste('bankkonten', { kompakt: true })),
+    hausordnungKarte(),
     h('section', { class: 'vw-karte' },
       h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'So sieht Ihr Briefkopf aus')),
       h('div', { class: 'vw-innen vw-briefvorschau' },

@@ -2521,3 +2521,78 @@ a.vw-kennzahl:hover {
   color: #555;
   margin-top: 1mm;
 }
+
+/* ---------- Einzugsunterlagen ---------- */
+.vw .vw-brief.din .din__ausfuellen {
+  display: inline-block;
+  width: 100%;
+  min-width: 40mm;
+  height: 6mm;
+  border-bottom: 0.2mm solid #888;
+}
+.vw .vw-brief.din .din__frei {
+  font-size: 7pt;
+  color: #777;
+  font-weight: 400;
+}
+.vw .vw-brief.din .din__punkt {
+  margin: 0 0 1.2mm;
+  padding-left: 4mm;
+  text-indent: -3mm;
+}
+.vw .vw-vorlage {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1.5px solid rgba(18, 38, 63, 0.25);
+  border-radius: 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+.din-unterlagen > .vw-brief.din + .vw-brief.din {
+  margin-top: 2rem;
+}
+.din-unterlagen > .din__folgekopf--mappe {
+  display: none;
+}
+@media print {
+  .din-unterlagen > .vw-brief.din + .vw-brief.din {
+    break-before: page;
+    margin-top: 0;
+  }
+  /* Eine gemeinsame Kopf- und Fußzeile für die ganze Mappe */
+  .din-unterlagen .vw-brief.din .din__folgekopf {
+    display: none !important;
+  }
+  .din-unterlagen > .din__folgekopf--mappe {
+    display: flex;
+    justify-content: space-between;
+    gap: 8mm;
+    position: fixed;
+    top: 9mm;
+    left: 25mm;
+    right: 20mm;
+    z-index: 1;
+    padding-bottom: 2mm;
+    border-bottom: 0.2mm solid #c9d0d8;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 7.5pt;
+    color: #555;
+  }
+  .din-unterlagen > .vw-brief.din ~ .vw-brief.din .din__fuss {
+    display: none;
+  }
+}
+@media print {
+  .din-unterlagen .vw-brief.din {
+    background: transparent !important;
+  }
+  .din-unterlagen .vw-brief.din .din__fuss {
+    z-index: 2;
+  }
+  .vw .vw-brief.din .din__sign {
+    margin-top: 9mm;
+    gap: 9mm 10mm;
+  }
+}
