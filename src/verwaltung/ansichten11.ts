@@ -9,6 +9,7 @@
  * Fotos liegen getrennt von den übrigen Daten (Server: /api/?a=datei),
  * damit das Tool beim Start nicht alle Bilder laden muss.
  */
+import { dokument } from './dokument';
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { api, modus } from './cloud';
 import { datum, h, hinweis, routen, zeichneNeu } from './app';
@@ -216,8 +217,7 @@ routen.uebergabedruck = (id) => {
   const sig = (png: string | undefined, text: string) => h('div', { class: 'din__unterschrift' }, png ? h('img', { src: png, alt: `Unterschrift ${text}` }) : h('span', { class: 'din__unterschrift-leer' }), h('span', {}, text));
   return h('div', { class: 'vw-stapel' },
     werkzeug(`#/mietverhaeltnis/${m.id}`, h('a', { class: 'vw-knopf', href: `#/uebergabe/${m.id}/${String(p.art).toLowerCase()}` }, 'Bearbeiten')),
-    bogen(anschriftMieter({ m, einheit, objekt }), `Wohnungsübergabeprotokoll – ${p.art}`,
-      briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung], ['Übergabe am', datum(p.datum)]),
+    dokument(`Wohnungsübergabeprotokoll – ${p.art}`, `${objekt.bezeichnung} · ${einheit.bezeichnung} · Übergabe am ${datum(p.datum)}`,
       h('p', {}, `Übergabe ${wohnungText(einheit).replace(/^die /, 'der ')}, ${[objekt.strasse, objekt.ort].filter(Boolean).join(', ')}. Anwesend: ${[p.anwesendMieter && `${p.anwesendMieter} (Mieter)`, p.anwesendVerwaltung && `${p.anwesendVerwaltung} (Verwaltung)`].filter(Boolean).join(', ') || '–'}.`),
       h('h3', { class: 'din__para' }, 'Zustand der Räume'),
       h('table', { class: 'vw-brief__tabelle din__protokoll' },

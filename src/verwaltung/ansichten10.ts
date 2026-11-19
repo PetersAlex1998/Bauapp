@@ -8,6 +8,7 @@
  *  • Kautionsbestätigung und Kautionsabrechnung (#/kautionsbrief/<id>/<bestaetigung|abrechnung>)
  * Alle Schreiben im DIN-5008-Briefbogen.
  */
+import { dokument } from './dokument';
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { datumPlus, datumPlusMonate, kuendigungsEnde, kautionBestand, kautionErhalten, kautionsbuchungen, mietStand, mieteAm, monatHeute, monatVon, rueckstand, soll, verlaufVon, zahl, type MietStand } from './rechnen';
 import { aktionen, datum, formular, geld, h, hinweis, kennzahl, liste, marke, monatText, routen, zeichne } from './app';
@@ -34,7 +35,8 @@ export function standMarke(m: Satz) {
 /** „die Wohnung 3 (1. OG links)“ ohne doppeltes „Wohnung“ */
 export const wohnungText = (e: Satz) => `${/^wohnung/i.test(e.bezeichnung ?? '') ? 'die' : 'die Wohnung'} ${e.bezeichnung}${e.lage ? ` (${e.lage})` : ''}`;
 const personen = (m: Satz) => [m.name, ...String(m.name2 ?? '').split(',')].map((x) => String(x ?? '').trim()).filter(Boolean);
-const nachname = (name: string) => name.trim().split(/\s+/).pop() ?? name;
+/** Nachname: letztes Wort ohne Zusätze in Klammern, z. B. „Anna Beispiel (Untermieterin)“ → „Beispiel“ */
+const nachname = (name: string) => String(name).replace(/\([^)]*\)/g, '').trim().split(/\s+/).pop() || name;
 
 /** Anrede für den Brief */
 export function anredeZeile(m: Satz): string {
@@ -274,8 +276,7 @@ routen.mietvertrag = (id) => {
     werkzeug(`#/mietverhaeltnis/${m.id}`, h('button', { class: 'vw-knopf', onclick: () => formular('mieter', m) }, 'Daten ergänzen')),
     h('p', { class: 'vw-fein vw-nichtdrucken' }, 'Vorlage aus den Daten des Mietverhältnisses. Lassen Sie das Muster einmal juristisch prüfen, bevor Sie es zum ersten Mal verwenden; danach bleibt es für jede Vermietung gleich.'),
     ...warnungen.map((w) => h('p', { class: 'vw-warnung vw-nichtdrucken' }, w)),
-    bogen(anschriftMieter(k), 'Mietvertrag über Wohnraum',
-      briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung], ['Mietbeginn', datum(m.beginn)]),
+    dokument('Mietvertrag über Wohnraum', `${[objekt.strasse, objekt.ort].filter(Boolean).join(', ') || objekt.bezeichnung} · ${einheit.bezeichnung} · Mietbeginn ${datum(m.beginn)}`,
       h('p', {}, h('strong', {}, 'Vermieter: '), vermieter, `, vertreten durch die Hausverwaltung ${verwalter}`),
       h('p', {}, h('strong', {}, 'Mieter: '), mieterText, m.anschriftBisher ? `, bisher wohnhaft ${String(m.anschriftBisher).replace(/\n+/g, ', ')}` : ''),
       ...absatz('§ 1 Mietsache',
@@ -333,8 +334,7 @@ routen.wohnungsgeber = (id, artText) => {
       h('button', { class: 'vw-knopf', onclick: () => { speichere('mieter', { id: m.id, schritte: { ...(m.schritte ?? {}), wgb: heute() } }); hinweis('In der Checkliste als erledigt vermerkt'); } }, 'Als ausgestellt vermerken')),
     !kunde && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Dem Objekt ist kein Eigentümer (Kunde) zugeordnet. Name und Anschrift des Eigentümers sind Pflichtangaben.'),
     auszug && !m.ende && h('p', { class: 'vw-warnung vw-nichtdrucken' }, 'Für dieses Mietverhältnis ist noch kein Mietende eingetragen.'),
-    bogen(anschriftMieter(k), 'Wohnungsgeberbestätigung nach § 19 Bundesmeldegesetz',
-      briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung]),
+    dokument('Wohnungsgeberbestätigung', `nach § 19 Bundesmeldegesetz · ${objekt.bezeichnung} · ${einheit.bezeichnung}`,
       h('p', {}, `Hiermit wird bestätigt, dass die unten genannten Personen in die folgende Wohnung ${auszug ? 'ausgezogen' : 'eingezogen'} sind.`),
       h('table', { class: 'vw-brief__tabelle din__formular' }, h('tbody', {},
         h('tr', {}, h('th', {}, 'Art des Vorgangs'), h('td', {}, auszug ? `Auszug am ${datum(tag)}` : `Einzug am ${datum(tag)}`)),

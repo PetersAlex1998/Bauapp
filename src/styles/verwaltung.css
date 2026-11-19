@@ -1557,7 +1557,10 @@ a.vw-kennzahl:hover {
   max-width: none;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 98.5mm 20mm 32mm 25mm;
+  padding: 98.5mm 20mm 10mm 25mm;
+  /* Am Bildschirm: Fußzeile ans Ende des Inhalts, mindestens an den Blattfuß */
+  display: flex;
+  flex-direction: column;
   border: 0;
   border-radius: 0;
   background: #fff;
@@ -2595,4 +2598,226 @@ a.vw-kennzahl:hover {
     margin-top: 9mm;
     gap: 9mm 10mm;
   }
+}
+
+
+/* Bildschirm: Fußzeile fließt mit (kein Überdecken langer Schreiben) */
+@media screen {
+  .vw-brief.din .din__fuss {
+    position: static;
+    margin-top: auto;
+    padding-top: 2.5mm;
+    width: auto;
+  }
+  .vw-brief.din .din__seiten {
+    margin-bottom: 10mm;
+  }
+}
+@media print {
+  .vw-brief.din {
+    display: block;
+  }
+}
+
+/* ==========================================================================
+   DOKUMENT IM GANZFORMAT (Verträge, Formulare, Protokolle)
+   ========================================================================== */
+.vw-dok {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 12mm 20mm 10mm 25mm;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #111;
+  font-family: 'Instrument Sans Variable', Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  line-height: 1.45;
+  box-shadow: 0 2px 18px rgba(18, 38, 63, 0.12);
+}
+.vw-dok + .vw-dok,
+.vw-brief.din + .vw-dok,
+.vw-dok + .vw-brief.din {
+  margin-top: 2rem;
+}
+.vw .vw-dok .dok__seiten,
+.vw .vw-dok .dok__seiten > * > tr > td {
+  border: 0;
+  padding: 0;
+  background: transparent !important;
+  box-shadow: none;
+}
+.vw-dok .dok__seiten {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dok__kopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10mm;
+  padding-bottom: 3mm;
+  margin-bottom: 7mm;
+  border-bottom: 0.3mm solid #12263f;
+}
+.vw .vw-dok .dok__kopf p {
+  margin: 0;
+}
+.vw .vw-dok .dok__titel {
+  font-size: 15pt;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #12263f;
+}
+.vw .vw-dok .dok__unter {
+  margin-top: 1.2mm;
+  font-size: 8pt;
+  color: #555;
+}
+.dok__logo {
+  max-height: 14mm;
+  max-width: 55mm;
+  width: auto;
+  height: auto;
+}
+.vw .vw-dok .dok__firma {
+  font-family: Georgia, serif;
+  font-size: 15pt;
+  color: #12263f;
+}
+.vw .vw-dok .dok__text p,
+.vw .vw-dok .dok__text li {
+  margin: 0 0 3mm;
+  font-size: 10pt;
+}
+.vw .vw-dok .dok__text h3,
+.vw .vw-dok .din__para {
+  margin: 5mm 0 1.5mm;
+  font-family: inherit;
+  font-size: 10.5pt;
+  font-weight: 700;
+  color: #12263f;
+  break-after: avoid;
+}
+.vw .vw-dok .vw-brief__tabelle {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1mm 0 4mm;
+}
+.vw .vw-dok .vw-brief__tabelle th,
+.vw .vw-dok .vw-brief__tabelle td {
+  padding: 1.6mm 2mm;
+  font-size: 9.5pt;
+  text-align: left;
+  border-bottom: 0.2mm solid #d6dce3;
+  background: none;
+  vertical-align: top;
+}
+.vw .vw-dok .vw-brief__tabelle th:first-child,
+.vw .vw-dok .vw-brief__tabelle td:first-child { padding-left: 0; }
+.vw .vw-dok .vw-brief__tabelle th:last-child,
+.vw .vw-dok .vw-brief__tabelle td:last-child { padding-right: 0; }
+.vw .vw-dok .vw-brief__tabelle .vw-zahlspalte { text-align: right; }
+.vw .vw-dok .vw-brief__tabelle tr { break-inside: avoid; }
+.vw .vw-dok .din__formular th {
+  width: 55mm;
+  font-weight: 400;
+  color: #444;
+}
+.vw .vw-dok .din__formular td.vw-linie { height: 9mm; }
+.vw .vw-dok .vw-linie { border-bottom: 0.2mm solid #888; }
+.vw .vw-dok .din__ausfuellen {
+  display: inline-block;
+  width: 100%;
+  min-width: 40mm;
+  height: 6mm;
+  border-bottom: 0.2mm solid #888;
+}
+.vw .vw-dok .din__frei { font-size: 7pt; color: #777; font-weight: 400; }
+.vw .vw-dok .din__punkt { margin: 0 0 1.2mm; padding-left: 4mm; text-indent: -3mm; }
+.vw .vw-dok .din__vereinbart { white-space: pre-wrap; }
+.vw .vw-dok .vw-brief__sign,
+.vw .vw-dok .din__sign {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12mm 10mm;
+  margin-top: 12mm;
+  break-inside: avoid;
+}
+.vw .vw-dok .vw-brief__sign span {
+  padding-top: 1.5mm;
+  border-top: 0.25mm solid #222;
+  font-size: 8pt;
+}
+.dok__fuss {
+  margin-top: auto;
+  padding-top: 2.5mm;
+  border-top: 0.2mm solid #c9d0d8;
+  font-size: 7pt;
+  color: #555;
+}
+@media screen and (max-width: 60rem) {
+  .vw-dok { zoom: 0.45; }
+}
+@media print {
+  .vw-dok {
+    page: dok;
+    display: block;
+    width: 210mm;
+    min-height: 0;
+    margin: 0;
+    padding: 0 20mm 0 25mm;
+    box-shadow: none;
+    zoom: 1;
+  }
+  .vw-dok + .vw-dok,
+  .vw-brief.din + .vw-dok,
+  .din-mappe .vw-dok {
+    break-before: page;
+    margin-top: 0;
+  }
+  .vw-dok .dok__seiten > thead { display: table-header-group; }
+  .dok__fuss { display: none; }
+  .vw .vw-dok .dok__kopf { margin-bottom: 6mm; }
+  .vw .vw-dok .din__fotoanlage { break-before: page; }
+}
+.vw .vw-brief.din .din__anlagen td:first-child,
+.vw .vw-brief.din .din__anlagen th:first-child {
+  width: 14mm;
+}
+.vw .vw-brief.din .din__anlagen td:last-child {
+  color: #444;
+}
+.vw .vw-brief.din .din__eckdaten {
+  margin-top: 2mm;
+}
+.din-vertragsmappe > * + * {
+  margin-top: 2rem;
+}
+@media print {
+  .din-vertragsmappe > * + * {
+    margin-top: 0;
+  }
+}
+/* Protokoll-Bausteine auch im Ganzformat */
+.vw-dok .din__unterschriften { display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; margin-top: 8mm; break-inside: avoid; }
+.vw-dok .din__unterschrift { display: grid; gap: 1mm; font-size: 8.5pt; }
+.vw-dok .din__unterschrift img { height: 18mm; width: auto; max-width: 100%; border-bottom: 0.3mm solid #222; object-fit: contain; object-position: left bottom; }
+.vw-dok .din__unterschrift-leer { display: block; height: 18mm; border-bottom: 0.3mm solid #222; }
+.vw-dok .din__fotoraster { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.vw-dok .din__fotoraster figure { margin: 0; break-inside: avoid; }
+.vw-dok .din__fotoraster img { width: 100%; height: 58mm; object-fit: cover; border-radius: 1mm; }
+.vw-dok .din__fotoraster figcaption { font-size: 8pt; color: #555; margin-top: 1mm; }
+.vw-dok .din__fotohinweis { color: #666; }
+.vw .vw-dok .din__protokoll td:nth-child(2) { white-space: nowrap; }
+.vw-dok .vw-brief__leer { min-height: 25mm; border-bottom: 0.2mm solid #888; }
+.din__abschluss {
+  break-inside: avoid;
+  margin-top: 4mm;
+}
+.vw .vw-dok .din__abschluss .din__sign {
+  margin-top: 8mm;
+  gap: 10mm 10mm;
 }

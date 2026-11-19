@@ -8,6 +8,7 @@
  * Alle Schreiben sind VORLAGEN. Vor dem Versand bitte inhaltlich und
  * rechtlich prüfen.
  */
+import { dokument } from './dokument';
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { ARTEN } from './schema';
 import { kautionBestand, kautionErhalten, kuendigungsEnde, positionen, rechnungSumme, rechnungUeberfaellig, aktivIm, datumPlus, einheitenVon, mahnstufe, mieterVon, monatHeute, monatPlus, monatVon, objektVonMieter, rueckstand, soll, tageBis, zahl } from './rechnen';
@@ -107,7 +108,7 @@ routen.brief = (art, mieterId) => {
   if (art === 'uebergabe') {
     const zeile = (text: string) => h('tr', {}, h('td', {}, text), h('td', { class: 'vw-linie' }), h('td', { class: 'vw-linie' }));
     return h('div', { class: 'vw-stapel' }, werkzeug('#/liste/mieter'),
-      bogen(an, 'Wohnungsübergabeprotokoll',
+      dokument('Wohnungsübergabeprotokoll', `${bezug} · Formular zum Ausfüllen`,
         h('p', {}, `${bezug}${einheit.lage ? ` (${einheit.lage})` : ''}. Übergabe am: ____________   ☐ Einzug   ☐ Auszug`),
         h('h3', {}, 'Zählerstände'),
         h('table', { class: 'vw-brief__tabelle' }, h('thead', {}, h('tr', {}, h('th', {}, 'Zähler'), h('th', {}, 'Zählernummer'), h('th', {}, 'Stand'))),

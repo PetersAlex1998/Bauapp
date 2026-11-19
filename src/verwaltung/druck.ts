@@ -18,10 +18,20 @@ const heuteText = () => new Date().toLocaleDateString('de-DE');
 const kopfBox = (inhalt: string, seite: 'left' | 'right') => `@top-${seite} { content: ${inhalt}; font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; color: #555; vertical-align: bottom; padding-bottom: 3mm; border-bottom: 0.2mm solid #c9d0d8; ${seite === 'left' ? 'margin-left: 25mm; text-align: left;' : 'margin-right: 20mm; text-align: right;'} }`;
 const seitenzahl = `"Seite " counter(page) " von " counter(pages)`;
 
-function regeln(art: 'brief' | 'mappe' | 'dokument', titel: string): string {
+const fussBoxen = (f: Record<string, any>) => {
+  const text = [f.name, f.strasse, f.ort, f.telefon && `Telefon ${f.telefon}`, f.email].filter(Boolean).join(' · ');
+  const stil = 'font-family: Arial, Helvetica, sans-serif; font-size: 6.8pt; color: #555; vertical-align: top; padding-top: 3mm; border-top: 0.2mm solid #c9d0d8;';
+  return `@bottom-left { content: ${css(text)}; ${stil} margin-left: 25mm; width: 135mm; } @bottom-right { content: ${seitenzahl}; ${stil} margin-right: 20mm; width: 30mm; text-align: right; white-space: nowrap; }`;
+};
+/** Ganzformatige Dokumente (Verträge, Formulare, Protokolle): Kopf aus dem Dokument, Fuß im Seitenrand */
+const dokSeite = (f: Record<string, any>) => `@page dok { size: A4; margin: 12mm 0 16mm 0; ${fussBoxen(f)} }`;
+
+type Art = 'brief' | 'mappe' | 'dokument' | 'dok';
+function regeln(art: Art, titel: string): string {
   const f = firma();
+  if (art === 'dok') return `@page { size: A4; margin: 12mm 0 16mm 0; ${fussBoxen(f)} } ${dokSeite(f)}`;
   // Die Mappe beginnt immer mit einem Deckblatt (DIN-Briefkopf ab Blattoberkante)
-  if (art === 'mappe') return `@page { size: A4; margin: 0 0 8mm 0; } @page deckblatt { margin: 0 0 8mm 0; } @page folgeblatt { margin: 20mm 0 12mm 0; }`;
+  if (art === 'mappe') return `@page { size: A4; margin: 0 0 8mm 0; } @page deckblatt { margin: 0 0 8mm 0; } @page folgeblatt { margin: 20mm 0 12mm 0; } ${dokSeite(f)}`;
   if (art === 'brief') {
     // Alle Seiten mit gleichen Rändern: sonst lässt Chromium die feste Fußzeile auf Seite 2 weg.
     // Abstand oben auf Folgeseiten kommt aus dem Tabellenkopf des Briefs, die Kopfzeile aus .din__folgekopf.
@@ -35,7 +45,7 @@ function regeln(art: 'brief' | 'mappe' | 'dokument', titel: string): string {
     @page :first { margin-top: 12mm; @top-left { content: none; border: 0; } @top-right { content: none; border: 0; } }`;
 }
 
-function setze(art: 'brief' | 'mappe' | 'dokument', titel: string) {
+function setze(art: Art, titel: string) {
   let el = document.getElementById('vw-druckrahmen') as HTMLStyleElement | null;
   if (!el) { el = document.createElement('style'); el.id = 'vw-druckrahmen'; document.head.append(el); }
   el.textContent = `@media print { ${regeln(art, titel)} }`;
@@ -55,6 +65,7 @@ export function druckrahmen(wurzel: HTMLElement, ersatzTitel = 'Übersicht', fes
   wurzel.querySelectorAll(':scope > .vw-druckkopf').forEach((x) => x.remove());
   if (wurzel.querySelector('.din-mappe')) return setze('mappe', '');
   const brief = wurzel.querySelector('.vw-brief.din');
+  if (!brief && wurzel.querySelector('.vw-dok')) return setze('dok', '');
   if (brief) return setze('brief', brief.querySelector('.din__betreff')?.textContent?.trim() || 'Schreiben');
   const titel = festerTitel ? ersatzTitel : (wurzel.querySelector('h1') ?? wurzel.querySelector('h2'))?.textContent?.replace(/\s*\d+$/, '').trim() || ersatzTitel;
   wurzel.prepend(druckkopf(titel));

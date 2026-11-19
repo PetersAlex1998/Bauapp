@@ -10,6 +10,7 @@
  *  • Willkommensschreiben mit Ansprechpartner, Zahlung, Schadensmeldung, Erledigungen
  *  • Vertragsmappe: alle Unterlagen in einem Druck, jedes im Briefbogen
  */
+import { dokument } from './dokument';
 import { alle, finde, heute, speichere, type Satz } from './speicher';
 import { mieteAm, zahl } from './rechnen';
 import { datum, geld, h, hinweis, routen, zeichne } from './app';
@@ -28,6 +29,8 @@ const anschrift = (o: Satz) => [o.strasse, o.ort].filter(Boolean).join(', ') || 
 const kasten = (an: boolean) => (an ? '☒' : '☐');
 const linie = (wert?: string) => (wert ? h('span', {}, wert) : h('span', { class: 'din__ausfuellen' }));
 const unterschriften = (...wer: string[]) => h('div', { class: 'vw-brief__sign din__sign' }, wer.flatMap((w) => [h('span', {}, 'Ort, Datum'), h('span', {}, w)]));
+/** Erklärung und Unterschriften bleiben beim Drucken zusammen auf einer Seite */
+const abschluss = (erklaerung: string, ...wer: string[]) => h('div', { class: 'din__abschluss' }, h('p', {}, erklaerung), unterschriften(...wer));
 
 /* ---------- Hausordnung ---------- */
 export const HAUSORDNUNG_STANDARD = `# Rücksicht und Ruhe
@@ -78,13 +81,11 @@ export function textBausteine(text: string): HTMLElement[] {
 }
 function hausordnungBlatt(k: Kontext): HTMLElement {
   const { m, objekt } = k;
-  return bogen(anschriftMieter(k), `Hausordnung · ${anschrift(objekt)}`,
-    briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', k.einheit.bezeichnung]),
+  return dokument('Hausordnung', `${anschrift(objekt)} · Anlage zum Mietvertrag · ${personen(m).join(', ')}`,
     h('p', {}, 'Die Hausordnung ist Bestandteil des Mietvertrags. Sie gilt für alle Bewohner, Besucher und Beauftragten der Mietpartei.'),
     ...textBausteine(hausordnungText()),
     ...(objekt.hausordnungZusatz ? [h('h3', { class: 'din__para' }, 'Besondere Regeln für dieses Haus'), ...textBausteine(objekt.hausordnungZusatz)] : []),
-    h('p', {}, 'Ich/Wir haben die Hausordnung erhalten, zur Kenntnis genommen und erkennen sie als Bestandteil des Mietvertrags an.'),
-    unterschriften(...personen(m).map((p) => `Mieter: ${p}`)));
+    abschluss('Ich/Wir haben die Hausordnung erhalten, zur Kenntnis genommen und erkennen sie als Bestandteil des Mietvertrags an.', ...personen(m).map((p) => `Mieter: ${p}`)));
 }
 routen.hausordnung = (id) => {
   const k = kontext(id);
@@ -97,8 +98,7 @@ function datenschutzBlatt(k: Kontext): HTMLElement {
   const a = absender();
   const vermieter = k.kunde ? [k.kunde.name, k.kunde.strasse, k.kunde.ort].filter(Boolean).join(', ') : 'Ihr Vermieter (siehe Mietvertrag)';
   const verwaltung = [a.name, a.strasse, a.ort].filter(Boolean).join(', ');
-  return bogen(anschriftMieter(k), 'Datenschutzinformation für Mieter',
-    briefInfo(['Objekt', k.objekt.bezeichnung], ['Einheit', k.einheit.bezeichnung]),
+  return dokument('Datenschutzinformation für Mieter', `Art. 13 DSGVO · ${k.objekt.bezeichnung} · ${k.einheit.bezeichnung}`,
     h('p', {}, 'Nach Art. 13 der Datenschutz-Grundverordnung (DSGVO) informieren wir Sie, wie wir Ihre personenbezogenen Daten im Rahmen des Mietverhältnisses verarbeiten.'),
     ...textBausteine(`# Verantwortlich
 Verantwortlich ist Ihr Vermieter: ${vermieter}. Mit der Verwaltung ist beauftragt: ${verwaltung}${a.email ? `, E-Mail ${a.email}` : ''}${a.telefon ? `, Telefon ${a.telefon}` : ''}. Dorthin können Sie sich mit allen Fragen zum Datenschutz wenden.
@@ -114,8 +114,7 @@ Wir speichern Ihre Daten für die Dauer des Mietverhältnisses und darüber hina
 Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21 DSGVO). Sie können sich außerdem bei einer Datenschutz-Aufsichtsbehörde beschweren, z. B. bei der Landesbeauftragten für Datenschutz und Informationsfreiheit Nordrhein-Westfalen.
 # Pflicht zur Bereitstellung
 Die Angaben im Mietvertrag sind für den Abschluss und die Durchführung des Mietverhältnisses erforderlich. Freiwillige Angaben sind als solche gekennzeichnet.`),
-    h('p', {}, 'Ich/Wir haben diese Datenschutzinformation erhalten.'),
-    unterschriften(...personen(k.m).map((p) => `Mieter: ${p}`)));
+    abschluss('Ich/Wir haben diese Datenschutzinformation erhalten.', ...personen(k.m).map((p) => `Mieter: ${p}`)));
 }
 routen.datenschutzinfo = (id) => {
   const k = kontext(id);
@@ -129,8 +128,7 @@ function einzugsBlatt(k: Kontext): HTMLElement {
   const { m, einheit, objekt } = k;
   const e: Einzug = m.einzug ?? {};
   const zeile = (titel: string, wert?: string, frei = false) => h('tr', {}, h('th', {}, titel, frei ? h('small', { class: 'din__frei' }, ' (freiwillig)') : ''), h('td', {}, linie(wert)));
-  return bogen(anschriftMieter(k), 'Einzugsformular',
-    briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung], ['Einzug', datum(m.beginn)]),
+  return dokument('Einzugsformular', `${objekt.bezeichnung} · ${einheit.bezeichnung} · Einzug ${datum(m.beginn)}`,
     h('p', {}, `Bitte prüfen und ergänzen Sie Ihre Angaben für ${wohnungText(einheit)}, ${anschrift(objekt)}. So können wir Sie erreichen und alles richtig abrechnen.`),
     h('h3', { class: 'din__para' }, 'Mieter und Haushalt'),
     h('table', { class: 'vw-brief__tabelle din__formular' }, h('tbody', {},
@@ -155,8 +153,7 @@ function einzugsBlatt(k: Kontext): HTMLElement {
     h('p', { class: 'din__punkt' }, '• Strom (und ggf. Gas) beim Versorger Ihrer Wahl mit dem Zählerstand vom Übergabeprotokoll anmelden.'),
     h('p', { class: 'din__punkt' }, '• Rundfunkbeitrag anmelden oder Ihre Adresse ändern (rundfunkbeitrag.de).'),
     h('p', { class: 'din__punkt' }, '• Eine Hausrat- und Privathaftpflichtversicherung wird empfohlen.'),
-    h('p', {}, 'Die Hausordnung und die Datenschutzinformation habe ich/haben wir erhalten. Änderungen meiner Angaben teile ich der Hausverwaltung mit.'),
-    unterschriften(...personen(m).map((p) => `Mieter: ${p}`)));
+    abschluss('Die Hausordnung und die Datenschutzinformation habe ich/haben wir erhalten. Änderungen meiner Angaben teile ich der Hausverwaltung mit.', ...personen(m).map((p) => `Mieter: ${p}`)));
 }
 routen.einzugsformular = (id) => {
   const k = kontext(id);
@@ -199,8 +196,7 @@ function sepaBlatt(k: Kontext): HTMLElement {
   const mk = mietkonto(objekt.id);
   const e: Einzug = m.einzug ?? {};
   const empf = mk?.inhaber || '______________________________';
-  return bogen(anschriftMieter(k), 'SEPA-Lastschriftmandat',
-    briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', k.einheit.bezeichnung]),
+  return dokument('SEPA-Lastschriftmandat', `für wiederkehrende Zahlungen · ${objekt.bezeichnung} · ${k.einheit.bezeichnung}`,
     h('table', { class: 'vw-brief__tabelle din__formular' }, h('tbody', {},
       h('tr', {}, h('th', {}, 'Zahlungsempfänger'), h('td', {}, empf)),
       h('tr', {}, h('th', {}, 'Gläubiger-Identifikationsnummer'), h('td', {}, linie(mk?.glaeubigerId))),
@@ -257,20 +253,49 @@ routen.willkommen = (id) => {
   return h('div', { class: 'vw-stapel' }, werkzeug(`#/mietverhaeltnis/${k.m.id}`), willkommenBlatt(k));
 };
 
-/* ---------- Vertragsmappe ---------- */
-const MAPPE: [string, string][] = [
-  ['mietvertrag', 'Mietvertrag'], ['hausordnung', 'Hausordnung'], ['datenschutz', 'Datenschutzinformation'],
-  ['einzug', 'Einzugsformular'], ['sepa', 'SEPA-Lastschriftmandat'], ['wgb', 'Wohnungsgeberbestätigung'], ['willkommen', 'Willkommensschreiben'],
+/* ---------- Vertragsmappe: Deckblatt (Brief) + Unterlagen im Ganzformat ---------- */
+const MAPPE: [string, string, string][] = [
+  ['mietvertrag', 'Mietvertrag über Wohnraum', 'bitte unterschreiben und zurücksenden'],
+  ['hausordnung', 'Hausordnung', 'bitte unterschreiben und zurücksenden'],
+  ['datenschutz', 'Datenschutzinformation', 'Erhalt bitte unterschreiben und zurücksenden'],
+  ['einzug', 'Einzugsformular', 'bitte ausfüllen, unterschreiben und zurücksenden'],
+  ['sepa', 'SEPA-Lastschriftmandat', 'bitte ausfüllen, unterschreiben und zurücksenden'],
+  ['wgb', 'Wohnungsgeberbestätigung', 'für Ihre Anmeldung bei der Meldebehörde'],
+  ['willkommen', 'Willkommensschreiben', 'zu Ihrer Information'],
 ];
 let mappeWahl: Record<string, boolean> = {};
 let mappeFuer = '';
+
+/** Deckblatt: Anschreiben im DIN-Briefbogen mit allen Unterlagen und was damit zu tun ist */
+function deckblatt(k: Kontext, gewaehlt: [string, string, string][]): HTMLElement {
+  const { m, einheit, objekt } = k;
+  const kalt = mieteAm(m, m.beginn > heute() ? m.beginn : heute());
+  const vz = zahl(m.nebenkosten);
+  const frist = [datumPlus14(), m.beginn && m.beginn > heute() ? m.beginn : ''].filter(Boolean).sort()[0];
+  const zeilen = [...gewaehlt.filter(([key]) => key !== 'willkommen'), ['energie', 'Energieausweis (Kopie)', 'für Ihre Unterlagen'] as [string, string, string]];
+  return bogen(anschriftMieter(k), 'Ihre Vertragsunterlagen',
+    briefInfo(['Objekt', objekt.bezeichnung], ['Einheit', einheit.bezeichnung], ['Mietbeginn', datum(m.beginn)]),
+    h('p', {}, anredeZeile(m)),
+    h('p', {}, `anbei erhalten Sie die Unterlagen zu Ihrem Mietverhältnis über ${wohnungText(einheit)}, ${anschrift(objekt)}, ab dem ${datum(m.beginn)}.`),
+    h('table', { class: 'vw-brief__tabelle din__anlagen' },
+      h('thead', {}, h('tr', {}, h('th', {}, 'Anlage'), h('th', {}, 'Unterlage'), h('th', {}, 'Was ist zu tun?'))),
+      h('tbody', {}, zeilen.map(([, titel, tun], i) => h('tr', {}, h('td', {}, String(i + 1)), h('td', {}, titel), h('td', {}, tun))))),
+    h('table', { class: 'vw-brief__tabelle din__eckdaten' }, h('tbody', {},
+      h('tr', {}, h('td', {}, 'Grundmiete + Vorauszahlung'), h('td', { class: 'vw-zahlspalte' }, `${geld(kalt)} + ${geld(vz)} = `, h('strong', {}, geld(kalt + vz)), ' monatlich')),
+      zahl(m.kautionSoll) > 0 && h('tr', {}, h('td', {}, 'Kaution'), h('td', { class: 'vw-zahlspalte' }, `${geld(m.kautionSoll)}${m.kautionArt && m.kautionArt !== 'Keine Kaution' ? ` · ${m.kautionArt}` : ''}`)))),
+    h('p', {}, `Bitte senden Sie uns die unterschriebenen Unterlagen bis zum ${datum(frist)} zurück. Ihr gegengezeichnetes Exemplar des Mietvertrags erhalten Sie anschließend. Den Termin für die Wohnungsübergabe stimmen wir mit Ihnen ab.`),
+    h('p', {}, 'Bei Fragen sind wir gern für Sie da.'),
+    ...gruss());
+}
+const datumPlus14 = () => { const d = new Date(); d.setDate(d.getDate() + 14); return d.toISOString().slice(0, 10); };
+
 routen.vertragsmappe = (id) => {
   const k = kontext(id);
   if (!k) return fehlt();
   const { m } = k;
   const sepa = m.einzug?.zahlweise === 'SEPA-Lastschrift';
-  if (mappeFuer !== m.id) { mappeFuer = m.id; mappeWahl = { mietvertrag: true, hausordnung: true, datenschutz: true, einzug: true, sepa, wgb: true, willkommen: true }; }
-  const nur = (el: HTMLElement | null | undefined) => el?.querySelector('.vw-brief.din') as HTMLElement | null;
+  if (mappeFuer !== m.id) { mappeFuer = m.id; mappeWahl = { mietvertrag: true, hausordnung: true, datenschutz: true, einzug: true, sepa, wgb: true, willkommen: false }; }
+  const nur = (el: HTMLElement | null | undefined) => el?.querySelector('.vw-dok, .vw-brief.din') as HTMLElement | null;
   const bauen: Record<string, () => HTMLElement | null> = {
     mietvertrag: () => nur(routen.mietvertrag(m.id)),
     hausordnung: () => hausordnungBlatt(k),
@@ -280,19 +305,18 @@ routen.vertragsmappe = (id) => {
     wgb: () => nur(routen.wohnungsgeber(m.id, 'einzug')),
     willkommen: () => willkommenBlatt(k),
   };
-  const blaetter = MAPPE.filter(([key]) => mappeWahl[key]).map(([key]) => bauen[key]()).filter(Boolean) as HTMLElement[];
-  const a = absender();
+  const gewaehlt = MAPPE.filter(([key]) => mappeWahl[key]);
+  const briefe = gewaehlt.filter(([key]) => key === 'willkommen').map(([key]) => bauen[key]());
+  const unterlagen = gewaehlt.filter(([key]) => key !== 'willkommen').map(([key]) => bauen[key]());
   return h('div', { class: 'vw-stapel' },
     werkzeug(`#/mietverhaeltnis/${m.id}`,
       h('button', { class: 'vw-knopf', onclick: () => { speichere('mieter', { id: m.id, schritte: { ...(m.schritte ?? {}), mappe: heute() } }); hinweis('Ausgabe der Unterlagen vermerkt'); } }, 'Als ausgehändigt vermerken')),
     h('section', { class: 'vw-karte vw-nichtdrucken' },
-      h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Vertragsmappe'), h('span', {}, `${blaetter.length} Dokumente · jedes beginnt auf einer neuen Seite`)),
+      h('header', { class: 'vw-karte__kopf' }, h('h2', {}, 'Vertragsmappe'), h('span', {}, 'Deckblatt im Briefbogen, danach jede Unterlage auf neuer Seite')),
       h('div', { class: 'vw-innen vw-mehr' }, MAPPE.map(([key, titel]) => h('label', { class: 'vw-haken' },
         h('input', { type: 'checkbox', checked: !!mappeWahl[key], onchange: (e: Event) => { mappeWahl[key] = (e.target as HTMLInputElement).checked; zeichne(); } }), ' ', titel,
         key === 'sepa' && !sepa ? h('small', {}, ' (nur bei Lastschrift)') : '')))),
-    h('div', { class: 'din-unterlagen' },
-      h('div', { class: 'din__folgekopf din__folgekopf--mappe', 'aria-hidden': 'true' }, h('span', {}, a.name), h('span', {}, `Vertragsunterlagen · ${personen(m).join(', ')}`)),
-      ...blaetter));
+    h('div', { class: 'din-mappe din-vertragsmappe' }, deckblatt(k, gewaehlt), ...briefe.filter(Boolean) as HTMLElement[], ...unterlagen.filter(Boolean) as HTMLElement[]));
 };
 
 /* ---------- Hausordnung als Vorlage pflegen (Administration → Unternehmen) ---------- */
